@@ -30,6 +30,7 @@ from .schemas import (
     DealBatchOut,
     DealItemResult,
     DealOut,
+    EaSettingsSnapshotOut,
     HeartbeatIn,
     HeartbeatOut,
     PositionOut,
@@ -288,10 +289,21 @@ def account_to_out(row: sqlite3.Row, db: sqlite3.Connection) -> AccountOut:
     data["deal_count"] = int(stats["deal_count"] or 0)
     data["synced_order_count"] = int(stats["synced_order_count"] or 0)
     data["latest_deal_time"] = stats["latest_deal_time"]
+    settings_stats = db.execute(
+        """
+        SELECT COUNT(*) AS settings_count,
+               MAX(snapshot_time) AS latest_settings_time
+          FROM ea_settings_history
+         WHERE account_login = ?
+        """,
+        (row["mt5_login"],),
+    ).fetchone()
     data["symbol_count"] = int(symbol_stats["symbol_count"] or 0)
     data["snapshot_count"] = int(snapshot_stats["snapshot_count"] or 0)
     data["latest_snapshot_time"] = snapshot_stats["latest_snapshot_time"]
     data["latest_equity"] = snapshot_stats["latest_equity"]
+    data["settings_count"] = int(settings_stats["settings_count"] or 0)
+    data["latest_settings_time"] = settings_stats["latest_settings_time"]
     return AccountOut.model_validate(data)
 
 
@@ -411,6 +423,33 @@ def my_account_positions(
     account = get_owned_account(account_id, user, db)
     return pair_positions(db, int(account["mt5_login"]), include_closed=include_closed)
 
+
+
+@app.get("/api/v1/my/accounts/{account_id}/settings", response_model=list[EaSettingsSnapshotOut])
+def my_account_settings(
+    account_id: int,
+    limit: int = Query(20, ge=1, le=100),
+    db: sqlite3.Connection = Depends(get_db),
+    user: sqlite3.Row = Depends(get_current_user),
+) -> list[EaSettingsSnapshotOut]:
+    account = get_owned_account(account_id, user, db)
+    rows = db.execute(
+        """
+        SELECT id, account_login, snapshot_time, settings_json, group_count,
+               key_count, received_at, content_hash
+          FROM ea_settings_history
+         WHERE account_login = ?
+         ORDER BY snapshot_time DESC, id DESC
+         LIMIT ?
+        """,
+        (account["mt5_login"], limit),
+    ).fetchall()
+    result: list[EaSettingsSnapshotOut] = []
+    for row in rows:
+        item = dict(row)
+        item["settings"] = json.loads(item.pop("settings_json") or "{}")
+        result.append(EaSettingsSnapshotOut.model_validate(item))
+    return result
 
 
 @app.get("/api/v1/my/api-logs", response_model=list[ApiLogOut])

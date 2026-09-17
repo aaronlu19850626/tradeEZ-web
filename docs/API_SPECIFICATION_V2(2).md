@@ -358,7 +358,60 @@ RETURNING last_sync_time;
 
 `snapshot_time` 为 Unix UTC 秒。建议以 `(account_id, snapshot_time)` 保证幂等。
 
-### 3.6 心跳
+### 3.6 上传 EA 参数配置快照
+
+`POST /api/v1/ingest/settings`
+
+EA 初始化成功后立即上传一次；之后每小时最多保存一条**内容发生变化**的配置。相同 `(mt5_login, snapshot_time)` 或相同内容在一小时内重试时，接口按幂等成功处理。
+
+请求：
+
+```json
+{
+  "mt5_login": 88973405,
+  "snapshot_time": 1789632400,
+  "settings": {
+    "basic": {
+      "magic": 920716,
+      "magic_scalp": 920717,
+      "magic_trend": 920718,
+      "refresh_seconds": 1,
+      "use_session": true
+    },
+    "risk": {
+      "daily_max_drawdown": 500.0,
+      "daily_profit_target": 1000.0,
+      "consec_loss_limit": 3,
+      "enable_circuit_breaker": true
+    },
+    "scalp": {"lots": 0.4, "max_positions": 1, "sl_points": 350, "tp_points": 500},
+    "trend": {"lots": 0.25, "max_positions": 1, "sl_points": 500, "trail_step": 350},
+    "moat": {"enable": true, "liquidation": 1000.0, "shutdown": 2000.0},
+    "sync": {
+      "enable": true,
+      "api_base_url": "https://api.tradeez.cn",
+      "max_batch_size": 100,
+      "request_timeout_ms": 10000
+    }
+  }
+}
+```
+
+`snapshot_time` 为 Unix UTC 秒。服务端按 `(mt5_login, snapshot_time)` 唯一去重，并保存完整配置历史用于 Web 控制台展示和相邻版本差异对比。审计日志只记录参数组数量、参数数量和快照时间，不记录配置明细和 API 地址。
+
+成功响应使用本接口专属包装格式：
+
+```json
+{
+  "code": 0,
+  "message": "ok",
+  "data": {"received_at": 1789632401}
+}
+```
+
+一小时内提交不同配置会返回 `429 SETTINGS_TOO_FREQUENT`，其中 `details.retry_after_seconds` 指示剩余等待秒数。
+
+### 3.7 心跳
 
 `POST /api/v1/ingest/heartbeat`
 

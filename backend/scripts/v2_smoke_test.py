@@ -333,6 +333,46 @@ def main() -> None:
             status, body = signed_request(api, "/ingest/snapshots", snapshots_body)
             assert_ok("v2.1 snapshots array endpoint accepts snapshot", status == 200 and body == {"accepted": 1}, body)
 
+            settings_time = now - 20
+            settings_marker = "https://settings.example/private"
+            settings_body = {
+                "mt5_login": MT5_LOGIN,
+                "snapshot_time": settings_time,
+                "settings": {
+                    "basic": {"magic": 920716, "refresh_seconds": 1},
+                    "risk": {"daily_max_drawdown": 500.0, "enable_circuit_breaker": True},
+                    "scalp": {"lots": 0.4, "max_positions": 1, "sl_points": 350},
+                    "trend": {"lots": 0.25, "trail_step": 350},
+                    "moat": {"enable": True, "shutdown": 2000.0},
+                    "sync": {"enable": True, "api_base_url": settings_marker, "max_batch_size": 100},
+                },
+            }
+            status, body = signed_request(api, "/ingest/settings", settings_body)
+            assert_ok(
+                "v2.1 settings snapshot uses code/message/data acknowledgement",
+                status == 200
+                and body.get("code") == 0
+                and body.get("message") == "ok"
+                and isinstance(body.get("data", {}).get("received_at"), int),
+                body,
+            )
+            settings_received_at = body["data"]["received_at"]
+            status, body = signed_request(api, "/ingest/settings", settings_body)
+            assert_ok(
+                "duplicate settings snapshot is idempotent",
+                status == 200 and body.get("data", {}).get("received_at") == settings_received_at,
+                body,
+            )
+            frequent_settings_body = json.loads(json.dumps(settings_body))
+            frequent_settings_body["snapshot_time"] = settings_time + 60
+            frequent_settings_body["settings"]["scalp"]["sl_points"] = 360
+            status, body = signed_request(api, "/ingest/settings", frequent_settings_body)
+            assert_ok(
+                "changed settings cannot be stored more than once per hour",
+                status == 429 and body["error"]["code"] == "SETTINGS_TOO_FREQUENT",
+                body,
+            )
+
             heartbeat_body = {
                 "mt5_login": MT5_LOGIN,
                 "server_gmt_offset": 10800,
@@ -393,6 +433,8 @@ def main() -> None:
                 and account["synced_order_count"] == 1002
                 and account["server_gmt_off"] == 10800
                 and account["server_timezone_name"] == "UTC+3"
+                and account["settings_count"] == 1
+                and account["latest_settings_time"] == settings_time
                 and account["symbol_count"] == 1
                 and account["snapshot_count"] == 1
                 and "last_deal_handshake_at" not in account,
@@ -418,10 +460,29 @@ def main() -> None:
             assert_ok(
                 "audit logs are visible in console and contain counts without order details",
                 status == 200
-                and {"ingest_deals", "update_cursor", "heartbeat", "ingest_symbols", "ingest_snapshots", "query_api_logs"} <= actions
+                and {"ingest_deals", "update_cursor", "heartbeat", "ingest_symbols", "ingest_snapshots", "ingest_settings", "query_api_logs"} <= actions
                 and any(item.get("item_count") == 1 for item in deal_logs if item.get("action") == "ingest_deals")
+                and any(item.get("item_count") == 1 for item in deal_logs if item.get("action") == "ingest_settings")
                 and "XAUUSD" not in serialized_logs
-                and "TradeEZ-SC" not in serialized_logs,
+                and "TradeEZ-SC" not in serialized_logs
+                and settings_marker not in serialized_logs,
+                body,
+            )
+
+            status, body = raw_request(
+                api,
+                "GET",
+                "/my/accounts/1/settings?limit=20",
+                headers={"Authorization": f"Bearer {user_token}"},
+            )
+            latest_settings = body[0] if isinstance(body, list) and body else {}
+            assert_ok(
+                "console can read latest EA settings snapshot",
+                status == 200
+                and latest_settings.get("snapshot_time") == settings_time
+                and latest_settings.get("settings", {}).get("sync", {}).get("api_base_url") == settings_marker
+                and latest_settings.get("group_count") == 6
+                and latest_settings.get("key_count") == 14,
                 body,
             )
 

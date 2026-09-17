@@ -20,6 +20,8 @@ from .v2_models import (
     HeartbeatResponse,
     IngestDealsRequest,
     IngestDealsResponse,
+    IngestSettingsRequest,
+    IngestSettingsResponse,
     IngestSnapshotsRequest,
     IngestSnapshotsResponse,
     IngestSymbolsRequest,
@@ -38,6 +40,7 @@ RATE_LIMITS = {
     "update_cursor": 60,
     "symbols": 10,
     "snapshots": 120,
+    "settings": 30,
     "heartbeat": 12,
 }
 _rate_buckets: dict[str, deque[float]] = defaultdict(deque)
@@ -389,6 +392,123 @@ async def ingest_snapshots_v21(
         db.rollback()
         raise
     return IngestSnapshotsResponse(accepted=len(payload.snapshots))
+
+
+@router.post("/ingest/settings", response_model=IngestSettingsResponse)
+async def ingest_settings_v21(
+    payload: IngestSettingsRequest,
+    request: Request,
+    authorization: str | None = Header(default=None),
+    x_timestamp: str | None = Header(default=None),
+    x_signature: str | None = Header(default=None),
+    db: sqlite3.Connection = Depends(get_db),
+) -> IngestSettingsResponse:
+    account = await get_bound_account(
+        request, payload, authorization, x_timestamp, x_signature, db, "settings", window_seconds=3600
+    )
+    now = int(time.time())
+    if payload.snapshot_time > now + 300:
+        raise ApiError(
+            code="INVALID_SETTINGS_SNAPSHOT_TIME",
+            message="snapshot_time is too far in the future",
+            status_code=400,
+            details={"snapshot_time": payload.snapshot_time},
+        )
+
+    canonical_settings = json.dumps(
+        payload.settings, ensure_ascii=False, separators=(",", ":"), sort_keys=True
+    )
+    content_hash = hashlib.sha256(canonical_settings.encode("utf-8")).hexdigest()
+    group_count = len(payload.settings)
+    key_count = sum(len(group) for group in payload.settings.values())
+    raw = json.dumps(payload.model_dump(), ensure_ascii=False, separators=(",", ":"), sort_keys=True)
+
+    try:
+        db.execute("BEGIN IMMEDIATE")
+        existing = db.execute(
+            """
+            SELECT id, received_at, content_hash
+              FROM ea_settings_history
+             WHERE account_login = ? AND snapshot_time = ?
+            """,
+            (payload.mt5_login, payload.snapshot_time),
+        ).fetchone()
+        if existing is not None:
+            if existing["content_hash"] != content_hash:
+                raise ApiError(
+                    code="SETTINGS_SNAPSHOT_CONFLICT",
+                    message="A different settings snapshot already exists for this account and snapshot_time",
+                    status_code=409,
+                    details={"snapshot_time": payload.snapshot_time},
+                )
+            db.commit()
+            return IngestSettingsResponse(data={"received_at": int(existing["received_at"])})  # type: ignore[arg-type]
+
+        latest = db.execute(
+            """
+            SELECT snapshot_time, content_hash
+              FROM ea_settings_history
+             WHERE account_login = ?
+             ORDER BY snapshot_time DESC, id DESC
+             LIMIT 1
+            """,
+            (payload.mt5_login,),
+        ).fetchone()
+        if latest is not None:
+            latest_time = int(latest["snapshot_time"])
+            if payload.snapshot_time < latest_time:
+                raise ApiError(
+                    code="SETTINGS_SNAPSHOT_OUT_OF_ORDER",
+                    message="settings snapshot_time must not be older than the latest stored snapshot",
+                    status_code=409,
+                    details={"latest_snapshot_time": latest_time},
+                )
+            if latest["content_hash"] != content_hash and payload.snapshot_time < latest_time + 3600:
+                retry_after = latest_time + 3600 - payload.snapshot_time
+                raise ApiError(
+                    code="SETTINGS_TOO_FREQUENT",
+                    message="changed EA settings can be stored at most once per hour",
+                    status_code=429,
+                    details={"retry_after_seconds": retry_after},
+                )
+
+        received_at = now
+        db.execute(
+            """
+            INSERT INTO ea_settings_history (
+                account_login, snapshot_time, settings_json, group_count,
+                key_count, content_hash, raw_json, received_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                payload.mt5_login,
+                payload.snapshot_time,
+                canonical_settings,
+                group_count,
+                key_count,
+                content_hash,
+                raw,
+                received_at,
+            ),
+        )
+        db.execute(
+            """
+            UPDATE accounts
+               SET last_seen_at=strftime('%Y-%m-%dT%H:%M:%fZ', 'now'),
+                   updated_at=strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
+             WHERE id = ?
+            """,
+            (account["id"],),
+        )
+        db.commit()
+    except ApiError:
+        db.rollback()
+        raise
+    except Exception:
+        db.rollback()
+        raise
+
+    return IngestSettingsResponse(data={"received_at": received_at})  # type: ignore[arg-type]
 
 
 @router.post("/ingest/heartbeat", response_model=HeartbeatResponse)

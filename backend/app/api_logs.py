@@ -18,6 +18,7 @@ API_ACTIONS = {
     "/api/v1/sync/update_last_sync_time": "update_cursor",
     "/api/v1/ingest/symbols": "ingest_symbols",
     "/api/v1/ingest/snapshots": "ingest_snapshots",
+    "/api/v1/ingest/settings": "ingest_settings",
     "/api/v1/ingest/heartbeat": "heartbeat",
     "/api/v1/auth/send-code": "send_login_code",
     "/api/v1/auth/verify-code": "verify_login_code",
@@ -41,6 +42,8 @@ def _api_action(path: str) -> str:
         return API_ACTIONS[path]
     if path.startswith("/api/v1/my/accounts/") and (path.endswith("/deals") or path.endswith("/positions")):
         return "query_account_data"
+    if path.startswith("/api/v1/my/accounts/") and path.endswith("/settings"):
+        return "query_settings"
     if path.startswith("/api/v1/accounts/") and path.endswith("/regenerate-key"):
         return "regenerate_sync_key"
     if path.startswith("/api/v1/accounts/"):
@@ -66,8 +69,16 @@ def _summarize_api_request(path: str, payload: dict | None) -> tuple[int | None,
         if isinstance(value, list):
             summary["counts"][key] = len(value)
 
+    settings_value = payload.get("settings")
+    if isinstance(settings_value, dict):
+        summary["counts"]["settings"] = 1
+        summary["settings_groups"] = len(settings_value)
+        summary["settings_keys"] = sum(len(group) for group in settings_value.values() if isinstance(group, dict))
+
     if isinstance(payload.get("last_sync_time"), int):
         summary["last_sync_time"] = int(payload["last_sync_time"])
+    if isinstance(payload.get("snapshot_time"), int):
+        summary["snapshot_time"] = int(payload["snapshot_time"])
     if path.endswith("/auth/send-code") or path.endswith("/auth/verify-code"):
         # Never retain email addresses, codes, tokens, or sync keys.
         summary["has_email"] = bool(payload.get("email"))
@@ -83,7 +94,7 @@ def _summarize_api_response(path: str, payload: object) -> tuple[dict, int | Non
     scalar_keys = {
         "last_sync_time", "updated", "accepted", "inserted", "duplicates",
         "ok", "server_time", "is_new_user", "id", "mt5_login", "deal_count",
-        "synced_order_count", "symbol_count", "snapshot_count",
+        "synced_order_count", "symbol_count", "snapshot_count", "code", "message",
     }
 
     if isinstance(payload, dict):
@@ -97,6 +108,9 @@ def _summarize_api_response(path: str, payload: object) -> tuple[dict, int | Non
             mt5_login = int(payload["mt5_login"])
         if isinstance(payload.get("id"), int) and "/accounts" in path:
             account_id = int(payload["id"])
+        data = payload.get("data")
+        if isinstance(data, dict) and isinstance(data.get("received_at"), int):
+            summary["received_at"] = int(data["received_at"])
         for key in ("deals", "symbols", "snapshots"):
             if isinstance(payload.get(key), list):
                 summary[f"{key}_returned"] = len(payload[key])
@@ -178,7 +192,7 @@ def _write_api_log(
 
     counts = request_summary.get("counts", {}) if isinstance(request_summary, dict) else {}
     item_count = None
-    for key in ("deals", "symbols", "snapshots"):
+    for key in ("deals", "symbols", "snapshots", "settings"):
         if isinstance(counts.get(key), int):
             item_count = counts[key]
             break

@@ -108,6 +108,8 @@ class AccountOut(BaseModel):
     snapshot_count: int = 0
     latest_snapshot_time: int | None = None
     latest_equity: float | None = None
+    settings_count: int = 0
+    latest_settings_time: int | None = None
 
 
 class AccountKeyOut(AccountOut):
@@ -234,6 +236,17 @@ class PositionOut(BaseModel):
 
 class MessageOut(BaseModel):
     message: str
+
+
+class EaSettingsSnapshotOut(BaseModel):
+    id: int
+    account_login: int
+    snapshot_time: int
+    settings: dict
+    group_count: int
+    key_count: int
+    received_at: int
+    content_hash: str
 
 
 class ApiLogOut(BaseModel):

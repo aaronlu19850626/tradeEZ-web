@@ -113,6 +113,21 @@ CREATE TABLE IF NOT EXISTS snapshots (
 );
 CREATE INDEX IF NOT EXISTS idx_snapshots_account_time ON snapshots(account_login, timestamp);
 
+CREATE TABLE IF NOT EXISTS ea_settings_history (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    account_login INTEGER NOT NULL,
+    snapshot_time INTEGER NOT NULL,
+    settings_json TEXT NOT NULL,
+    group_count INTEGER NOT NULL DEFAULT 0,
+    key_count INTEGER NOT NULL DEFAULT 0,
+    content_hash TEXT NOT NULL,
+    raw_json TEXT NOT NULL,
+    received_at INTEGER NOT NULL,
+    UNIQUE(account_login, snapshot_time)
+);
+CREATE INDEX IF NOT EXISTS idx_ea_settings_account_time
+    ON ea_settings_history(account_login, snapshot_time DESC);
+
 CREATE TABLE IF NOT EXISTS heartbeat_history (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     account_login INTEGER NOT NULL,

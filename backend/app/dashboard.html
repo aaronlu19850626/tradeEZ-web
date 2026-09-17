@@ -18,7 +18,7 @@ p{color:#94a3b8;line-height:1.55}label{display:block;margin:14px 0 6px;color:#cb
 .online{background:rgba(34,197,94,.14);color:#86efac}.recent{background:rgba(245,158,11,.16);color:#fcd34d}.offline{background:rgba(148,163,184,.14);color:#cbd5e1}
 .account-btn{width:100%;text-align:left;margin:7px 0;background:#1e293b}.account-btn.active{outline:2px solid #3b82f6;background:#172554}.kv{display:grid;grid-template-columns:110px 1fr;gap:6px 10px;font-size:13px;margin:8px 0}.kv div:nth-child(odd){color:#94a3b8}
 code{background:#0b1220;border:1px solid #263247;border-radius:6px;padding:2px 6px}.table-wrap{overflow:auto;border:1px solid #263247;border-radius:12px}table{width:100%;border-collapse:collapse;font-size:12px}th,td{padding:9px 10px;border-bottom:1px solid #1f2a3d;text-align:left;white-space:nowrap}th{color:#93c5fd;background:#0f172a}
-.positive{color:#86efac}.negative{color:#fca5a5}.steps li{margin:8px 0;color:#cbd5e1;line-height:1.45}.inline{display:flex;gap:8px;align-items:center}.small{font-size:12px}
+pre{white-space:pre-wrap;word-break:break-word;background:#0b1220;border:1px solid #263247;border-radius:10px;padding:10px;max-height:360px;overflow:auto;font-size:12px}.positive{color:#86efac}.negative{color:#fca5a5}.steps li{margin:8px 0;color:#cbd5e1;line-height:1.45}.inline{display:flex;gap:8px;align-items:center}.small{font-size:12px}
 @media(max-width:900px){.grid{grid-template-columns:1fr}.row{grid-template-columns:1fr}}
 </style>
 </head>
@@ -57,7 +57,7 @@ code{background:#0b1220;border:1px solid #263247;border-radius:6px;padding:2px 6
           <button id="resetKeyBtn" class="danger">重置同步 Key</button>
         </div>
         <div class="kv">
-          <div>MT5 账号</div><div id="cfgLogin"></div><div>券商</div><div id="cfgBroker"></div><div>币种/时间</div><div id="cfgCurrencyGmt"></div><div>最近心跳</div><div id="cfgHeartbeat"></div><div>增量同步点</div><div id="cfgLastSync"></div><div>品种规格</div><div id="cfgSymbols"></div><div>账户快照</div><div id="cfgSnapshots"></div><div>有效订单</div><div id="cfgDeals"></div>
+          <div>MT5 账号</div><div id="cfgLogin"></div><div>券商</div><div id="cfgBroker"></div><div>币种/时间</div><div id="cfgCurrencyGmt"></div><div>最近心跳</div><div id="cfgHeartbeat"></div><div>增量同步点</div><div id="cfgLastSync"></div><div>品种规格</div><div id="cfgSymbols"></div><div>账户快照</div><div id="cfgSnapshots"></div><div>EA参数</div><div id="cfgSettings"></div><div>有效订单</div><div id="cfgDeals"></div>
         </div>
         <h3>API 地址</h3><input id="apiBase" value="https://192.168.31.116:8443" />
         <h3>EA 同步 Key</h3><input id="syncKey" readonly value="生成后只完整显示一次" />
@@ -76,6 +76,7 @@ code{background:#0b1220;border:1px solid #263247;border-radius:6px;padding:2px 6
       <thead><tr><th>订单号</th><th>开仓时间</th><th>品种</th><th>策略</th><th>方向</th><th>手数</th><th>开仓</th><th>平仓</th><th>止损</th><th>止盈</th><th>库存费</th><th>佣金</th><th>净盈亏</th><th>持仓时间</th></tr></thead>
       <tbody id="positionsBody"><tr><td colspan="14" class="muted">暂无数据</td></tr></tbody>
     </table></div></div>
+    <div class="card"><h2>EA 参数配置快照</h2><p class="small muted">EA 初始化及参数变更后上传；只展示配置内容，审计日志仅记录参数组和参数数量。</p><div id="settingsMeta" class="small muted">暂无配置快照</div><pre id="settingsJson">暂无配置快照</pre><h3>与上一份配置差异</h3><div id="settingsDiff" class="small muted">—</div></div>
     <div class="card"><h2>最近原始成交</h2><div class="table-wrap"><table>
       <thead><tr><th>时间</th><th>Ticket</th><th>Position</th><th>品种</th><th>类型</th><th>方向</th><th>手数</th><th>价格</th><th>盈亏</th><th>Magic/备注</th></tr></thead>
       <tbody id="dealsBody"><tr><td colspan="10" class="muted">暂无数据</td></tr></tbody>
@@ -99,8 +100,27 @@ function entryLabel(e){return e===0?'开仓':e===1?'平仓':e===3?'对冲平仓'
 function typeLabel(t){return t===0?'买':'卖';}
 function hold(sec){if(sec===null||sec===undefined)return '—';const d=Math.floor(sec/86400);const h=Math.floor((sec%86400)/3600);const m=Math.floor((sec%3600)/60);const ss=sec%60;const pad=(n)=>String(n).padStart(2,'0');return `${d?d+'天 ':''}${pad(h)}:${pad(m)}:${pad(ss)}`;}
 function tzLabel(a){if(a.server_timezone_name)return a.server_timezone_name;if(a.server_gmt_off===null||a.server_gmt_off===undefined)return '等待心跳';const sign=a.server_gmt_off>=0?'+':'-';const mins=Math.abs(a.server_gmt_off)/60;const h=Math.floor(mins/60),m=mins%60;return `UTC${sign}${h}${m?'.'+m:''}`;}
-function actionLabel(a){return {query_cursor:'查询游标',ingest_deals:'上传成交',update_cursor:'确认游标',ingest_symbols:'上传品种',ingest_snapshots:'上传快照',heartbeat:'心跳',account_collection:'账号列表',regenerate_sync_key:'重置Key',account_management:'账号管理',query_account_data:'查询数据',query_api_logs:'查询日志',send_login_code:'发送验证码',verify_login_code:'验证登录'}[a]||a||'—';}
+function actionLabel(a){return {query_cursor:'查询游标',ingest_deals:'上传成交',update_cursor:'确认游标',ingest_symbols:'上传品种',ingest_snapshots:'上传快照',heartbeat:'心跳',account_collection:'账号列表',regenerate_sync_key:'重置Key',account_management:'账号管理',query_account_data:'查询数据',query_settings:'查询参数',query_api_logs:'查询日志',ingest_settings:'上传参数',send_login_code:'发送验证码',verify_login_code:'验证登录'}[a]||a||'—';}
 function renderLogs(logs){$('logsBody').innerHTML=logs.length?logs.map(x=>`<tr><td>${fmtIso(x.created_at)}</td><td><code>${esc(x.method)} ${esc(x.path)}</code></td><td>${esc(actionLabel(x.action))}</td><td>${x.mt5_login??'—'}</td><td class="${x.success?'positive':'negative'}">${x.success?'成功':x.status_code}</td><td>${x.item_count??'—'}</td><td>${fmt(x.last_sync_time??x.response_summary?.last_sync_time)}</td><td>${x.duration_ms} ms</td><td>${x.error_code?esc(x.error_code+' '+(x.error_message||'')):'—'}</td></tr>`).join(''):'<tr><td colspan="9" class="muted">暂无日志</td></tr>';}
+function diffSettings(next,prev,prefix=''){
+  const out=[]; const paths=new Set([...Object.keys(next||{}),...Object.keys(prev||{})]);
+  for(const k of paths){
+    const path=prefix?`${prefix}.${k}`:k, nv=next?.[k], ov=prev?.[k];
+    const nObj=nv&&typeof nv==='object', oObj=ov&&typeof ov==='object';
+    if(nObj||oObj) out.push(...diffSettings(nObj?nv:{},oObj?ov:{},path));
+    else if(JSON.stringify(nv)!==JSON.stringify(ov)) out.push({path,from:ov,to:nv});
+  }
+  return out;
+}
+function renderSettings(items){
+  const meta=$('settingsMeta'), box=$('settingsJson'), diffBox=$('settingsDiff');
+  if(!items||!items.length){meta.textContent='暂无配置快照';box.textContent='暂无配置快照';diffBox.innerHTML='—';return;}
+  const latest=items[0], previous=items[1]||null;
+  meta.textContent=`快照时间：${fmt(latest.snapshot_time)} · 接收时间：${fmt(latest.received_at)} · ${latest.group_count} 个参数组 / ${latest.key_count} 个参数`;
+  box.textContent=JSON.stringify(latest.settings,null,2);
+  const diffs=previous?diffSettings(latest.settings,previous.settings):[];
+  diffBox.innerHTML=diffs.length?diffs.map(d=>`<div><code>${esc(d.path)}</code>：${esc(String(d.from??'—'))} → ${esc(String(d.to??'—'))}</div>`).join(''):(previous?'两份配置没有差异':'这是第一份配置快照');
+}
 async function api(path,options={}){
   options.headers=Object.assign({'Content-Type':'application/json'},options.headers||{});
   if(token())options.headers.Authorization='Bearer '+token();
@@ -175,16 +195,18 @@ async function renderSelected(){
   $('cfgCurrencyGmt').textContent=`${a.account_currency||'—'} / ${tzLabel(a)}`;
   $('globalTz').textContent=`MT5 服务器时区：${tzLabel(a)}`;
   $('globalTz').className='pill '+(a.server_gmt_off===null||a.server_gmt_off===undefined?'offline':'online');
-  $('cfgHeartbeat').textContent=fmtIso(a.last_seen_at);$('cfgLastSync').textContent=fmt(a.last_sync_time);$('cfgSymbols').textContent=`${a.symbol_count||0} 个`;$('cfgSnapshots').textContent=a.latest_snapshot_time?`${fmt(a.latest_snapshot_time)} · 净值 ${Number(a.latest_equity||0).toFixed(2)} / 快照 ${a.snapshot_count||0} 条`:'等待 EA 上传';$('cfgDeals').textContent=`${a.synced_order_count||0} 个有效订单；原始成交 ${a.deal_count} 笔；最新成交：${fmt(a.latest_deal_time)}`;
+  $('cfgHeartbeat').textContent=fmtIso(a.last_seen_at);$('cfgLastSync').textContent=fmt(a.last_sync_time);$('cfgSymbols').textContent=`${a.symbol_count||0} 个`;$('cfgSettings').textContent=a.latest_settings_time?`${fmt(a.latest_settings_time)} · ${a.settings_count||0} 份`:'等待 EA 上传';$('cfgSnapshots').textContent=a.latest_snapshot_time?`${fmt(a.latest_snapshot_time)} · 净值 ${Number(a.latest_equity||0).toFixed(2)} / 快照 ${a.snapshot_count||0} 条`:'等待 EA 上传';$('cfgDeals').textContent=`${a.synced_order_count||0} 个有效订单；原始成交 ${a.deal_count} 笔；最新成交：${fmt(a.latest_deal_time)}`;
   const key=freshKeys[a.id]||'';$('syncKey').value=key||'已隐藏（如未保存，请重置 Key）';
   const base=$('apiBase').value.trim()||'https://192.168.31.116:8443';
   $('eaConfig').value=`Inp_EnableSync=true\nInp_ApiBaseURL=${base}\nInp_SecretKey=${key?key:'请先复制刚生成的 sk_live Key；旧 Key 请重置'}\nInp_MaxBatchSize=100\nInp_HistoryDays=7\nInp_TimerSeconds=3\nInp_SendSymbolSpec=true\nInp_SnapshotIntervalSec=30\nInp_HeartbeatIntervalSec=300`;
-  const [deals,positions,logs]=await Promise.all([
+  const [deals,positions,logs,settingsSnapshots]=await Promise.all([
     api(`/api/v1/my/accounts/${a.id}/deals?limit=50`),
     api(`/api/v1/my/accounts/${a.id}/positions`),
-    api(`/api/v1/my/api-logs?limit=80&mt5_login=${encodeURIComponent(a.mt5_login)}`)
+    api(`/api/v1/my/api-logs?limit=80&mt5_login=${encodeURIComponent(a.mt5_login)}`),
+    api(`/api/v1/my/accounts/${a.id}/settings?limit=20`)
   ]);
   renderLogs(logs);
+  renderSettings(settingsSnapshots);
   $('dealsBody').innerHTML=deals.length?deals.map(d=>`<tr><td>${fmt(d.deal_time)}</td><td>${d.ticket}</td><td>${d.position_id||'—'}</td><td>${esc(d.symbol||'—')}</td><td>${entryLabel(d.entry)}</td><td>${typeLabel(d.type)}</td><td>${d.volume}</td><td>${d.price}</td><td class="${pnlClass(d.profit+d.swap+d.commission)}">${(d.profit+d.swap+d.commission).toFixed(2)}</td><td>${d.magic}<br><span class="muted">${esc(d.comment||'')}</span></td></tr>`).join(''):'<tr><td colspan="10" class="muted">暂无数据</td></tr>';
   $('positionsBody').innerHTML=positions.length?positions.slice(0,50).map(p=>`<tr><td>${p.position_id}</td><td>${fmt(p.open_time)}</td><td>${esc(p.symbol)}</td><td>${p.strategy}</td><td>${p.direction}</td><td>${p.volume_in} / ${p.volume_out}</td><td>${p.open_price??'—'}</td><td>${p.close_price??'—'}</td><td>${p.sl_price??'—'}</td><td>${p.tp_price??'—'}</td><td>${Number(p.swap_total||0).toFixed(2)}</td><td>${Number(p.commission_total||0).toFixed(2)}</td><td class="${pnlClass(p.net_pnl)}">${p.net_pnl.toFixed(2)}</td><td>${p.is_closed?hold(p.hold_seconds):hold(Math.floor(Date.now()/1000)-p.open_time)+" (持仓中)"}</td></tr>`).join(''):'<tr><td colspan="14" class="muted">暂无数据</td></tr>';
 }

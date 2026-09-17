@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class ApiError(Exception):
@@ -112,6 +112,38 @@ class IngestSnapshotsRequest(BaseModel):
 
 class IngestSnapshotsResponse(BaseModel):
     accepted: int
+
+
+class IngestSettingsRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    mt5_login: int = Field(..., gt=0)
+    snapshot_time: int = Field(..., gt=0)
+    settings: dict[str, dict[str, object]] = Field(..., min_length=1, max_length=20)
+
+    @field_validator("settings")
+    @classmethod
+    def validate_settings(cls, value: dict[str, dict[str, object]]) -> dict[str, dict[str, object]]:
+        total_keys = 0
+        for group_name, group in value.items():
+            if group_name != group_name.strip() or not group_name.strip() or len(group_name) > 64:
+                raise ValueError("settings group name must be 1-64 characters without surrounding whitespace")
+            if not isinstance(group, dict) or not group:
+                raise ValueError("settings group must be a non-empty object")
+            total_keys += len(group)
+        if total_keys > 300:
+            raise ValueError("too many settings keys")
+        return value
+
+
+class SettingsAckData(BaseModel):
+    received_at: int
+
+
+class IngestSettingsResponse(BaseModel):
+    code: int = 0
+    message: str = "ok"
+    data: SettingsAckData
 
 
 class HeartbeatRequest(AccountRequest):

@@ -19,7 +19,7 @@
 - 成交上传只入库，不推进 `last_sync_time`。
 - 所有批次成功后，EA 单独调用游标更新接口。
 - 游标只允许单调推进；目标 `open_time` 必须已有服务端接收的成交，否则返回 `409 CURSOR_AHEAD_OF_DATA`。
-- 品种规格、账户快照数组、心跳均使用 v2.1 新路径；心跳额外携带 MT5 服务器时区作为展示元数据。
+- 品种规格、账户快照数组、EA 参数配置快照、心跳均使用 v2.1 新路径；心跳额外携带 MT5 服务器时区作为展示元数据。
 - 独立 API 审计日志模块 `app/api_logs.py`：记录接口、账号、结果、订单数量、游标和耗时，不保存订单明细、Key、验证码或令牌。
 - 控制台有效订单数量按不同 `position_id` 统计；订单列表显示订单号、止损、止盈、库存费、佣金和秒级持仓时间。
 - SQLite 本地存储，便于局域网联调；生产环境再迁移 PostgreSQL。
@@ -167,7 +167,8 @@ EA Timer 周期执行：
 5. 按每批最多 `Inp_MaxBatchSize` 调用 `/ingest/deals`。
 6. 任一批失败则停止，不推进游标。
 7. 所有批次成功且本轮有成交时，用本轮最大 `open_time` 调用 `/sync/update_last_sync_time`。
-8. 定期上传品种规格、账户快照和心跳。
+8. 初始化后上传 EA 参数配置快照；之后每小时上传一次，配置未变化时服务端幂等处理。
+9. 定期上传品种规格、账户快照和心跳。
 
 网络请求只在 Timer 中发生，不在 `OnTradeTransaction` 中阻塞交易。
 
@@ -189,7 +190,8 @@ X-Signature: <lowercase-hex-hmac-sha256>
 | POST | `/api/v1/sync/update_last_sync_time` | 全部批次成功后推进游标 |
 | POST | `/api/v1/ingest/symbols` | 上传品种规格 |
 | POST | `/api/v1/ingest/snapshots` | 上传账户快照数组 |
-| POST | `/api/v1/ingest/heartbeat` | 心跳，请求仅包含 `mt5_login` |
+| POST | `/api/v1/ingest/settings` | 上传 EA 参数配置快照 |
+| POST | `/api/v1/ingest/heartbeat` | 心跳，可携带展示用 MT5 时区 |
 
 成交响应：
 
@@ -219,6 +221,7 @@ X-Signature: <lowercase-hex-hmac-sha256>
 - `POST /api/v1/accounts/{id}/regenerate-key`
 - `GET  /api/v1/my/accounts/{id}/deals`
 - `GET  /api/v1/my/accounts/{id}/positions`
+- `GET  /api/v1/my/accounts/{id}/settings?limit=20`
 - `GET  /api/v1/my/api-logs?limit=100&mt5_login=<login>&success=<true|false>`
 
 旧版探针路径保留在 `/internal/legacy/...`，不作为新 EA 对接路径。
@@ -243,7 +246,8 @@ cd D:\projects\TradeEZ\EA\TradeSync-Web
 - UTC 时间原样存储。
 - 无效记录整批失败。
 - 1001 条拒绝、1000 条成功。
-- symbols、snapshots、heartbeat 可用。
+- symbols、snapshots、settings、heartbeat 可用。
+- settings 相同快照幂等；不同配置一小时内仅允许保存一次。
 
 ## 9. 兼容和安全说明
 
@@ -253,4 +257,3 @@ cd D:\projects\TradeEZ\EA\TradeSync-Web
 - `dev-sync-key-change-me` 只作为本地开发兼容，不作为 EA 正式配置。
 - `.env`、SQLite、证书私钥、`venv/`、日志均不提交。
 - 当前内存限流只适合单进程开发；多进程 / 生产环境应使用共享限流存储。
-
