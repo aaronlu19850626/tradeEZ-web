@@ -41,7 +41,7 @@ code{background:#0b1220;border:1px solid #263247;border-radius:6px;padding:2px 6
       <label>MT5 登录号（必须和终端账号一致）</label><input id="mt5Login" inputmode="numeric" placeholder="例如 88973405" />
       <label>备注，可选</label><input id="accountLabel" placeholder="例如 实盘 / 模拟盘" />
       <div class="row"><div><label>券商服务器，可选</label><input id="brokerServer" placeholder="Example-Server" /></div><div><label>账户币种，可选</label><input id="accountCurrency" placeholder="USD" /></div></div>
-      <label>GMT 偏移秒数，可选；EA 成交同步会自动更新</label><input id="gmtOffset" inputmode="numeric" placeholder="例如 10800" />
+      <label>服务器时区备注（可选；v2.1 接口固定上传 UTC，不再发送 GMT 偏移）</label><input id="gmtOffset" inputmode="numeric" placeholder="可留空 / 仅备注" />
       <button id="createAccountBtn" style="width:100%;margin-top:14px;">绑定并生成同步 Key</button>
       <div id="accountMessage" class="message"></div>
     </div>
@@ -57,7 +57,7 @@ code{background:#0b1220;border:1px solid #263247;border-radius:6px;padding:2px 6
           <button id="resetKeyBtn" class="danger">重置同步 Key</button>
         </div>
         <div class="kv">
-          <div>MT5 账号</div><div id="cfgLogin"></div><div>券商</div><div id="cfgBroker"></div><div>币种/GMT</div><div id="cfgCurrencyGmt"></div><div>最近心跳</div><div id="cfgHeartbeat"></div><div>增量同步点</div><div id="cfgLastSync"></div><div>品种规格</div><div id="cfgSymbols"></div><div>账户快照</div><div id="cfgSnapshots"></div><div>成交数量</div><div id="cfgDeals"></div>
+          <div>MT5 账号</div><div id="cfgLogin"></div><div>券商</div><div id="cfgBroker"></div><div>币种/时间</div><div id="cfgCurrencyGmt"></div><div>最近心跳</div><div id="cfgHeartbeat"></div><div>增量同步点</div><div id="cfgLastSync"></div><div>品种规格</div><div id="cfgSymbols"></div><div>账户快照</div><div id="cfgSnapshots"></div><div>成交数量</div><div id="cfgDeals"></div>
         </div>
         <h3>API 地址</h3><input id="apiBase" value="https://192.168.31.116:8443" />
         <h3>EA 同步 Key</h3><input id="syncKey" readonly value="生成后只完整显示一次" />
@@ -66,7 +66,7 @@ code{background:#0b1220;border:1px solid #263247;border-radius:6px;padding:2px 6
           <li>MT5：工具 → 选项 → EA 交易 → 允许 WebRequest，添加上面的 API 地址。</li>
           <li>把 <code>TradeSyncProbeEA</code> 挂到任意图表。</li>
           <li>将 API 地址和网页生成的 <code>sk_live_...</code> 同步 Key 填入 EA 参数。</li>
-          <li>EA 日志出现 Initial sync completed 后，本页心跳和增量同步点会在数秒内刷新。</li>
+          <li>EA 日志出现 Two-phase commit complete 后，本页心跳和开仓时间游标会在数秒内刷新。</li>
         </ol>
         <h3>EA 参数文本</h3><textarea id="eaConfig" readonly></textarea>
         <p class="small muted">同步 Key 只在生成或重置时完整展示一次。旧版 dev Key 仅作为本地兼容手段，正式使用请始终使用 sk_live 专属 Key。</p>
@@ -91,7 +91,7 @@ function fmt(ts){return ts?new Date(ts*1000).toLocaleString():'—';}
 function fmtIso(v){return v?new Date(v).toLocaleString():'—';}
 function ageSeconds(iso){return iso?Math.max(0,Math.floor((Date.now()-Date.parse(iso))/1000)):null;}
 function pnlClass(v){return v>0?'positive':v<0?'negative':'';}
-function entryLabel(e){return e===0?'开仓':e===1?'平仓':'开平';}
+function entryLabel(e){return e===0?'开仓':e===1?'平仓':e===3?'对冲平仓':'开平';}
 function typeLabel(t){return t===0?'买':'卖';}
 function hold(sec){if(sec===null||sec===undefined)return '—';const h=Math.floor(sec/3600),m=Math.floor((sec%3600)/60);return (h?h+'小时 ':'')+m+'分钟';}
 async function api(path,options={}){
@@ -165,11 +165,11 @@ async function renderSelected(){
   pill.className='pill '+(age===null?'offline':age<120?'online':age<900?'recent':'offline');
   $('connectionText').textContent=age===null?'未收到心跳':age<120?'EA 在线':age<900?`${age} 秒前在线`:`离线（${age} 秒前）`;
   $('cfgLogin').textContent=a.mt5_login;$('cfgBroker').textContent=a.broker_server||'等待 EA 心跳';
-  $('cfgCurrencyGmt').textContent=`${a.account_currency||'—'} / ${a.server_gmt_off===null?'—':a.server_gmt_off}`;
+  $('cfgCurrencyGmt').textContent=`${a.account_currency||'—'} / UTC v2.1`;
   $('cfgHeartbeat').textContent=fmtIso(a.last_seen_at);$('cfgLastSync').textContent=fmt(a.last_sync_time);$('cfgSymbols').textContent=`${a.symbol_count||0} 个`;$('cfgSnapshots').textContent=a.latest_snapshot_time?`${fmt(a.latest_snapshot_time)} · 净值 ${Number(a.latest_equity||0).toFixed(2)} / 快照 ${a.snapshot_count||0} 条`:'等待 EA 上传';$('cfgDeals').textContent=`${a.deal_count} 笔，最新成交：${fmt(a.latest_deal_time)}`;
   const key=freshKeys[a.id]||'';$('syncKey').value=key||'已隐藏（如未保存，请重置 Key）';
   const base=$('apiBase').value.trim()||'https://192.168.31.116:8443';
-  $('eaConfig').value=`Inp_BaseUrl=${base}\nInp_SyncKey=${key?key:'请先复制刚生成的 sk_live Key；旧页面请重置 Key'}\nInp_HistoryDays=7\nInp_TimerSeconds=3\nInp_BatchSize=500\nInp_SendSymbolSpec=true\nInp_SnapshotIntervalSec=30\nInp_HeartbeatIntervalSec=300`;
+  $('eaConfig').value=`Inp_EnableSync=true\nInp_ApiBaseURL=${base}\nInp_SecretKey=${key?key:'请先复制刚生成的 sk_live Key；旧 Key 请重置'}\nInp_MaxBatchSize=100\nInp_HistoryDays=7\nInp_TimerSeconds=3\nInp_SendSymbolSpec=true\nInp_SnapshotIntervalSec=30\nInp_HeartbeatIntervalSec=300`;
   const [deals,positions]=await Promise.all([
     api(`/api/v1/my/accounts/${a.id}/deals?limit=50`),
     api(`/api/v1/my/accounts/${a.id}/positions`)

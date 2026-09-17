@@ -16,6 +16,7 @@ from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from .config import get_settings
+from .crypto import encrypt_sync_key
 from .db import get_db, init_db
 from .emailer import send_verification_email
 from .schemas import (
@@ -228,14 +229,16 @@ def hash_sync_secret(secret: str) -> str:
     return hashlib.sha256(secret.encode("utf-8")).hexdigest()
 
 
-def generate_sync_key(db: sqlite3.Connection) -> tuple[str, str, str]:
+def generate_sync_key(db: sqlite3.Connection) -> tuple[str, str, str, str, str]:
     while True:
         secret = secrets.token_urlsafe(32)
         prefix = secret[:12]
         if db.execute("SELECT 1 FROM accounts WHERE key_prefix = ?", (prefix,)).fetchone() is None:
             break
     full_key = f"sk_live_{secret}"
-    return full_key, prefix, hash_sync_secret(full_key)
+    environment = "live"
+    encrypted = encrypt_sync_key(full_key, settings)
+    return full_key, prefix, hash_sync_secret(full_key), encrypted, environment
 
 
 
@@ -287,16 +290,18 @@ def create_account(
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="This MT5 account is already bound to you")
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="This MT5 account is already bound to another user")
 
-    sync_key, prefix, key_hash = generate_sync_key(db)
+    sync_key, prefix, key_hash, encrypted_key, key_environment = generate_sync_key(db)
     cursor = db.execute(
         """
         INSERT INTO accounts (
             user_id, mt5_login, label, broker_server, account_currency,
-            server_gmt_off, key_prefix, key_hash
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            server_gmt_off, key_prefix, key_hash, key_encrypted,
+            key_environment, key_created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ', 'now'), strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
         """,
         (user["id"], payload.mt5_login, payload.label, payload.broker_server,
-         payload.account_currency, payload.server_gmt_off, prefix, key_hash),
+         payload.account_currency, payload.server_gmt_off, prefix, key_hash,
+         encrypted_key, key_environment),
     )
     db.commit()
     row = db.execute("SELECT * FROM accounts WHERE id = ?", (cursor.lastrowid,)).fetchone()
@@ -332,10 +337,21 @@ def regenerate_account_key(
     user: sqlite3.Row = Depends(get_current_user),
 ) -> AccountKeyOut:
     get_owned_account(account_id, user, db)
-    sync_key, prefix, key_hash = generate_sync_key(db)
+    sync_key, prefix, key_hash, encrypted_key, key_environment = generate_sync_key(db)
     db.execute(
-        "UPDATE accounts SET key_prefix = ?, key_hash = ?, key_revoked = 0 WHERE id = ?",
-        (prefix, key_hash, account_id),
+        """
+        UPDATE accounts SET
+            key_prefix = ?,
+            key_hash = ?,
+            key_encrypted = ?,
+            key_environment = ?,
+            key_revoked = 0,
+            key_created_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now'),
+            key_last_used_at = NULL,
+            updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
+        WHERE id = ?
+        """,
+        (prefix, key_hash, encrypted_key, key_environment, account_id),
     )
     db.commit()
     row = db.execute("SELECT * FROM accounts WHERE id = ?", (account_id,)).fetchone()
@@ -421,13 +437,13 @@ def ingest_deals(
                         account_login, ticket, position_id, order_id, symbol,
                         entry, type, volume, price, sl_price, tp_price,
                         profit, swap, commission, magic, comment,
-                        deal_time, server_gmt_off, raw_json
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        open_time, deal_time, server_gmt_off, raw_json
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                     (payload.account_login, deal.ticket, deal.position_id, deal.order_id, deal.symbol,
                      deal.entry, deal.type, deal.volume, deal.price, deal.sl_price, deal.tp_price,
                      deal.profit, deal.swap, deal.commission, deal.magic, deal.comment,
-                     deal.deal_time, payload.server_gmt_off, raw),
+                     deal.deal_time, deal.deal_time, payload.server_gmt_off, raw),
                 )
                 if cursor.rowcount == 1:
                     accepted += 1
@@ -561,7 +577,7 @@ def pair_positions(db: sqlite3.Connection, account_login: int, include_closed: b
             entry = int(deal["entry"])
             if entry in (0, 2):
                 if volume_in == 0:
-                    open_time = int(deal["deal_time"])
+                    open_time = int(deal["open_time"] or deal["deal_time"])
                     sl_price = deal["sl_price"]
                     magic = int(deal["magic"])
                     comment = deal["comment"]

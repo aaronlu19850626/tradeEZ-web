@@ -40,9 +40,14 @@ CREATE TABLE IF NOT EXISTS accounts (
     server_gmt_off INTEGER,
     key_prefix TEXT NOT NULL UNIQUE,
     key_hash TEXT NOT NULL,
+    key_encrypted TEXT,
+    key_environment TEXT NOT NULL DEFAULT 'live',
+    key_created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+    key_last_used_at TEXT,
     key_revoked INTEGER NOT NULL DEFAULT 0,
     last_sync_time INTEGER NOT NULL DEFAULT 0,
     created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+    updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
     last_seen_at TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_accounts_user ON accounts(user_id);
@@ -51,22 +56,23 @@ CREATE TABLE IF NOT EXISTS deals (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     account_login INTEGER NOT NULL,
     ticket INTEGER NOT NULL,
-    position_id INTEGER,
-    order_id INTEGER,
-    symbol TEXT,
+    position_id INTEGER NOT NULL DEFAULT 0,
+    order_id INTEGER NOT NULL DEFAULT 0,
+    symbol TEXT NOT NULL DEFAULT '',
     entry INTEGER NOT NULL DEFAULT 0,
     type INTEGER NOT NULL DEFAULT 0,
     volume REAL NOT NULL,
     price REAL NOT NULL,
-    sl_price REAL,
-    tp_price REAL,
+    sl_price REAL NOT NULL DEFAULT 0,
+    tp_price REAL NOT NULL DEFAULT 0,
     profit REAL NOT NULL DEFAULT 0,
     swap REAL NOT NULL DEFAULT 0,
     commission REAL NOT NULL DEFAULT 0,
     magic INTEGER NOT NULL DEFAULT 0,
-    comment TEXT,
+    comment TEXT NOT NULL DEFAULT '',
+    open_time INTEGER NOT NULL DEFAULT 0,
     deal_time INTEGER NOT NULL,
-    server_gmt_off INTEGER,
+    server_gmt_off INTEGER NOT NULL DEFAULT 0,
     raw_json TEXT NOT NULL,
     received_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
     UNIQUE(account_login, ticket)
@@ -82,9 +88,9 @@ CREATE TABLE IF NOT EXISTS symbols (
     point REAL NOT NULL,
     contract_size REAL NOT NULL,
     tick_value REAL NOT NULL,
-    tick_size REAL NOT NULL,
-    currency_base TEXT NOT NULL,
-    currency_profit TEXT NOT NULL,
+    tick_size REAL NOT NULL DEFAULT 0,
+    currency_base TEXT NOT NULL DEFAULT '',
+    currency_profit TEXT NOT NULL DEFAULT '',
     raw_json TEXT NOT NULL,
     updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
     UNIQUE(account_login, symbol)
@@ -97,9 +103,9 @@ CREATE TABLE IF NOT EXISTS snapshots (
     timestamp INTEGER NOT NULL,
     balance REAL NOT NULL,
     equity REAL NOT NULL,
-    margin REAL NOT NULL,
-    free_margin REAL NOT NULL,
-    margin_level REAL NOT NULL,
+    margin REAL NOT NULL DEFAULT 0,
+    free_margin REAL NOT NULL DEFAULT 0,
+    margin_level REAL NOT NULL DEFAULT 0,
     raw_json TEXT NOT NULL,
     received_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
     UNIQUE(account_login, timestamp)
@@ -116,7 +122,6 @@ CREATE TABLE IF NOT EXISTS heartbeat_history (
 CREATE INDEX IF NOT EXISTS idx_heartbeat_history_account_time
     ON heartbeat_history(account_login, timestamp);
 
--- Legacy heartbeat table kept for the current dashboard compatibility.
 CREATE TABLE IF NOT EXISTS heartbeats (
     account_login INTEGER PRIMARY KEY,
     server_gmt_off INTEGER,
@@ -134,16 +139,32 @@ def _column_names(conn: sqlite3.Connection, table: str) -> set[str]:
     return {row[1] for row in conn.execute(f"PRAGMA table_info({table})").fetchall()}
 
 
+def _add_column_if_missing(conn: sqlite3.Connection, table: str, columns: set[str], name: str, ddl: str) -> None:
+    if name not in columns:
+        conn.execute(f"ALTER TABLE {table} ADD COLUMN {ddl}")
+
+
 def init_db(db_path: str) -> None:
     path = Path(db_path)
     path.parent.mkdir(parents=True, exist_ok=True)
     with sqlite3.connect(path) as conn:
         conn.executescript(SCHEMA_SQL)
-        # Lightweight migration for databases created before API v2.
         account_columns = _column_names(conn, "accounts")
-        if "last_sync_time" not in account_columns:
-            conn.execute("ALTER TABLE accounts ADD COLUMN last_sync_time INTEGER NOT NULL DEFAULT 0")
+        _add_column_if_missing(conn, "accounts", account_columns, "last_sync_time", "last_sync_time INTEGER NOT NULL DEFAULT 0")
+        _add_column_if_missing(conn, "accounts", account_columns, "key_encrypted", "key_encrypted TEXT")
+        _add_column_if_missing(conn, "accounts", account_columns, "key_environment", "key_environment TEXT NOT NULL DEFAULT 'live'")
+        _add_column_if_missing(conn, "accounts", account_columns, "key_created_at", "key_created_at TEXT")
+        _add_column_if_missing(conn, "accounts", account_columns, "key_last_used_at", "key_last_used_at TEXT")
+        _add_column_if_missing(conn, "accounts", account_columns, "updated_at", "updated_at TEXT")
+
+        deal_columns = _column_names(conn, "deals")
+        _add_column_if_missing(conn, "deals", deal_columns, "open_time", "open_time INTEGER NOT NULL DEFAULT 0")
+        conn.execute("UPDATE deals SET open_time = deal_time WHERE open_time = 0 OR open_time IS NULL")
+        _add_column_if_missing(conn, "deals", deal_columns, "server_gmt_off", "server_gmt_off INTEGER NOT NULL DEFAULT 0")
+        conn.execute("UPDATE deals SET server_gmt_off = 0")
+
         conn.execute("CREATE INDEX IF NOT EXISTS idx_accounts_last_sync_time ON accounts(last_sync_time)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_deals_account_open_time ON deals(account_login, open_time)")
 
 
 def get_db(request: Request) -> sqlite3.Connection:

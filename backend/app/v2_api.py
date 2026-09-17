@@ -8,35 +8,35 @@ import time
 from collections import defaultdict, deque
 from threading import Lock
 
-from fastapi import APIRouter, Depends, Header
-from pydantic import ValidationError
+from fastapi import APIRouter, Depends, Header, Request
 
 from .config import get_settings
+from .crypto import decrypt_sync_key
 from .db import get_db
 from .v2_models import (
+    AccountRequest,
     ApiError,
-    HeartbeatRequest,
     HeartbeatResponse,
     IngestDealsRequest,
     IngestDealsResponse,
+    IngestSnapshotsRequest,
+    IngestSnapshotsResponse,
     IngestSymbolsRequest,
     IngestSymbolsResponse,
-    LastSyncTimeRequest,
     LastSyncTimeResponse,
-    SnapshotRequest,
-    SnapshotResponse,
+    UpdateLastSyncTimeRequest,
+    UpdateLastSyncTimeResponse,
 )
 
-router = APIRouter(prefix="/api/v1", tags=["v2-sync"])
+router = APIRouter(prefix="/api/v1", tags=["v2.1-sync"])
 settings = get_settings()
 
-ENTRY_MAP = {"IN": 0, "OUT": 1, "INOUT": 2}
-TYPE_MAP = {"BUY": 0, "SELL": 1}
 RATE_LIMITS = {
     "last_sync_time": 60,
     "deals": 30,
+    "update_cursor": 60,
     "symbols": 10,
-    "snapshot": 120,  # 120/hour is implemented as 120/minute in this single-process dev build.
+    "snapshots": 120,
     "heartbeat": 12,
 }
 _rate_buckets: dict[str, deque[float]] = defaultdict(deque)
@@ -65,41 +65,81 @@ def check_rate_limit(scope: str, identity: str, limit: int, window_seconds: int 
         bucket.append(now)
 
 
-def authenticate_v2(mt5_login: int, authorization: str | None, db: sqlite3.Connection) -> sqlite3.Row:
+def _verify_hmac(account: sqlite3.Row, token: str, raw_body: bytes, x_timestamp: str | None, x_signature: str | None) -> None:
+    encrypted_key = account["key_encrypted"] if "key_encrypted" in account.keys() else None
+    recovered = decrypt_sync_key(encrypted_key, settings)
+
+    # Keys generated before HMAC support only have an irreversible hash. They remain
+    # Bearer-compatible until rotation; all newly created keys require HMAC.
+    if not recovered:
+        if encrypted_key:
+            raise ApiError(
+                code="INTERNAL_ERROR",
+                message="Sync key could not be decrypted; check TRADESYNC_SYNC_KEY_ENCRYPTION_SECRET or rotate the key",
+                status_code=500,
+            )
+        return
+
+    if not hmac.compare_digest(recovered, token):
+        raise ApiError(code="INVALID_SECRET_KEY", message="The provided secret key is invalid", status_code=401)
+    if not x_timestamp:
+        raise ApiError(code="TIMESTAMP_EXPIRED", message="X-Timestamp header is required", status_code=401)
+    if not x_signature:
+        raise ApiError(code="SIGNATURE_MISMATCH", message="X-Signature header is required", status_code=401)
+
+    try:
+        timestamp = int(x_timestamp)
+    except ValueError:
+        raise ApiError(code="TIMESTAMP_EXPIRED", message="X-Timestamp must be Unix UTC seconds", status_code=401) from None
+
+    now = int(time.time())
+    if abs(now - timestamp) > 300:
+        raise ApiError(code="TIMESTAMP_EXPIRED", message="Request timestamp is outside the allowed 300 second window", status_code=401)
+
+    expected = hmac.new(
+        token.encode("utf-8"),
+        raw_body + str(timestamp).encode("ascii"),
+        hashlib.sha256,
+    ).hexdigest()
+    if not hmac.compare_digest(expected, x_signature.strip().lower()):
+        raise ApiError(code="SIGNATURE_MISMATCH", message="Request signature does not match", status_code=401)
+
+
+async def authenticate_v2(
+    request: Request,
+    mt5_login: int,
+    authorization: str | None,
+    x_timestamp: str | None,
+    x_signature: str | None,
+    db: sqlite3.Connection,
+) -> sqlite3.Row:
     if not authorization:
-        raise ApiError(
-            code="MISSING_SECRET_KEY",
-            message="Authorization header is required",
-            status_code=401,
-        )
+        raise ApiError(code="MISSING_SECRET_KEY", message="Authorization header is required", status_code=401)
     if not authorization.startswith("Bearer "):
-        raise ApiError(
-            code="INVALID_AUTH_FORMAT",
-            message="Authorization must be 'Bearer <token>'",
-            status_code=401,
-        )
+        raise ApiError(code="INVALID_AUTH_FORMAT", message="Authorization must be 'Bearer <token>'", status_code=401)
 
     token = authorization[7:].strip()
+    raw_body = await request.body()
 
     if token.startswith(("sk_live_", "sk_test_")):
-        remainder = token.split("_", 2)[2]
-        key_prefix = remainder[:12]
+        parts = token.split("_", 2)
+        if len(parts) != 3 or len(parts[2]) < 32:
+            raise ApiError(code="INVALID_SECRET_KEY", message="The provided secret key is invalid", status_code=401)
+        key_prefix = parts[2][:12]
         account = db.execute(
             "SELECT * FROM accounts WHERE key_prefix = ? AND key_revoked = 0",
             (key_prefix,),
         ).fetchone()
         if account is None or not hmac.compare_digest(account["key_hash"], hash_secret(token)):
-            raise ApiError(
-                code="INVALID_SECRET_KEY",
-                message="The provided secret key is invalid",
-                status_code=401,
-            )
+            raise ApiError(code="INVALID_SECRET_KEY", message="The provided secret key is invalid", status_code=401)
         if int(account["mt5_login"]) != int(mt5_login):
-            raise ApiError(
-                code="ACCOUNT_FORBIDDEN",
-                message="The secret key cannot access this MT5 login",
-                status_code=403,
-            )
+            raise ApiError(code="ACCOUNT_KEY_MISMATCH", message="The secret key cannot access this MT5 login", status_code=403)
+        _verify_hmac(account, token, raw_body, x_timestamp, x_signature)
+        db.execute(
+            "UPDATE accounts SET key_last_used_at=strftime('%Y-%m-%dT%H:%M:%fZ', 'now') WHERE id = ?",
+            (account["id"],),
+        )
+        db.commit()
         return account
 
     if token.startswith("ts."):
@@ -114,7 +154,7 @@ def authenticate_v2(mt5_login: int, authorization: str | None, db: sqlite3.Conne
         if account is None or not hmac.compare_digest(account["key_hash"], hash_secret(secret)):
             raise ApiError(code="INVALID_SECRET_KEY", message="Invalid secret key", status_code=401)
         if int(account["mt5_login"]) != int(mt5_login):
-            raise ApiError(code="ACCOUNT_FORBIDDEN", message="Account mismatch", status_code=403)
+            raise ApiError(code="ACCOUNT_KEY_MISMATCH", message="Account mismatch", status_code=403)
         return account
 
     if hmac.compare_digest(token, settings.sync_key):
@@ -126,48 +166,56 @@ def authenticate_v2(mt5_login: int, authorization: str | None, db: sqlite3.Conne
     raise ApiError(code="INVALID_SECRET_KEY", message="The provided secret key is invalid", status_code=401)
 
 
-def get_bound_account(payload, authorization: str | None, db: sqlite3.Connection, scope: str) -> sqlite3.Row:
-    account = authenticate_v2(payload.mt5_login, authorization, db)
-    check_rate_limit(scope, str(account["id"]), RATE_LIMITS[scope])
+async def get_bound_account(
+    request: Request,
+    payload,
+    authorization: str | None,
+    x_timestamp: str | None,
+    x_signature: str | None,
+    db: sqlite3.Connection,
+    scope: str,
+    window_seconds: int = 60,
+) -> sqlite3.Row:
+    account = await authenticate_v2(request, payload.mt5_login, authorization, x_timestamp, x_signature, db)
+    check_rate_limit(scope, str(account["id"]), RATE_LIMITS[scope], window_seconds)
     return account
 
-def validate_deal_request(request: IngestDealsRequest) -> None:
-    tickets = [deal.deal_ticket for deal in request.deals]
+
+def ensure_unique_tickets(payload: IngestDealsRequest) -> None:
+    tickets = [deal.ticket for deal in payload.deals]
     if len(tickets) != len(set(tickets)):
         raise ApiError(
             code="DUPLICATE_DEAL_TICKET_IN_REQUEST",
-            message="deal_ticket must be unique within a request",
+            message="ticket must be unique within a request",
             status_code=400,
-        )
-    latest = max(deal.deal_time for deal in request.deals)
-    if request.last_deal_time != latest:
-        raise ApiError(
-            code="INVALID_LAST_DEAL_TIME",
-            message="last_deal_time must equal the latest deal_time in the batch",
-            status_code=400,
-            details={"provided": request.last_deal_time, "expected": latest},
         )
 
 
 @router.post("/sync/last_sync_time", response_model=LastSyncTimeResponse)
-def get_last_sync_time(
-    payload: LastSyncTimeRequest,
+async def get_last_sync_time(
+    payload: AccountRequest,
+    request: Request,
     authorization: str | None = Header(default=None),
+    x_timestamp: str | None = Header(default=None),
+    x_signature: str | None = Header(default=None),
     db: sqlite3.Connection = Depends(get_db),
 ) -> LastSyncTimeResponse:
-    account = authenticate_v2(payload.mt5_login, authorization, db)
+    account = await authenticate_v2(request, payload.mt5_login, authorization, x_timestamp, x_signature, db)
     check_rate_limit("last_sync_time", str(account["id"]), RATE_LIMITS["last_sync_time"])
     return LastSyncTimeResponse(last_sync_time=int(account["last_sync_time"] or 0))
 
 
 @router.post("/ingest/deals", response_model=IngestDealsResponse)
-def ingest_deals_v2(
+async def ingest_deals_v21(
     payload: IngestDealsRequest,
+    request: Request,
     authorization: str | None = Header(default=None),
+    x_timestamp: str | None = Header(default=None),
+    x_signature: str | None = Header(default=None),
     db: sqlite3.Connection = Depends(get_db),
 ) -> IngestDealsResponse:
-    account = get_bound_account(payload, authorization, db, "deals")
-    validate_deal_request(payload)
+    account = await get_bound_account(request, payload, authorization, x_timestamp, x_signature, db, "deals")
+    ensure_unique_tickets(payload)
 
     inserted = 0
     duplicates = 0
@@ -175,81 +223,110 @@ def ingest_deals_v2(
         db.execute("BEGIN IMMEDIATE")
         for deal in payload.deals:
             raw = json.dumps(deal.model_dump(), ensure_ascii=False, separators=(",", ":"), sort_keys=True)
-            try:
-                db.execute(
-                    """
-                    INSERT INTO deals (
-                        account_login, ticket, position_id, order_id, symbol,
-                        entry, type, volume, price, sl_price, tp_price,
-                        profit, swap, commission, magic, comment,
-                        deal_time, server_gmt_off, raw_json
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    """,
-                    (
-                        payload.mt5_login,
-                        deal.deal_ticket,
-                        deal.position_id,
-                        deal.order_ticket,
-                        deal.symbol,
-                        ENTRY_MAP[deal.entry_type],
-                        TYPE_MAP[deal.deal_type],
-                        deal.volume,
-                        deal.price,
-                        deal.sl,
-                        deal.tp,
-                        deal.profit,
-                        deal.swap,
-                        deal.commission,
-                        deal.magic,
-                        deal.comment or "",
-                        deal.deal_time,
-                        payload.server_gmt_off,
-                        raw,
-                    ),
-                )
+            cursor = db.execute(
+                """
+                INSERT INTO deals (
+                    account_login, ticket, position_id, order_id, symbol,
+                    entry, type, volume, price, sl_price, tp_price,
+                    profit, swap, commission, magic, comment,
+                    open_time, deal_time, server_gmt_off, raw_json
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(account_login, ticket) DO NOTHING
+                """,
+                (
+                    payload.mt5_login,
+                    deal.ticket,
+                    deal.position_id,
+                    deal.order_id,
+                    deal.symbol,
+                    deal.entry,
+                    deal.type,
+                    deal.volume,
+                    deal.price,
+                    deal.sl_price,
+                    deal.tp_price,
+                    deal.profit,
+                    deal.swap,
+                    deal.commission,
+                    deal.magic,
+                    deal.comment,
+                    deal.open_time,
+                    deal.deal_time,
+                    0,
+                    raw,
+                ),
+            )
+            if cursor.rowcount == 1:
                 inserted += 1
-            except sqlite3.IntegrityError:
+            else:
                 duplicates += 1
-
-        db.execute(
-            """
-            UPDATE accounts
-            SET last_sync_time = MAX(COALESCE(last_sync_time, 0), ?),
-                server_gmt_off = COALESCE(?, server_gmt_off)
-            WHERE id = ?
-            """,
-            (payload.last_deal_time, payload.server_gmt_off, account["id"]),
-        )
+        # v2.1 contract: persisting deals and advancing the cursor are separate phases.
         db.commit()
     except Exception:
         db.rollback()
         raise
 
-    updated = db.execute(
-        "SELECT last_sync_time FROM accounts WHERE id = ?",
-        (account["id"],),
-    ).fetchone()["last_sync_time"]
-    return IngestDealsResponse(
-        accepted=len(payload.deals),
-        inserted=inserted,
-        duplicates=duplicates,
-        last_sync_time_updated=int(updated or payload.last_deal_time),
+    return IngestDealsResponse(accepted=len(payload.deals), inserted=inserted, duplicates=duplicates)
+
+
+@router.post("/sync/update_last_sync_time", response_model=UpdateLastSyncTimeResponse)
+async def update_last_sync_time(
+    payload: UpdateLastSyncTimeRequest,
+    request: Request,
+    authorization: str | None = Header(default=None),
+    x_timestamp: str | None = Header(default=None),
+    x_signature: str | None = Header(default=None),
+    db: sqlite3.Connection = Depends(get_db),
+) -> UpdateLastSyncTimeResponse:
+    account = await authenticate_v2(request, payload.mt5_login, authorization, x_timestamp, x_signature, db)
+    check_rate_limit("update_cursor", str(account["id"]), RATE_LIMITS["update_cursor"])
+
+    now = int(time.time())
+    if payload.last_sync_time > now + 300:
+        raise ApiError(code="INVALID_REQUEST", message="last_sync_time is too far in the future", status_code=400)
+
+    current = int(account["last_sync_time"] or 0)
+    if payload.last_sync_time <= current:
+        return UpdateLastSyncTimeResponse(last_sync_time=current, updated=False)
+
+    exists = db.execute(
+        "SELECT 1 FROM deals WHERE account_login = ? AND open_time = ? LIMIT 1",
+        (payload.mt5_login, payload.last_sync_time),
+    ).fetchone()
+    if exists is None:
+        raise ApiError(
+            code="CURSOR_AHEAD_OF_DATA",
+            message="Cannot advance the cursor before a received deal has this open_time",
+            status_code=409,
+            details={"last_sync_time": payload.last_sync_time},
+        )
+
+    db.execute(
+        """
+        UPDATE accounts
+        SET last_sync_time = MAX(COALESCE(last_sync_time, 0), ?),
+            updated_at=strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
+        WHERE id = ?
+        """,
+        (payload.last_sync_time, account["id"]),
     )
+    db.commit()
+    return UpdateLastSyncTimeResponse(last_sync_time=payload.last_sync_time, updated=True)
+
 
 @router.post("/ingest/symbols", response_model=IngestSymbolsResponse)
-def ingest_symbols_v2(
+async def ingest_symbols_v21(
     payload: IngestSymbolsRequest,
+    request: Request,
     authorization: str | None = Header(default=None),
+    x_timestamp: str | None = Header(default=None),
+    x_signature: str | None = Header(default=None),
     db: sqlite3.Connection = Depends(get_db),
 ) -> IngestSymbolsResponse:
-    account = get_bound_account(payload, authorization, db, "symbols")
-    names = [item.symbol for item in payload.symbols]
+    account = await get_bound_account(request, payload, authorization, x_timestamp, x_signature, db, "symbols")
+    names = [item.name for item in payload.symbols]
     if len(names) != len(set(names)):
-        raise ApiError(
-            code="DUPLICATE_SYMBOL_IN_REQUEST",
-            message="symbol must be unique within a request",
-            status_code=400,
-        )
+        raise ApiError(code="DUPLICATE_SYMBOL_IN_REQUEST", message="name must be unique within a request", status_code=400)
 
     try:
         db.execute("BEGIN IMMEDIATE")
@@ -267,75 +344,68 @@ def ingest_symbols_v2(
                     contract_size=excluded.contract_size,
                     tick_value=excluded.tick_value,
                     tick_size=excluded.tick_size,
-                    currency_base=excluded.currency_base,
-                    currency_profit=excluded.currency_profit,
                     raw_json=excluded.raw_json,
                     updated_at=strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
                 """,
-                (
-                    payload.mt5_login,
-                    item.symbol,
-                    item.digits,
-                    item.point,
-                    item.contract_size,
-                    item.tick_value,
-                    item.tick_size,
-                    item.currency_base,
-                    item.currency_profit,
-                    raw,
-                ),
+                (payload.mt5_login, item.name, item.digits, item.point, item.contract_size,
+                 item.tick_value, item.point, "", "", raw),
             )
         db.commit()
     except Exception:
         db.rollback()
         raise
+    return IngestSymbolsResponse(accepted=len(payload.symbols))
 
-    return IngestSymbolsResponse(accepted=len(payload.symbols), upserted=len(payload.symbols))
 
-
-@router.post("/ingest/snapshot", response_model=SnapshotResponse)
-def ingest_snapshot_v2(
-    payload: SnapshotRequest,
+@router.post("/ingest/snapshots", response_model=IngestSnapshotsResponse)
+async def ingest_snapshots_v21(
+    payload: IngestSnapshotsRequest,
+    request: Request,
     authorization: str | None = Header(default=None),
+    x_timestamp: str | None = Header(default=None),
+    x_signature: str | None = Header(default=None),
     db: sqlite3.Connection = Depends(get_db),
-) -> SnapshotResponse:
-    account = authenticate_v2(payload.mt5_login, authorization, db)
-    check_rate_limit("snapshot", str(account["id"]), RATE_LIMITS["snapshot"], 3600)
-    raw = json.dumps(payload.model_dump(), ensure_ascii=False, separators=(",", ":"), sort_keys=True)
-    db.execute(
-        """
-        INSERT OR IGNORE INTO snapshots (
-            account_login, timestamp, balance, equity, margin,
-            free_margin, margin_level, raw_json
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        """,
-        (
-            payload.mt5_login,
-            payload.timestamp,
-            payload.balance,
-            payload.equity,
-            payload.margin,
-            payload.free_margin,
-            payload.margin_level,
-            raw,
-        ),
+) -> IngestSnapshotsResponse:
+    account = await get_bound_account(
+        request, payload, authorization, x_timestamp, x_signature, db, "snapshots", window_seconds=3600
     )
-    db.commit()
-    return SnapshotResponse(accepted=True)
+    try:
+        db.execute("BEGIN IMMEDIATE")
+        for item in payload.snapshots:
+            raw = json.dumps(item.model_dump(), ensure_ascii=False, separators=(",", ":"), sort_keys=True)
+            db.execute(
+                """
+                INSERT OR IGNORE INTO snapshots (
+                    account_login, timestamp, balance, equity, margin,
+                    free_margin, margin_level, raw_json
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (payload.mt5_login, item.snapshot_time, item.balance, item.equity,
+                 item.margin, item.free_margin, 0, raw),
+            )
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
+    return IngestSnapshotsResponse(accepted=len(payload.snapshots))
 
 
-@router.post("/sync/heartbeat", response_model=HeartbeatResponse)
-def heartbeat_v2(
-    payload: HeartbeatRequest,
+@router.post("/ingest/heartbeat", response_model=HeartbeatResponse)
+async def heartbeat_v21(
+    payload: AccountRequest,
+    request: Request,
     authorization: str | None = Header(default=None),
+    x_timestamp: str | None = Header(default=None),
+    x_signature: str | None = Header(default=None),
     db: sqlite3.Connection = Depends(get_db),
 ) -> HeartbeatResponse:
-    account = authenticate_v2(payload.mt5_login, authorization, db)
+    account = await authenticate_v2(request, payload.mt5_login, authorization, x_timestamp, x_signature, db)
     check_rate_limit("heartbeat", str(account["id"]), RATE_LIMITS["heartbeat"], 3600)
-    raw = json.dumps(payload.model_dump(), ensure_ascii=False, separators=(",", ":"), sort_keys=True)
+    server_time = int(time.time())
+    raw = json.dumps({"mt5_login": payload.mt5_login, "server_time": server_time, "version": "2.1"})
     db.execute(
         "INSERT INTO heartbeat_history (account_login, timestamp, version) VALUES (?, ?, ?)",
-        (payload.mt5_login, payload.timestamp, payload.version),
+        (payload.mt5_login, server_time, "2.1"),
     )
     db.execute(
         """
@@ -348,11 +418,11 @@ def heartbeat_v2(
             payload=excluded.payload,
             last_seen_at=strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
         """,
-        (payload.mt5_login, None, None, None, None, payload.version, raw),
+        (payload.mt5_login, 0, None, None, None, "2.1", raw),
     )
     db.execute(
         "UPDATE accounts SET last_seen_at=strftime('%Y-%m-%dT%H:%M:%fZ', 'now') WHERE id = ?",
         (account["id"],),
     )
     db.commit()
-    return HeartbeatResponse(received=True)
+    return HeartbeatResponse(ok=True, server_time=server_time)

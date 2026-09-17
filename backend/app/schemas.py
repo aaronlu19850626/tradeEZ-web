@@ -94,6 +94,9 @@ class AccountOut(BaseModel):
     account_currency: str | None = None
     server_gmt_off: int | None = None
     key_prefix: str
+    key_environment: str = "live"
+    key_created_at: str | None = None
+    key_last_used_at: str | None = None
     last_seen_at: str | None = None
     created_at: str
     last_sync_time: int = 0
@@ -196,6 +199,7 @@ class DealOut(BaseModel):
     commission: float
     magic: int
     comment: str | None
+    open_time: int = 0
     deal_time: int
     server_gmt_off: int | None
     received_at: str

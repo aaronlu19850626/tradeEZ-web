@@ -12,6 +12,8 @@ class Settings(BaseSettings):
 
     # Email verification-code login
     auth_secret: str = "dev-auth-secret-change-me"
+    # Used to encrypt the recoverable sync secret required for HMAC verification.
+    sync_key_encryption_secret: str = ""
     access_token_ttl_hours: int = 24 * 7
     email_provider: str = "console"  # console | smtp
     code_ttl_seconds: int = 600
