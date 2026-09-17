@@ -603,7 +603,9 @@ void SendHeartbeatDue()
    if(g_lastHeartbeatUtc != 0 && nowUtc - g_lastHeartbeatUtc < interval)
       return;
 
-   string body = StringFormat("{\"mt5_login\":%I64d}", GetLogin());
+   string body = StringFormat(
+      "{\"mt5_login\":%I64d,\"server_gmt_offset\":%I64d,\"server_timezone_name\":\"%s\"}",
+      GetLogin(), g_gmtOffset, JsonString(FormatTimezoneName(g_gmtOffset)));
    string response = "";
    if(!PostJson("/api/v1/ingest/heartbeat", body, response))
       return;
@@ -733,6 +735,17 @@ string BytesToHex(const uchar &bytes[])
    for(int i = 0; i < ArraySize(bytes); i++)
       result += StringFormat("%02x", bytes[i]);
    return(result);
+}
+
+string FormatTimezoneName(const long offsetSeconds)
+{
+   const long absSeconds = MathAbs(offsetSeconds);
+   const long hours = absSeconds / 3600;
+   const long minutes = (absSeconds % 3600) / 60;
+   const string sign = (offsetSeconds < 0) ? "-" : "+";
+   if(minutes == 0)
+      return(StringFormat("UTC%s%I64d", sign, hours));
+   return(StringFormat("UTC%s%I64d:%02I64d", sign, hours, minutes));
 }
 
 long GetLogin()

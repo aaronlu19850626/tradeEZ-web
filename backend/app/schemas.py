@@ -93,6 +93,7 @@ class AccountOut(BaseModel):
     broker_company: str | None = None
     account_currency: str | None = None
     server_gmt_off: int | None = None
+    server_timezone_name: str | None = None
     key_prefix: str
     key_environment: str = "live"
     key_created_at: str | None = None
@@ -101,6 +102,7 @@ class AccountOut(BaseModel):
     created_at: str
     last_sync_time: int = 0
     deal_count: int = 0
+    synced_order_count: int = 0
     latest_deal_time: int | None = None
     symbol_count: int = 0
     snapshot_count: int = 0
@@ -218,6 +220,9 @@ class PositionOut(BaseModel):
     open_price: float | None
     close_price: float | None
     sl_price: float | None
+    tp_price: float | None
+    swap_total: float
+    commission_total: float
     net_pnl: float
     open_time: int | None
     close_time: int | None
@@ -229,3 +234,24 @@ class PositionOut(BaseModel):
 
 class MessageOut(BaseModel):
     message: str
+
+
+class ApiLogOut(BaseModel):
+    id: int
+    created_at: str
+    user_id: int | None = None
+    account_id: int | None = None
+    mt5_login: int | None = None
+    method: str
+    path: str
+    action: str
+    status_code: int
+    success: bool
+    duration_ms: int
+    item_count: int | None = None
+    last_sync_time: int | None = None
+    request_summary: dict = {}
+    response_summary: dict = {}
+    error_code: str | None = None
+    error_message: str | None = None
+    client_ip: str | None = None

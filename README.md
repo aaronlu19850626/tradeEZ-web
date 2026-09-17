@@ -16,7 +16,8 @@ TradeSync-Web 是 TradeEZ 的 MT5 交易数据同步 Web 服务。当前阶段�
   - 先查 `last_sync_time`，再批量上传成交，全部批次成功后单独推进游标。
   - 使用包含式边界 `open_time >= last_sync_time`，重复成交按 ticket 幂等。
   - 单批最多 1000 条，EA 默认 100 条。
-  - 支持品种规格、复数快照数组和心跳。
+  - 支持品种规格、复数快照数组和携带 MT5 服务器时区的心跳。
+- 独立 API 审计日志模块：只记录接口、账号、结果、数量、游标和耗时，不保存订单明细。
 - SQLite 本地库和网页连接控制台。
 - MetaEditor 编译目标：0 errors / 0 warnings。
 
@@ -52,12 +53,14 @@ docs/      PRD、设计、API 规范和部署文档
 ## 本地快速启动
 
 ```powershell
-cd D:\projects\TradeEZ\EA\TradeSync-Webackend
+cd D:\projects\TradeEZ\EA\TradeSync-Web\backend
 py -m venv venv
-.env\Scripts\python.exe -m pip install -r requirements.txt
+.\venv\Scripts\python.exe -m pip install -r requirements.txt
 copy .env.example .env
-.env\Scripts\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
+.\venv\Scripts\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
 ```
+
+最近订单列表显示订单号、止损、止盈、库存费、佣金，并把持仓时间精确到秒；“有效订单”口径为已同步的不同 `position_id` 数量。
 
 控制台：
 
@@ -71,7 +74,7 @@ http://127.0.0.1:8000/dashboard
 
 ```powershell
 cd D:\projects\TradeEZ\EA\TradeSync-Web
-.ackendenv\Scripts\python.exe .ackend\scripts2_smoke_test.py
+.\backend\venv\Scripts\python.exe .\backend\scripts\v2_smoke_test.py
 ```
 
 该测试使用临时 SQLite 数据库，覆盖 HMAC 成功/失败、防重放时间窗、403 账号不匹配、成交幂等、同秒边界、两阶段提交、409 游标保护、1000/1001 批次限制、品种、快照和心跳。

@@ -97,9 +97,11 @@ signature = hmac.new(secret_key.encode("utf-8"), message, hashlib.sha256).hexdig
 | `open_time` | Unix UTC 秒 | 该 position/order 的首次建仓时间 |
 | `deal_time` | Unix UTC 秒 | 当前成交发生时间 |
 | `snapshot_time` | Unix UTC 秒 | 账户快照采集时间 |
-| `server_gmt_off` | 固定为 `0` | v2.1 数据已规范化为 UTC，仅保留兼容字段 |
+| `server_gmt_off` | 固定为 `0` | 成交/快照数据已规范化为 UTC，仅保留兼容字段 |
+| `server_gmt_offset` | 秒 | 仅心跳元数据，用于控制台显示 MT5 服务器时区，不参与任何时间转换 |
+| `server_timezone_name` | string | 仅心跳元数据，例如 `UTC+3` |
 
-禁止服务器再次根据 `server_gmt_off` 转换 v2.1 时间字段。
+禁止服务器根据成交中的 `server_gmt_off` 或心跳时区元数据再次转换 v2.1 时间字段。
 
 ### 2.5 成功与错误
 
@@ -362,9 +364,13 @@ RETURNING last_sync_time;
 
 ```json
 {
-  "mt5_login": 88973405
+  "mt5_login": 88973405,
+  "server_gmt_offset": 10800,
+  "server_timezone_name": "UTC+3"
 }
 ```
+
+为兼容旧 EA，心跳中的 `server_gmt_offset` 和 `server_timezone_name` 可省略；新 EA 必须上报，供 Web 控制台全局显示 MT5 服务器时区。这两个字段只作展示元数据，不改变成交和快照使用 Unix UTC 秒的规则。
 
 成功响应：
 

@@ -11,15 +11,18 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import Depends, FastAPI, HTTPException, Query, status
+from starlette.responses import Response as HttpResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
+from .api_logs import ApiLogMiddleware
 from .config import get_settings
 from .crypto import encrypt_sync_key
 from .db import get_db, init_db
 from .emailer import send_verification_email
 from .schemas import (
+    ApiLogOut,
     AccountCreateIn,
     AccountKeyOut,
     AccountOut,
@@ -83,6 +86,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.add_middleware(ApiLogMiddleware)
+
 
 app.include_router(v2_router)
 
@@ -110,6 +115,10 @@ async def validation_error_handler(request, exc: RequestValidationError):
             }
         },
     )
+
+
+
+
 
 
 @app.get("/health")
@@ -244,7 +253,21 @@ def generate_sync_key(db: sqlite3.Connection) -> tuple[str, str, str, str, str]:
 
 def account_to_out(row: sqlite3.Row, db: sqlite3.Connection) -> AccountOut:
     stats = db.execute(
-        "SELECT COUNT(*) AS deal_count, MAX(deal_time) AS latest_deal_time FROM deals WHERE account_login = ?",
+        """
+        SELECT
+            COUNT(*) AS deal_count,
+            COUNT(DISTINCT CASE
+                WHEN position_id > 0
+                 AND TRIM(COALESCE(symbol, '')) <> ''
+                 AND volume > 0
+                 AND price > 0
+                 AND entry IN (0, 2)
+                THEN position_id
+            END) AS synced_order_count,
+            MAX(deal_time) AS latest_deal_time
+        FROM deals
+        WHERE account_login = ?
+        """,
         (row["mt5_login"],),
     ).fetchone()
     symbol_stats = db.execute(
@@ -263,6 +286,7 @@ def account_to_out(row: sqlite3.Row, db: sqlite3.Connection) -> AccountOut:
     ).fetchone()
     data = dict(row)
     data["deal_count"] = int(stats["deal_count"] or 0)
+    data["synced_order_count"] = int(stats["synced_order_count"] or 0)
     data["latest_deal_time"] = stats["latest_deal_time"]
     data["symbol_count"] = int(symbol_stats["symbol_count"] or 0)
     data["snapshot_count"] = int(snapshot_stats["snapshot_count"] or 0)
@@ -386,6 +410,49 @@ def my_account_positions(
 ) -> list[PositionOut]:
     account = get_owned_account(account_id, user, db)
     return pair_positions(db, int(account["mt5_login"]), include_closed=include_closed)
+
+
+
+@app.get("/api/v1/my/api-logs", response_model=list[ApiLogOut])
+def my_api_logs(
+    limit: int = Query(100, ge=1, le=500),
+    mt5_login: int | None = Query(default=None),
+    success: bool | None = Query(default=None),
+    db: sqlite3.Connection = Depends(get_db),
+    user: sqlite3.Row = Depends(get_current_user),
+) -> list[ApiLogOut]:
+    where = [
+        "(l.user_id = ? OR l.account_id IN (SELECT id FROM accounts WHERE user_id = ?) OR l.mt5_login IN (SELECT mt5_login FROM accounts WHERE user_id = ?))"
+    ]
+    params: list[object] = [user["id"], user["id"], user["id"]]
+    if mt5_login is not None:
+        where.append("l.mt5_login = ?")
+        params.append(mt5_login)
+    if success is not None:
+        where.append("l.success = ?")
+        params.append(1 if success else 0)
+    params.append(limit)
+
+    rows = db.execute(
+        f"""
+        SELECT l.*
+        FROM api_logs l
+        WHERE {' AND '.join(where)}
+        ORDER BY l.created_at DESC, l.id DESC
+        LIMIT ?
+        """,
+        params,
+    ).fetchall()
+
+    result: list[ApiLogOut] = []
+    for row in rows:
+        item = dict(row)
+        item["success"] = bool(item.get("success"))
+        item["request_summary"] = json.loads(item.get("request_summary") or "{}")
+        item["response_summary"] = json.loads(item.get("response_summary") or "{}")
+        result.append(ApiLogOut.model_validate(item))
+    return result
+
 
 def authenticate_ingest(
     credentials: HTTPAuthorizationCredentials | None,
@@ -565,8 +632,9 @@ def pair_positions(db: sqlite3.Connection, account_login: int, include_closed: b
     positions: list[PositionOut] = []
     for position_id, deals in grouped.items():
         volume_in = volume_out = open_value = close_value = net_pnl = 0.0
+        swap_total = commission_total = 0.0
         open_time = close_time = None
-        sl_price = None
+        sl_price = tp_price = None
         magic = None
         comment = None
         direction = None
@@ -575,10 +643,13 @@ def pair_positions(db: sqlite3.Connection, account_login: int, include_closed: b
             volume = float(deal["volume"])
             price = float(deal["price"])
             entry = int(deal["entry"])
+            swap_total += float(deal["swap"])
+            commission_total += float(deal["commission"])
             if entry in (0, 2):
                 if volume_in == 0:
                     open_time = int(deal["open_time"] or deal["deal_time"])
                     sl_price = deal["sl_price"]
+                    tp_price = deal["tp_price"]
                     magic = int(deal["magic"])
                     comment = deal["comment"]
                     direction = "buy" if int(deal["type"]) == 0 else "sell"
@@ -590,9 +661,13 @@ def pair_positions(db: sqlite3.Connection, account_login: int, include_closed: b
                 net_pnl += float(deal["profit"]) + float(deal["swap"]) + float(deal["commission"])
                 close_time = int(deal["deal_time"])
 
-        open_price = open_value / volume_in if volume_in else None
+        # A close-only record can arrive during limited history sync, but it is not
+        # a valid paired order until its opening-side deal has been synchronized.
+        if volume_in <= 0:
+            continue
+        open_price = open_value / volume_in
         close_price = close_value / volume_out if volume_out else None
-        is_closed = volume_in > 0 and volume_out + 1e-9 >= volume_in
+        is_closed = volume_out + 1e-9 >= volume_in
         hold_seconds = close_time - open_time if is_closed and open_time is not None and close_time is not None else None
         positions.append(
             PositionOut(
@@ -606,6 +681,9 @@ def pair_positions(db: sqlite3.Connection, account_login: int, include_closed: b
                 open_price=round(open_price, 8) if open_price is not None else None,
                 close_price=round(close_price, 8) if close_price is not None else None,
                 sl_price=sl_price,
+                tp_price=tp_price,
+                swap_total=round(swap_total, 8),
+                commission_total=round(commission_total, 8),
                 net_pnl=round(net_pnl, 8),
                 open_time=open_time,
                 close_time=close_time if is_closed else None,

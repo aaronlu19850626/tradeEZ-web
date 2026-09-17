@@ -276,6 +276,35 @@ def main() -> None:
             assert_ok("batch upload still does not implicitly move cursor", status == 200 and body.get("last_sync_time") == base_open, body)
 
             snapshot_time = now - 5
+            close_deal = deal(
+                1003,
+                base_open,
+                base_open + 123,
+                position_id=1001,
+                order_id=10_001_003,
+                entry=1,
+                type=1,
+                profit=5.0,
+                swap=-1.0,
+                commission=-2.0,
+                tp_price=2060.0,
+            )
+            status, body = signed_request(api, "/ingest/deals", deals_payload([close_deal]))
+            assert_ok("closing deal for position detail tests is inserted", status == 200 and body.get("inserted") == 1, body)
+
+            close_only_deal = deal(
+                1004,
+                base_open,
+                base_open + 50,
+                position_id=999999,
+                order_id=10_001_004,
+                entry=1,
+                type=1,
+                profit=1.0,
+            )
+            status, body = signed_request(api, "/ingest/deals", deals_payload([close_only_deal]))
+            assert_ok("close-only deal is stored without becoming a valid order", status == 200 and body.get("inserted") == 1, body)
+
             symbols_body = {
                 "mt5_login": MT5_LOGIN,
                 "symbols": [{"name": "GOLD#", "digits": 2, "point": 0.01, "tick_value": 1.0, "contract_size": 100.0}],
@@ -296,7 +325,12 @@ def main() -> None:
             status, body = signed_request(api, "/ingest/snapshots", snapshots_body)
             assert_ok("v2.1 snapshots array endpoint accepts snapshot", status == 200 and body == {"accepted": 1}, body)
 
-            status, body = signed_request(api, "/ingest/heartbeat", account_body)
+            heartbeat_body = {
+                "mt5_login": MT5_LOGIN,
+                "server_gmt_offset": 10800,
+                "server_timezone_name": "UTC+3",
+            }
+            status, body = signed_request(api, "/ingest/heartbeat", heartbeat_body)
             assert_ok(
                 "v2.1 heartbeat endpoint responds with server time",
                 status == 200 and body.get("ok") is True and abs(int(body.get("server_time", 0)) - now) <= 5,
@@ -326,10 +360,59 @@ def main() -> None:
             assert_ok(
                 "dashboard account stats reflect v2.1 data without temporary handshake fields",
                 status == 200
-                and account["deal_count"] == 1002
+                and account["deal_count"] == 1004
+                and account["synced_order_count"] == 1002
+                and account["server_gmt_off"] == 10800
+                and account["server_timezone_name"] == "UTC+3"
                 and account["symbol_count"] == 1
                 and account["snapshot_count"] == 1
                 and "last_deal_handshake_at" not in account,
+                body,
+            )
+
+            status, body = raw_request(
+                api,
+                "GET",
+                "/my/api-logs?limit=200",
+                headers={"Authorization": f"Bearer {user_token}"},
+            )
+            # The log-query API itself is audited, so fetch once more to observe that row.
+            status, body = raw_request(
+                api,
+                "GET",
+                "/my/api-logs?limit=200",
+                headers={"Authorization": f"Bearer {user_token}"},
+            )
+            actions = {item.get("action") for item in body} if isinstance(body, list) else set()
+            serialized_logs = json.dumps(body, ensure_ascii=False, default=str)
+            deal_logs = [item for item in body] if isinstance(body, list) else []
+            assert_ok(
+                "audit logs are visible in console and contain counts without order details",
+                status == 200
+                and {"ingest_deals", "update_cursor", "heartbeat", "ingest_symbols", "ingest_snapshots", "query_api_logs"} <= actions
+                and any(item.get("item_count") == 1 for item in deal_logs if item.get("action") == "ingest_deals")
+                and "XAUUSD" not in serialized_logs
+                and "TradeEZ-SC" not in serialized_logs,
+                body,
+            )
+
+            status, body = raw_request(
+                api,
+                "GET",
+                "/my/accounts/1/positions",
+                headers={"Authorization": f"Bearer {user_token}"},
+            )
+            close_only_order = next((item for item in body if item.get("position_id") == 999999), None) if isinstance(body, list) else None
+            closed_order = next((item for item in body if item.get("position_id") == 1001), None) if isinstance(body, list) else None
+            assert_ok(
+                "order list includes ticket, stop levels, swap, commission and second-level duration",
+                status == 200
+                and closed_order is not None
+                and close_only_order is None
+                and closed_order.get("tp_price") == 2060.0
+                and closed_order.get("swap_total") == -1.0
+                and closed_order.get("commission_total") == -4.5
+                and closed_order.get("hold_seconds") == 123,
                 body,
             )
 

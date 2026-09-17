@@ -19,7 +19,9 @@
 - 成交上传只入库，不推进 `last_sync_time`。
 - 所有批次成功后，EA 单独调用游标更新接口。
 - 游标只允许单调推进；目标 `open_time` 必须已有服务端接收的成交，否则返回 `409 CURSOR_AHEAD_OF_DATA`。
-- 品种规格、账户快照数组、心跳均使用 v2.1 新路径。
+- 品种规格、账户快照数组、心跳均使用 v2.1 新路径；心跳额外携带 MT5 服务器时区作为展示元数据。
+- 独立 API 审计日志模块 `app/api_logs.py`：记录接口、账号、结果、订单数量、游标和耗时，不保存订单明细、Key、验证码或令牌。
+- 控制台有效订单数量按不同 `position_id` 统计；订单列表显示订单号、止损、止盈、库存费、佣金和秒级持仓时间。
 - SQLite 本地存储，便于局域网联调；生产环境再迁移 PostgreSQL。
 
 ## 目录
@@ -35,9 +37,9 @@ backend/certs/            本地开发证书（不提交）
 ## 1. 初始化
 
 ```powershell
-cd D:\projects\TradeEZ\EA\TradeSync-Webackend
+cd D:\projects\TradeEZ\EA\TradeSync-Web\backend
 py -m venv venv
-.env\Scripts\python.exe -m pip install -r requirements.txt
+.\venv\Scripts\python.exe -m pip install -r requirements.txt
 copy .env.example .env
 ```
 
@@ -53,7 +55,7 @@ TRADESYNC_SYNC_KEY_ENCRYPTION_SECRET=<another-long-random-secret>
 ## 2. 本地 HTTP 启动
 
 ```powershell
-.env\Scripts\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
+.\venv\Scripts\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
 ```
 
 控制台：
@@ -67,7 +69,7 @@ http://127.0.0.1:8000/dashboard
 生成证书（脚本会自动加入本机名和当前首选局域网 IP）：
 
 ```powershell
-.env\Scripts\python.exe -m pip install -r requirements-dev.txt
+.\venv\Scripts\python.exe -m pip install -r requirements-dev.txt
 powershell -ExecutionPolicy Bypass -File .\scripts
 ew-lan-cert.ps1
 ```
@@ -82,7 +84,7 @@ ew-lan-cert.ps1 -IpAddress 192.168.31.116 -ExtraHost JKLCHEN
 首次开放防火墙，需要管理员 PowerShell：
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\scriptsllow-firewall-8443.ps1
+powershell -ExecutionPolicy Bypass -File .\scripts\allow-firewall-8443.ps1
 ```
 
 启动 HTTPS：
@@ -217,6 +219,7 @@ X-Signature: <lowercase-hex-hmac-sha256>
 - `POST /api/v1/accounts/{id}/regenerate-key`
 - `GET  /api/v1/my/accounts/{id}/deals`
 - `GET  /api/v1/my/accounts/{id}/positions`
+- `GET  /api/v1/my/api-logs?limit=100&mt5_login=<login>&success=<true|false>`
 
 旧版探针路径保留在 `/internal/legacy/...`，不作为新 EA 对接路径。
 
@@ -224,7 +227,7 @@ X-Signature: <lowercase-hex-hmac-sha256>
 
 ```powershell
 cd D:\projects\TradeEZ\EA\TradeSync-Web
-.ackendenv\Scripts\python.exe .ackend\scripts2_smoke_test.py
+.\backend\venv\Scripts\python.exe .\backend\scripts\v2_smoke_test.py
 ```
 
 覆盖：

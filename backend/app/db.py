@@ -38,6 +38,7 @@ CREATE TABLE IF NOT EXISTS accounts (
     broker_company TEXT,
     account_currency TEXT,
     server_gmt_off INTEGER,
+    server_timezone_name TEXT,
     key_prefix TEXT NOT NULL UNIQUE,
     key_hash TEXT NOT NULL,
     key_encrypted TEXT,
@@ -122,6 +123,32 @@ CREATE TABLE IF NOT EXISTS heartbeat_history (
 CREATE INDEX IF NOT EXISTS idx_heartbeat_history_account_time
     ON heartbeat_history(account_login, timestamp);
 
+
+CREATE TABLE IF NOT EXISTS api_logs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+    user_id INTEGER,
+    account_id INTEGER,
+    mt5_login INTEGER,
+    method TEXT NOT NULL,
+    path TEXT NOT NULL,
+    action TEXT NOT NULL DEFAULT '',
+    status_code INTEGER NOT NULL,
+    success INTEGER NOT NULL,
+    duration_ms INTEGER NOT NULL DEFAULT 0,
+    item_count INTEGER,
+    last_sync_time INTEGER,
+    request_summary TEXT NOT NULL DEFAULT '{}',
+    response_summary TEXT NOT NULL DEFAULT '{}',
+    error_code TEXT,
+    error_message TEXT,
+    client_ip TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_api_logs_user_time ON api_logs(user_id, created_at DESC, id DESC);
+CREATE INDEX IF NOT EXISTS idx_api_logs_account_time ON api_logs(account_id, created_at DESC, id DESC);
+CREATE INDEX IF NOT EXISTS idx_api_logs_login_time ON api_logs(mt5_login, created_at DESC, id DESC);
+CREATE INDEX IF NOT EXISTS idx_api_logs_created ON api_logs(created_at DESC, id DESC);
+
 CREATE TABLE IF NOT EXISTS heartbeats (
     account_login INTEGER PRIMARY KEY,
     server_gmt_off INTEGER,
@@ -129,6 +156,8 @@ CREATE TABLE IF NOT EXISTS heartbeats (
     broker_company TEXT,
     broker_server TEXT,
     ea_version TEXT,
+    server_gmt_offset INTEGER,
+    server_timezone_name TEXT,
     payload TEXT NOT NULL,
     last_seen_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
 );
@@ -156,6 +185,11 @@ def init_db(db_path: str) -> None:
         _add_column_if_missing(conn, "accounts", account_columns, "key_created_at", "key_created_at TEXT")
         _add_column_if_missing(conn, "accounts", account_columns, "key_last_used_at", "key_last_used_at TEXT")
         _add_column_if_missing(conn, "accounts", account_columns, "updated_at", "updated_at TEXT")
+        _add_column_if_missing(conn, "accounts", account_columns, "server_timezone_name", "server_timezone_name TEXT")
+
+        heartbeat_columns = _column_names(conn, "heartbeats")
+        _add_column_if_missing(conn, "heartbeats", heartbeat_columns, "server_gmt_offset", "server_gmt_offset INTEGER")
+        _add_column_if_missing(conn, "heartbeats", heartbeat_columns, "server_timezone_name", "server_timezone_name TEXT")
 
         deal_columns = _column_names(conn, "deals")
         _add_column_if_missing(conn, "deals", deal_columns, "open_time", "open_time INTEGER NOT NULL DEFAULT 0")

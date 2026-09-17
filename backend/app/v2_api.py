@@ -16,6 +16,7 @@ from .db import get_db
 from .v2_models import (
     AccountRequest,
     ApiError,
+    HeartbeatRequest,
     HeartbeatResponse,
     IngestDealsRequest,
     IngestDealsResponse,
@@ -392,7 +393,7 @@ async def ingest_snapshots_v21(
 
 @router.post("/ingest/heartbeat", response_model=HeartbeatResponse)
 async def heartbeat_v21(
-    payload: AccountRequest,
+    payload: HeartbeatRequest,
     request: Request,
     authorization: str | None = Header(default=None),
     x_timestamp: str | None = Header(default=None),
@@ -402,7 +403,18 @@ async def heartbeat_v21(
     account = await authenticate_v2(request, payload.mt5_login, authorization, x_timestamp, x_signature, db)
     check_rate_limit("heartbeat", str(account["id"]), RATE_LIMITS["heartbeat"], 3600)
     server_time = int(time.time())
-    raw = json.dumps({"mt5_login": payload.mt5_login, "server_time": server_time, "version": "2.1"})
+    timezone_name = payload.server_timezone_name.strip()[:32]
+    raw = json.dumps(
+        {
+            "mt5_login": payload.mt5_login,
+            "server_time": server_time,
+            "version": "2.1",
+            "server_gmt_offset": payload.server_gmt_offset,
+            "server_timezone_name": timezone_name,
+        },
+        ensure_ascii=False,
+        separators=(",", ":"),
+    )
     db.execute(
         "INSERT INTO heartbeat_history (account_login, timestamp, version) VALUES (?, ?, ?)",
         (payload.mt5_login, server_time, "2.1"),
@@ -411,18 +423,28 @@ async def heartbeat_v21(
         """
         INSERT INTO heartbeats (
             account_login, server_gmt_off, account_currency, broker_company,
-            broker_server, ea_version, payload
-        ) VALUES (?, ?, ?, ?, ?, ?, ?)
+            broker_server, ea_version, server_gmt_offset, server_timezone_name, payload
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(account_login) DO UPDATE SET
             ea_version=excluded.ea_version,
+            server_gmt_offset=excluded.server_gmt_offset,
+            server_timezone_name=excluded.server_timezone_name,
             payload=excluded.payload,
             last_seen_at=strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
         """,
-        (payload.mt5_login, 0, None, None, None, "2.1", raw),
+        (payload.mt5_login, 0, None, None, None, "2.1",
+         payload.server_gmt_offset, timezone_name, raw),
     )
     db.execute(
-        "UPDATE accounts SET last_seen_at=strftime('%Y-%m-%dT%H:%M:%fZ', 'now') WHERE id = ?",
-        (account["id"],),
+        """
+        UPDATE accounts SET
+            last_seen_at=strftime('%Y-%m-%dT%H:%M:%fZ', 'now'),
+            server_gmt_off=?,
+            server_timezone_name=?,
+            updated_at=strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
+        WHERE id = ?
+        """,
+        (payload.server_gmt_offset, timezone_name or None, account["id"]),
     )
     db.commit()
     return HeartbeatResponse(ok=True, server_time=server_time)
