@@ -191,6 +191,25 @@ def init_db(db_path: str) -> None:
         _add_column_if_missing(conn, "heartbeats", heartbeat_columns, "server_gmt_offset", "server_gmt_offset INTEGER")
         _add_column_if_missing(conn, "heartbeats", heartbeat_columns, "server_timezone_name", "server_timezone_name TEXT")
 
+        # A zero offset without a timezone name came from a pre-timezone EA heartbeat.
+        # Keep it unknown until a new EA explicitly reports the MT5 server timezone.
+        conn.execute(
+            """
+            UPDATE accounts
+               SET server_gmt_off = NULL
+             WHERE COALESCE(TRIM(server_timezone_name), '') = ''
+               AND server_gmt_off = 0
+            """
+        )
+        conn.execute(
+            """
+            UPDATE heartbeats
+               SET server_gmt_offset = NULL
+             WHERE COALESCE(TRIM(server_timezone_name), '') = ''
+               AND server_gmt_offset = 0
+            """
+        )
+
         deal_columns = _column_names(conn, "deals")
         _add_column_if_missing(conn, "deals", deal_columns, "open_time", "open_time INTEGER NOT NULL DEFAULT 0")
         conn.execute("UPDATE deals SET open_time = deal_time WHERE open_time = 0 OR open_time IS NULL")

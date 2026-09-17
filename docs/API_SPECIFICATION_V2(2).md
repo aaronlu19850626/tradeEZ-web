@@ -370,7 +370,7 @@ RETURNING last_sync_time;
 }
 ```
 
-为兼容旧 EA，心跳中的 `server_gmt_offset` 和 `server_timezone_name` 可省略；新 EA 必须上报，供 Web 控制台全局显示 MT5 服务器时区。这两个字段只作展示元数据，不改变成交和快照使用 Unix UTC 秒的规则。
+为兼容旧 EA，心跳中的 `server_gmt_offset` 和 `server_timezone_name` 可省略；省略时服务端必须保持“未知/等待心跳”，不得推断为 UTC+0。新 EA 必须上报，供 Web 控制台全局显示 MT5 服务器时区。这两个字段只作展示元数据，不改变成交和快照使用 Unix UTC 秒的规则。
 
 成功响应：
 

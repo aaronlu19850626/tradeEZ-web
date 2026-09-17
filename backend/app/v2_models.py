@@ -117,8 +117,8 @@ class IngestSnapshotsResponse(BaseModel):
 class HeartbeatRequest(AccountRequest):
     # Display-only MT5 server timezone. v2.1 deal timestamps remain normalized UTC
     # and deals still send server_gmt_off=0.
-    server_gmt_offset: int = Field(default=0, ge=-43200, le=43200)
-    server_timezone_name: str = Field(default="", max_length=32)
+    server_gmt_offset: int | None = Field(default=None, ge=-43200, le=43200)
+    server_timezone_name: str | None = Field(default=None, max_length=32)
 
 
 class HeartbeatResponse(BaseModel):

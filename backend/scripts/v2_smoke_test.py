@@ -36,6 +36,7 @@ from app.security import create_access_token  # noqa: E402
 MT5_LOGIN = 88973405
 OTHER_LOGIN = 88973406
 SYNC_KEY = "sk_live_" + secrets.token_urlsafe(32)
+OTHER_SYNC_KEY = "sk_live_" + ("o" * 40)
 SETTINGS = get_settings()
 
 
@@ -131,7 +132,14 @@ def seed_database(db_path: Path) -> None:
                 id, user_id, mt5_login, key_prefix, key_hash, key_encrypted, key_environment
             ) VALUES (?, ?, ?, ?, ?, ?, 'live')
             """,
-            (2, 1, OTHER_LOGIN, "otherlogin000", "x" * 64, encrypt_sync_key("sk_live_other", SETTINGS)),
+            (
+                2,
+                1,
+                OTHER_LOGIN,
+                OTHER_SYNC_KEY.split("_", 2)[2][:12],
+                hashlib.sha256(OTHER_SYNC_KEY.encode("utf-8")).hexdigest(),
+                encrypt_sync_key(OTHER_SYNC_KEY, SETTINGS),
+            ),
         )
         db.commit()
 
@@ -337,6 +345,14 @@ def main() -> None:
                 body,
             )
 
+            status, body = signed_request(
+                api,
+                "/ingest/heartbeat",
+                {"mt5_login": OTHER_LOGIN},
+                token=OTHER_SYNC_KEY,
+            )
+            assert_ok("legacy heartbeat without timezone fields stays unknown", status == 200, body)
+
             with sqlite3.connect(db_path) as db:
                 row = db.execute(
                     "SELECT open_time, deal_time FROM deals WHERE account_login=? AND ticket=1001",
@@ -346,8 +362,21 @@ def main() -> None:
                     "SELECT timestamp, equity FROM snapshots WHERE account_login=? AND timestamp=?",
                     (MT5_LOGIN, snapshot_time),
                 ).fetchone()
+                legacy_account_tz = db.execute(
+                    "SELECT server_gmt_off, server_timezone_name FROM accounts WHERE mt5_login=?",
+                    (OTHER_LOGIN,),
+                ).fetchone()
+                legacy_heartbeat_tz = db.execute(
+                    "SELECT server_gmt_offset, server_timezone_name FROM heartbeats WHERE account_login=?",
+                    (OTHER_LOGIN,),
+                ).fetchone()
             assert_ok("deal UTC timestamps are stored unchanged", row == (base_open, base_open), row)
             assert_ok("snapshot UTC timestamp is stored unchanged", snap == (snapshot_time, 10125.30), snap)
+            assert_ok(
+                "legacy heartbeat timezone remains unknown",
+                legacy_account_tz == (None, None) and legacy_heartbeat_tz == (None, None),
+                (legacy_account_tz, legacy_heartbeat_tz),
+            )
 
             user_token = create_access_token({"id": 1, "email": "v2-smoke@example.com"}, SETTINGS)
             status, body = raw_request(

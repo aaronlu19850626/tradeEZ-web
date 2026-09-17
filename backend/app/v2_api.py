@@ -403,7 +403,7 @@ async def heartbeat_v21(
     account = await authenticate_v2(request, payload.mt5_login, authorization, x_timestamp, x_signature, db)
     check_rate_limit("heartbeat", str(account["id"]), RATE_LIMITS["heartbeat"], 3600)
     server_time = int(time.time())
-    timezone_name = payload.server_timezone_name.strip()[:32]
+    timezone_name = payload.server_timezone_name.strip()[:32] if payload.server_timezone_name else None
     raw = json.dumps(
         {
             "mt5_login": payload.mt5_login,
@@ -427,8 +427,8 @@ async def heartbeat_v21(
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(account_login) DO UPDATE SET
             ea_version=excluded.ea_version,
-            server_gmt_offset=excluded.server_gmt_offset,
-            server_timezone_name=excluded.server_timezone_name,
+            server_gmt_offset=COALESCE(excluded.server_gmt_offset, heartbeats.server_gmt_offset),
+            server_timezone_name=COALESCE(NULLIF(TRIM(excluded.server_timezone_name), ''), heartbeats.server_timezone_name),
             payload=excluded.payload,
             last_seen_at=strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
         """,
@@ -439,8 +439,8 @@ async def heartbeat_v21(
         """
         UPDATE accounts SET
             last_seen_at=strftime('%Y-%m-%dT%H:%M:%fZ', 'now'),
-            server_gmt_off=?,
-            server_timezone_name=?,
+            server_gmt_off=COALESCE(?, server_gmt_off),
+            server_timezone_name=COALESCE(NULLIF(TRIM(?), ''), server_timezone_name),
             updated_at=strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
         WHERE id = ?
         """,
