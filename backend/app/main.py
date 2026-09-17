@@ -604,14 +604,14 @@ def heartbeat(
             """
             UPDATE accounts SET
                 last_seen_at=strftime('%Y-%m-%dT%H:%M:%fZ', 'now'),
-                server_gmt_off=COALESCE(?, server_gmt_off),
+                server_gmt_off=CASE WHEN ? = 0 THEN NULL ELSE COALESCE(?, server_gmt_off) END,
                 account_currency=COALESCE(?, account_currency),
                 broker_company=COALESCE(?, broker_company),
                 broker_server=COALESCE(?, broker_server)
             WHERE id = ?
             """,
-            (payload.server_gmt_off, payload.account_currency, payload.broker_company,
-             payload.broker_server, account["id"]),
+            (payload.server_gmt_off, payload.server_gmt_off, payload.account_currency,
+             payload.broker_company, payload.broker_server, account["id"]),
         )
     db.commit()
     row = db.execute("SELECT last_seen_at FROM heartbeats WHERE account_login = ?", (payload.account_login,)).fetchone()
@@ -754,4 +754,7 @@ def classify_strategy(magic: int | None, comment: str | None) -> str:
 @app.get("/register", include_in_schema=False)
 @app.get("/login", include_in_schema=False)
 def dashboard_page() -> FileResponse:
-    return FileResponse(DASHBOARD_PATH)
+    return FileResponse(
+        DASHBOARD_PATH,
+        headers={"Cache-Control": "no-store, max-age=0", "Pragma": "no-cache"},
+    )

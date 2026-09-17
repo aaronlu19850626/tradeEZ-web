@@ -2,216 +2,184 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>TradeSync 连接控制台</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>TradeSync 数据控制台</title>
 <style>
-:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;font-family:Arial,"Microsoft YaHei",sans-serif;background:#08111f;color:#e5e7eb}
-button,input,textarea{font:inherit}button{border:0;border-radius:9px;background:#2563eb;color:#fff;padding:10px 14px;cursor:pointer}
-button.secondary{background:#334155}button.danger{background:#b91c1c}button:disabled{opacity:.55;cursor:not-allowed}
-input,textarea{width:100%;padding:10px 11px;border:1px solid #475569;border-radius:9px;background:#0b1220;color:#fff}
-textarea{min-height:92px;resize:vertical;font-family:Consolas,monospace;font-size:12px}.hidden{display:none!important}
-.login-wrap{min-height:100vh;display:grid;place-items:center;padding:20px}.login-card,.card{background:#111827;border:1px solid #263247;border-radius:16px;box-shadow:0 18px 60px rgba(0,0,0,.28)}.card{width:100%;max-width:100%;min-width:0}.grid{align-items:start}.grid>div{min-width:0}
-.login-card{width:100%;max-width:430px;padding:28px}h1{margin:0 0 8px;font-size:24px}h2{margin:0 0 14px;font-size:18px}h3{margin:16px 0 8px;font-size:15px;color:#cbd5e1}
-p{color:#94a3b8;line-height:1.55}label{display:block;margin:14px 0 6px;color:#cbd5e1;font-size:13px}.topbar{min-height:58px;border-bottom:1px solid #263247;background:#0f172a;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 22px;position:sticky;top:0;z-index:2}.topbar>.inline{min-width:0;gap:10px;flex-wrap:wrap}.brand{white-space:nowrap}#globalTz{max-width:min(520px,45vw);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.brand{font-weight:700;color:#fff}.brand span{color:#60a5fa}.container{max-width:1280px;margin:22px auto;padding:0 18px}.grid{display:grid;grid-template-columns:360px 1fr;gap:16px}.card{padding:18px;margin-bottom:16px}.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.message{margin-top:10px;font-size:13px;white-space:pre-wrap}.ok{color:#86efac}.err{color:#fca5a5}.muted{color:#94a3b8}.pill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:4px 10px;font-size:12px;font-weight:700}.dot{width:8px;height:8px;border-radius:50%;background:currentColor}
-.online{background:rgba(34,197,94,.14);color:#86efac}.recent{background:rgba(245,158,11,.16);color:#fcd34d}.offline{background:rgba(148,163,184,.14);color:#cbd5e1}
-.account-btn{width:100%;text-align:left;margin:7px 0;background:#1e293b}.account-btn.active{outline:2px solid #3b82f6;background:#172554}.account-btn span{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.kv{display:grid;grid-template-columns:110px minmax(0,1fr);gap:6px 10px;font-size:13px;margin:8px 0;min-width:0}.kv div:nth-child(odd){color:#94a3b8}.kv div:nth-child(even){min-width:0;overflow-wrap:anywhere}
-code{background:#0b1220;border:1px solid #263247;border-radius:6px;padding:2px 6px;overflow-wrap:anywhere}.table-wrap{width:100%;max-width:100%;max-height:min(560px,62vh);overflow:auto;border:1px solid #263247;border-radius:12px}table{width:100%;min-width:max-content;border-collapse:collapse;font-size:12px}th,td{padding:9px 10px;border-bottom:1px solid #1f2a3d;text-align:left;white-space:nowrap}th{position:sticky;top:0;z-index:1;color:#93c5fd;background:#0f172a}tr:last-child td[colspan]{position:static}
-pre{width:100%;max-width:100%;white-space:pre-wrap;word-break:break-word;background:#0b1220;border:1px solid #263247;border-radius:10px;padding:10px;margin:0 0 10px;max-height:360px;overflow:auto;font-size:12px}.positive{color:#86efac}.negative{color:#fca5a5}.steps li{margin:8px 0;color:#cbd5e1;line-height:1.45}.inline{display:flex;gap:8px;align-items:center}.small{font-size:12px}
-@media(max-width:900px){.grid{grid-template-columns:1fr}.row{grid-template-columns:1fr}}
+:root{color-scheme:dark;--bg:#08111f;--panel:#111827;--panel2:#0f172a;--line:#263247;--line2:#1f2a3d;--text:#e5e7eb;--muted:#94a3b8;--blue:#60a5fa;--primary:#2563eb}
+*{box-sizing:border-box}html,body{min-height:100%;overflow-x:hidden}
+body{margin:0;font-family:Arial,"Microsoft YaHei",sans-serif;background:radial-gradient(circle at top left,#10233f 0,#08111f 34rem);color:var(--text)}
+button,input,textarea,select{font:inherit}
+button{border:0;border-radius:9px;background:var(--primary);color:#fff;padding:10px 14px;cursor:pointer;white-space:nowrap}
+button:hover{filter:brightness(1.08)}button.secondary{background:#334155}button.danger{background:#991b1b}button.ghost{background:#1e293b}button:disabled{opacity:.55;cursor:not-allowed}
+input,textarea,select{width:100%;padding:10px 11px;border:1px solid #475569;border-radius:9px;background:#0b1220;color:#fff}textarea{min-height:150px;resize:vertical;font-family:Consolas,monospace;font-size:12px;line-height:1.55}
+.hidden{display:none!important}.muted{color:var(--muted)}.small{font-size:12px}.positive,.buy{color:#86efac}.negative,.sell{color:#fca5a5}.warn{color:#fcd34d}
+code{background:#0b1220;border:1px solid var(--line);border-radius:6px;padding:2px 6px;overflow-wrap:anywhere}
+pre{margin:0;white-space:pre-wrap;word-break:break-word;background:#0b1220;border:1px solid var(--line);border-radius:10px;padding:12px;max-height:430px;overflow:auto;font-size:12px;line-height:1.55}
+.login-wrap{min-height:100vh;display:grid;place-items:center;padding:20px}.login-card{width:100%;max-width:430px;padding:28px;background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:0 18px 60px rgba(0,0,0,.28)}
+h1,h2,h3{margin-top:0}h1{font-size:24px;margin-bottom:8px}h2{font-size:18px;margin-bottom:14px}h3{font-size:14px;color:#cbd5e1;margin:16px 0 8px}
+p{color:var(--muted);line-height:1.55}label{display:block;margin:14px 0 6px;color:#cbd5e1;font-size:13px}.message{margin-top:10px;font-size:13px;white-space:pre-wrap}.ok{color:#86efac}.err{color:#fca5a5}
+.topbar{min-height:60px;border-bottom:1px solid var(--line);background:rgba(15,23,42,.96);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:space-between;gap:16px;padding:10px 22px;position:sticky;top:0;z-index:30}
+.topbar-group{display:flex;align-items:center;gap:10px;min-width:0}.topbar-left{flex:1 1 auto}.topbar-actions{flex:0 0 auto;display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:nowrap}
+.brand{font-weight:700;color:#fff;white-space:nowrap;font-size:16px}.brand-mark{color:#fff}.brand-sub{color:var(--blue);margin-left:6px;font-weight:600}
+.tz-pill{display:inline-flex;align-items:center;gap:6px;max-width:min(560px,42vw);border-radius:999px;padding:5px 11px;font-size:12px;font-weight:700;background:rgba(96,165,250,.14);color:#bfdbfe;border:1px solid rgba(96,165,250,.22);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.topbar select{width:240px;min-width:180px;padding:8px 10px}.topbar .user{max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.btn-icon{display:none}
+.container{max-width:1480px;margin:22px auto;padding:0 18px 36px}.page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:16px}.page-head h1{margin-bottom:4px}.page-head p{margin:0;max-width:820px}.page-side{flex:0 0 auto}
+.pill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:4px 10px;font-size:12px;font-weight:700}.dot{width:8px;height:8px;border-radius:50%;background:currentColor}.online{background:rgba(34,197,94,.14);color:#86efac}.recent{background:rgba(245,158,11,.16);color:#fcd34d}.offline{background:rgba(148,163,184,.14);color:#cbd5e1}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:0 12px 38px rgba(0,0,0,.18);padding:18px;width:100%;min-width:0}
+.kpi-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-bottom:16px}.kpi{padding:14px 15px;min-height:118px}.kpi .label{color:var(--muted);font-size:12px;margin-bottom:8px}.kpi .value{font-size:clamp(18px,2vw,23px);font-weight:700;line-height:1.25;word-break:break-word;font-variant-numeric:tabular-nums}.kpi .sub{color:var(--muted);font-size:12px;margin-top:7px;line-height:1.35;word-break:break-word}
+@media(min-width:1101px){.kpi-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:4px 0 12px}.tab{background:#1e293b}.tab.active{background:var(--primary);outline:2px solid rgba(96,165,250,.35)}
+.panel{padding:0;overflow:hidden}.panel-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 18px;border-bottom:1px solid var(--line)}.panel-head h2{margin:0}.panel-head p{margin:4px 0 0;font-size:12px}.panel-body{padding:0;min-width:0}
+.table-wrap{width:100%;max-width:100%;max-height:min(68vh,720px);overflow:auto;min-width:0}table{width:100%;min-width:max-content;border-collapse:separate;border-spacing:0;font-size:12px}
+th,td{padding:9px 10px;border-bottom:1px solid var(--line2);text-align:left;white-space:nowrap;vertical-align:middle}th{position:sticky;top:0;z-index:2;color:#93c5fd;background:var(--panel2);font-weight:700}
+th:first-child,td:first-child{position:sticky;left:0;z-index:1;background:var(--panel);box-shadow:inset -1px 0 var(--line)}th:first-child{z-index:3;background:var(--panel2)}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}td.wrap{white-space:normal;min-width:130px;line-height:1.45}tr:last-child td[colspan]{position:static;background:var(--panel)}
+.direction{display:inline-flex;border-radius:999px;padding:2px 8px;font-size:11px;font-weight:700}.direction.buy{background:rgba(34,197,94,.14)}.direction.sell{background:rgba(239,68,68,.14)}.direction.unknown{background:#334155;color:#cbd5e1}
+.filter-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:12px 18px;border-bottom:1px solid var(--line);background:#0d1728}.filter-bar select{width:auto;min-width:118px;padding:8px 10px}.filter-bar input{width:min(300px,100%);padding:8px 10px}.filter-bar button{padding:8px 12px}
+.empty-state{padding:52px 24px;text-align:center}.empty-state h2{margin-bottom:8px}.empty-state p{max-width:560px;margin:0 auto 18px}
+.settings-layout{display:grid;grid-template-columns:1fr;gap:16px;padding:16px}@media(min-width:901px){.settings-layout{grid-template-columns:minmax(0,1.15fr) minmax(280px,.85fr)}}
+#settingsJson{height:430px;max-height:56vh}.diff-list{display:grid;gap:7px;max-height:430px;overflow:auto}.diff-item{background:#0b1220;border:1px solid var(--line);border-radius:9px;padding:8px 10px;font-size:12px;overflow-wrap:anywhere}
+.backdrop{position:fixed;inset:0;background:rgba(2,6,23,.66);z-index:40;opacity:1;transition:opacity .18s ease}.drawer{position:fixed;top:0;right:0;height:100dvh;width:min(560px,94vw);z-index:41;background:var(--panel);border-left:1px solid var(--line);box-shadow:-24px 0 70px rgba(0,0,0,.45);display:flex;flex-direction:column}.backdrop.hidden{opacity:0;pointer-events:none}body.modal-open{overflow:hidden}
+.drawer-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px 22px;border-bottom:1px solid var(--line)}.drawer-head h2{margin:0 0 4px}.drawer-head p{margin:0;font-size:12px}.drawer-body{padding:18px 22px 24px;overflow:auto}.drawer-foot{margin-top:16px;padding-top:16px;border-top:1px solid var(--line)}.close-btn{width:36px;height:36px;padding:0;border-radius:10px;background:#1e293b;flex:0 0 auto}
+.form-grid{display:grid;grid-template-columns:1fr;gap:0 12px}@media(min-width:561px){.form-grid{grid-template-columns:1fr 1fr}}.form-grid .full{grid-column:1/-1}.steps{padding-left:20px}.steps li{margin:8px 0;color:#cbd5e1;line-height:1.45}.kv{display:grid;grid-template-columns:104px minmax(0,1fr);gap:8px 10px;font-size:13px;margin:10px 0}.kv div:nth-child(odd){color:var(--muted)}.kv div:nth-child(even){min-width:0;overflow-wrap:anywhere}
+.notice{border:1px solid rgba(96,165,250,.35);background:rgba(37,99,235,.12);color:#bfdbfe;border-radius:10px;padding:10px 12px;font-size:13px;line-height:1.5;margin:10px 0}
+@media(max-width:900px){.topbar{display:grid;grid-template-columns:1fr;gap:9px;padding:10px 12px}.topbar-left{justify-content:space-between}.topbar-actions{display:grid;grid-template-columns:minmax(0,1fr) repeat(3,42px);width:100%}.topbar-actions button{height:40px;padding:0}.topbar-actions .setup-account-btn{grid-column:2}.topbar-actions #refreshBtn{grid-column:3}.topbar-actions #logoutBtn{grid-column:4}.topbar select{width:100%;min-width:0;grid-column:1;grid-row:1}.btn-label{display:none}.btn-icon{display:inline}.topbar .user{display:none}.brand-sub{display:none}#globalTz{max-width:58vw}.container{padding:0 12px 28px}.page-head{align-items:stretch;flex-direction:column}.page-side{width:100%}.page-side .pill{width:100%;justify-content:center}}
+@media(max-width:420px){.kpi .value{font-size:18px}.card{padding:14px}.panel-head{padding:14px}.tz-pill{font-size:11px}.drawer{width:100%;border-left:0}.drawer-body{padding:16px 18px 22px}}
 </style>
 </head>
 <body>
-<div id="loginCard" class="login-wrap">
-  <div class="login-card">
-    <h1>TradeSync</h1>
-    <p>邮箱验证码注册 / 登录。新邮箱验证后会自动注册，登录成功后自动进入连接控制台。</p>
-    <label>邮箱</label><input id="email" type="email" placeholder="you@example.com" />
-    <button id="sendBtn" style="width:100%;margin-top:12px;">发送验证码</button>
-    <label>6 位验证码</label><input id="code" inputmode="numeric" maxlength="6" placeholder="查看邮箱或后端控制台" />
-    <button id="verifyBtn" style="width:100%;margin-top:12px;">验证并进入控制台</button>
-    <div id="loginMessage" class="message"></div>
-  </div>
-</div>
+<div id="loginCard" class="login-wrap"><div class="login-card">
+  <h1>TradeSync</h1>
+  <p>邮箱验证码注册 / 登录。新邮箱验证后会自动注册，登录成功后自动进入数据控制台。</p>
+  <label>邮箱</label><input id="email" type="email" placeholder="you@example.com" />
+  <button id="sendBtn" style="width:100%;margin-top:12px;">发送验证码</button>
+  <label>6 位验证码</label><input id="code" inputmode="numeric" maxlength="6" placeholder="查看邮箱或后端控制台" />
+  <button id="verifyBtn" style="width:100%;margin-top:12px;">验证并进入控制台</button>
+  <div id="loginMessage" class="message"></div>
+</div></div>
+
 <div id="app" class="hidden">
-  <div class="topbar"><div class="inline"><div class="brand">Trade<span>Sync</span> 连接控制台</div><span id="globalTz" class="pill offline">MT5 服务器时区：等待心跳</span></div><div class="inline"><span id="userEmail" class="muted small"></span><button class="secondary" id="logoutBtn">退出</button></div></div>
-  <div class="container"><div class="grid"><div>    <div class="card">
-      <h2>1. 绑定 MT5 账号</h2>
-      <label>MT5 登录号（必须和终端账号一致）</label><input id="mt5Login" inputmode="numeric" placeholder="例如 88973405" />
-      <label>备注，可选</label><input id="accountLabel" placeholder="例如 实盘 / 模拟盘" />
-      <div class="row"><div><label>券商服务器，可选</label><input id="brokerServer" placeholder="Example-Server" /></div><div><label>账户币种，可选</label><input id="accountCurrency" placeholder="USD" /></div></div>
-      <label>服务器时区备注（可选；v2.1 接口固定上传 UTC，不再发送 GMT 偏移）</label><input id="gmtOffset" inputmode="numeric" placeholder="可留空 / 仅备注" />
-      <button id="createAccountBtn" style="width:100%;margin-top:14px;">绑定并生成同步 Key</button>
-      <div id="accountMessage" class="message"></div>
+  <div class="topbar">
+    <div class="topbar-group topbar-left"><div class="brand"><span class="brand-mark">TradeSync</span><span class="brand-sub">数据控制台</span></div><span id="globalTz" class="tz-pill">MT5 服务器时区：等待心跳</span></div>
+    <div class="topbar-group topbar-actions">
+      <select id="accountSelect" title="切换或绑定 MT5 账号" aria-label="切换 MT5 账号"></select>
+      <button class="secondary setup-account-btn" title="查看 EA 接入配置"><span class="btn-icon">⚙</span><span class="btn-label">EA 配置</span></button>
+      <button class="ghost" id="refreshBtn" title="刷新数据"><span class="btn-icon">↻</span><span class="btn-label">刷新</span></button>
+      <button class="secondary" id="logoutBtn" title="退出登录"><span class="btn-icon">⏻</span><span class="btn-label">退出</span></button>
+      <span id="userEmail" class="muted small user"></span>
     </div>
-    <div class="card"><h2>我的 MT5 账号</h2><div id="accountList"><p class="muted">还没有绑定账号。</p></div><button id="refreshBtn" class="secondary" style="width:100%;margin-top:10px;">刷新状态</button></div>
   </div>
-  <div>
-    <div class="card">
-      <h2>2. 配置 EA 并检查连通性</h2>
-      <div id="setupEmpty" class="muted">先在左侧绑定 MT5 账号。</div>
-      <div id="setupPanel" class="hidden">
-        <div class="inline" style="justify-content:space-between;flex-wrap:wrap;gap:8px;">
-          <div id="connectionPill" class="pill offline"><span class="dot"></span><span id="connectionText">未连接</span></div>
-          <button id="resetKeyBtn" class="danger">重置同步 Key</button>
-        </div>
-        <div class="kv">
-          <div>MT5 账号</div><div id="cfgLogin"></div><div>券商</div><div id="cfgBroker"></div><div>币种/时间</div><div id="cfgCurrencyGmt"></div><div>最近心跳</div><div id="cfgHeartbeat"></div><div>增量同步点</div><div id="cfgLastSync"></div><div>品种规格</div><div id="cfgSymbols"></div><div>账户快照</div><div id="cfgSnapshots"></div><div>EA参数</div><div id="cfgSettings"></div><div>有效订单</div><div id="cfgDeals"></div>
-        </div>
-        <h3>API 地址</h3><input id="apiBase" value="https://192.168.31.116:8443" />
-        <h3>EA 同步 Key</h3><input id="syncKey" readonly value="生成后只完整显示一次" />
-        <div class="inline" style="margin-top:8px;flex-wrap:wrap;"><button class="secondary" id="copyKeyBtn">复制 Key</button><button class="secondary" id="copyConfigBtn">复制 EA 参数</button></div>
-        <h3>操作步骤</h3><ol class="steps">
-          <li>MT5：工具 → 选项 → EA 交易 → 允许 WebRequest，添加上面的 API 地址。</li>
-          <li>把 <code>TradeSyncProbeEA</code> 挂到任意图表。</li>
-          <li>将 API 地址和网页生成的 <code>sk_live_...</code> 同步 Key 填入 EA 参数。</li>
-          <li>EA 日志出现 Two-phase commit complete 后，本页心跳和开仓时间游标会在数秒内刷新。</li>
-        </ol>
-        <h3>EA 参数文本</h3><textarea id="eaConfig" readonly></textarea>
-        <p class="small muted">同步 Key 只在生成或重置时完整展示一次。旧版 dev Key 仅作为本地兼容手段，正式使用请始终使用 sk_live 专属 Key。</p>
+  <main class="container">
+    <section id="noAccountState" class="card empty-state hidden"><h2>还没有绑定 MT5 账号</h2><p>绑定只需要做一次。绑定后服务器会生成专属同步 Key，把 Key 填入 EA，之后此页面主要用于查看同步状态、订单、参数快照和接口日志。</p><button class="bind-account-btn">绑定 MT5 账号</button></section>
+    <section id="dashboardPanel">
+      <div class="page-head"><div><h1 id="accountTitle">MT5 账号</h1><p id="accountSubtitle" class="muted">正在加载账号数据…</p></div><div class="page-side"><span id="lastUpdated" class="pill offline">等待首次加载</span></div></div>
+      <div class="kpi-grid">
+        <div class="card kpi"><div class="label">EA 连接</div><div class="value" id="kpiStatus">—</div><div class="sub" id="kpiHeartbeat">暂无心跳</div></div>
+        <div class="card kpi"><div class="label">MT5 服务器时区</div><div class="value" id="kpiTimezone">—</div><div class="sub">由新版 EA 心跳上报，仅展示</div></div>
+        <div class="card kpi"><div class="label">有效订单</div><div class="value" id="kpiOrders">0</div><div class="sub" id="kpiOrderTime">暂无订单</div></div>
+        <div class="card kpi"><div class="label">原始成交</div><div class="value" id="kpiDeals">0</div><div class="sub">已同步成交笔数</div></div>
+        <div class="card kpi"><div class="label">最新净值</div><div class="value" id="kpiEquity">—</div><div class="sub" id="kpiSnapshot">暂无快照</div></div>
+        <div class="card kpi"><div class="label">增量同步点</div><div class="value" id="kpiCursor" style="font-size:16px">—</div><div class="sub">UTC 秒游标，页面按本地时间显示</div></div>
+        <div class="card kpi"><div class="label">品种规格</div><div class="value" id="kpiSymbols">0</div><div class="sub">已同步品种数量</div></div>
+        <div class="card kpi"><div class="label">EA 参数</div><div class="value" id="kpiSettings">—</div><div class="sub" id="kpiSettingsSub">暂无参数快照</div></div>
       </div>
-    </div>
-    <div class="card"><h2>最近订单（服务端临时配对）</h2><div class="table-wrap"><table>
-      <thead><tr><th>订单号</th><th>开仓时间</th><th>品种</th><th>策略</th><th>方向</th><th>手数</th><th>开仓</th><th>平仓</th><th>止损</th><th>止盈</th><th>库存费</th><th>佣金</th><th>净盈亏</th><th>持仓时间</th></tr></thead>
-      <tbody id="positionsBody"><tr><td colspan="14" class="muted">暂无数据</td></tr></tbody>
-    </table></div></div>
-    <div class="card"><h2>EA 参数配置快照</h2><p class="small muted">EA 初始化及参数变更后上传；只展示配置内容，审计日志仅记录参数组和参数数量。</p><div id="settingsMeta" class="small muted">暂无配置快照</div><pre id="settingsJson">暂无配置快照</pre><h3>与上一份配置差异</h3><div id="settingsDiff" class="small muted">—</div></div>
-    <div class="card"><h2>最近原始成交</h2><div class="table-wrap"><table>
-      <thead><tr><th>时间</th><th>Ticket</th><th>Position</th><th>品种</th><th>类型</th><th>方向</th><th>手数</th><th>价格</th><th>盈亏</th><th>Magic/备注</th></tr></thead>
-      <tbody id="dealsBody"><tr><td colspan="10" class="muted">暂无数据</td></tr></tbody>
-    </table></div></div>
-      <div class="card"><h2>接口日志</h2><p class="small muted">仅记录接口、账号、结果、订单数量和耗时；不保存订单明细。</p><div class="table-wrap"><table>
-      <thead><tr><th>时间</th><th>接口</th><th>动作</th><th>MT5 账号</th><th>结果</th><th>数量</th><th>游标</th><th>耗时</th><th>错误</th></tr></thead>
-      <tbody id="logsBody"><tr><td colspan="9" class="muted">暂无日志</td></tr></tbody>
-    </table></div></div>
-</div></div></div>
-</div><script>
-const $ = (id) => document.getElementById(id);
-let me=null, accounts=[], selectedId=null, freshKeys={};
+      <div class="tabs"><button class="tab active" data-tab="orders">订单数据</button><button class="tab" data-tab="deals">原始成交</button><button class="tab" data-tab="settings">EA 参数</button><button class="tab" data-tab="logs">接口日志</button></div>
+      <section class="card panel" id="tab-orders">
+        <div class="panel-head"><div><h2>订单数据</h2><p id="ordersMeta">正在统计有效订单…</p></div></div>
+        <div class="panel-body table-wrap"><table class="data-table orders-table">
+          <thead><tr><th>订单号</th><th>开仓时间</th><th>品种</th><th>策略</th><th>方向</th><th class="num">买入手数</th><th class="num">卖出手数</th><th class="num">开仓价</th><th class="num">平仓价</th><th class="num">止损</th><th class="num">止盈</th><th class="num">库存费</th><th class="num">佣金</th><th class="num">净盈亏</th><th class="num">持仓时间</th></tr></thead>
+          <tbody id="positionsBody"><tr><td colspan="15" class="muted">暂无数据</td></tr></tbody>
+        </table></div>
+      </section>
+      <section class="card panel hidden" id="tab-deals">
+        <div class="panel-head"><div><h2>最近原始成交</h2><p id="dealsMeta">保留 EA 上传的成交记录，用于核对同步明细。</p></div></div>
+        <div class="panel-body table-wrap"><table class="data-table deals-table">
+          <thead><tr><th>成交时间</th><th>Ticket</th><th>Position</th><th>品种</th><th>成交动作</th><th>方向</th><th class="num">手数</th><th class="num">价格</th><th class="num">净盈亏</th><th>Magic/备注</th></tr></thead>
+          <tbody id="dealsBody"><tr><td colspan="10" class="muted">暂无数据</td></tr></tbody>
+        </table></div>
+      </section>
+      <section class="card panel hidden" id="tab-settings">
+        <div class="panel-head"><div><h2>EA 参数配置快照</h2><p id="settingsMeta">暂无配置快照</p></div></div>
+        <div class="settings-layout"><pre id="settingsJson">暂无配置快照</pre><div><h3>与上一份配置差异</h3><div id="settingsDiff" class="small muted">—</div></div></div>
+      </section>
+      <section class="card panel hidden" id="tab-logs">
+        <div class="panel-head"><div><h2>接口日志</h2><p>仅记录接口、账号、结果、数量、游标和耗时；不保存订单明细、Key、验证码或 Token。</p></div></div>
+        <div class="filter-bar"><select id="logStatus" aria-label="日志结果"><option value="">全部结果</option><option value="true">仅成功</option><option value="false">仅失败</option></select><input id="logKeyword" placeholder="搜索接口或动作，例如：上传成交、heartbeat" /><button class="ghost" id="clearLogFilter">清除筛选</button><span class="small muted">当前只查看选中的 MT5 账号</span></div>
+        <div class="panel-body table-wrap"><table class="data-table logs-table"><thead><tr><th>时间</th><th>接口</th><th>动作</th><th>MT5 账号</th><th>结果</th><th class="num">数量</th><th>游标</th><th class="num">耗时</th><th>错误</th></tr></thead><tbody id="logsBody"><tr><td colspan="9" class="muted">暂无日志</td></tr></tbody></table></div>
+      </section>
+    </section>
+  </main>
+</div>
+<div id="drawerBackdrop" class="backdrop hidden"></div>
+<aside id="bindDrawer" class="drawer hidden" aria-hidden="true"><div class="drawer-head"><div><h2>绑定 MT5 账号</h2><p>只需绑定一次。MT5 登录号必须与终端账号一致。</p></div><button class="close-btn" data-close-drawer="bindDrawer" aria-label="关闭">×</button></div><div class="drawer-body">
+  <label>MT5 登录号</label><input id="mt5Login" inputmode="numeric" placeholder="例如 346208466" />
+  <div class="form-grid"><div><label>备注，可选</label><input id="accountLabel" placeholder="实盘 / 模拟盘" /></div><div><label>账户币种，可选</label><input id="accountCurrency" placeholder="USD" /></div><div class="full"><label>券商服务器，可选</label><input id="brokerServer" placeholder="Example-Server" /></div></div>
+  <div class="notice">MT5 服务器时区不需要手动填写，新版 EA 心跳会自动上报。</div><div id="accountMessage" class="message"></div><div class="drawer-foot"><button id="createAccountBtn" style="width:100%;">绑定并生成同步 Key</button></div>
+</div></aside>
+<aside id="setupDrawer" class="drawer hidden" aria-hidden="true"><div class="drawer-head"><div><h2>EA 接入配置</h2><p>首次绑定或重置 Key 时查看；日常数据同步无需打开。</p></div><button class="close-btn" data-close-drawer="setupDrawer" aria-label="关闭">×</button></div><div class="drawer-body">
+  <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><div id="connectionPill" class="pill offline"><span class="dot"></span><span id="connectionText">未连接</span></div><button class="danger" id="resetKeyBtn">重置同步 Key</button></div>
+  <div id="keyNotice" class="notice hidden">新同步 Key 已生成，请立即复制到 EA。旧 Key 已失效。</div>
+  <div class="kv"><div>MT5 账号</div><div id="cfgLogin">—</div><div>券商</div><div id="cfgBroker">—</div><div>币种/时区</div><div id="cfgCurrencyGmt">—</div><div>最近心跳</div><div id="cfgHeartbeat">—</div></div>
+  <h3>API 地址</h3><input id="apiBase" placeholder="打开控制台时自动识别" />
+  <h3>EA 同步 Key</h3><input id="syncKey" readonly value="生成后只完整显示一次" />
+  <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap"><button class="secondary" id="copyKeyBtn">复制 Key</button><button class="secondary" id="copyConfigBtn">复制 EA 参数</button></div>
+  <h3>接入步骤</h3><ol class="steps"><li>MT5：工具 → 选项 → EA 交易 → 允许 WebRequest，添加上面的 API 地址。</li><li>把 <code>TradeSyncProbeEA</code> 挂到任意图表。</li><li>将 API 地址和 <code>sk_live_...</code> 同步 Key 填入 EA 参数。</li><li>EA 日志出现 Two-phase commit complete 后，返回数据页查看订单、快照和日志。</li></ol>
+  <h3>EA 参数文本</h3><textarea id="eaConfig" readonly></textarea><p class="small muted">同步 Key 只在生成或重置时完整展示一次；旧版 dev Key 仅作为本地兼容手段。</p>
+</div></aside>
+<script>
+const $=(id)=>document.getElementById(id), $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
+let me=null,accounts=[],selectedId=null,freshKeys={},firstLoad=true,lastData={deals:[],positions:[],logs:[],settings:[]};
+const dateFormatter=new Intl.DateTimeFormat('zh-CN',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
 function show(id,text,ok=false){const el=$(id);el.textContent=text;el.className='message '+(ok?'ok':'err');}
 function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function token(){return localStorage.getItem('tradesync_access_token');}
-function fmt(ts){return ts?new Date(ts*1000).toLocaleString():'—';}
-function fmtIso(v){return v?new Date(v).toLocaleString():'—';}
+function fmt(ts){return ts?dateFormatter.format(new Date(ts*1000)):'—';}function fmtIso(v){return v?dateFormatter.format(new Date(v)):'—';}
+function utcTitle(ts,iso=false){const d=new Date(iso?ts:ts*1000);return `UTC ${d.toISOString().slice(0,19).replace('T',' ')}`;}
+function timeCell(ts){return ts?`<span title="${esc(utcTitle(ts))}">${fmt(ts)}</span>`:'—';}function isoTimeCell(v){return v?`<span title="${esc(utcTitle(v,true))}">${fmtIso(v)}</span>`:'—';}
 function ageSeconds(iso){return iso?Math.max(0,Math.floor((Date.now()-Date.parse(iso))/1000)):null;}
-function pnlClass(v){return v>0?'positive':v<0?'negative':'';}
-function entryLabel(e){return e===0?'开仓':e===1?'平仓':e===3?'对冲平仓':'开平';}
-function typeLabel(t){return t===0?'买':'卖';}
-function hold(sec){if(sec===null||sec===undefined)return '—';const d=Math.floor(sec/86400);const h=Math.floor((sec%86400)/3600);const m=Math.floor((sec%3600)/60);const ss=sec%60;const pad=(n)=>String(n).padStart(2,'0');return `${d?d+'天 ':''}${pad(h)}:${pad(m)}:${pad(ss)}`;}
-function tzLabel(a){if(a.server_timezone_name)return a.server_timezone_name;if(a.server_gmt_off===null||a.server_gmt_off===undefined)return '等待心跳';const sign=a.server_gmt_off>=0?'+':'-';const mins=Math.abs(a.server_gmt_off)/60;const h=Math.floor(mins/60),m=mins%60;return `UTC${sign}${h}${m?'.'+m:''}`;}
-function actionLabel(a){return {query_cursor:'查询游标',ingest_deals:'上传成交',update_cursor:'确认游标',ingest_symbols:'上传品种',ingest_snapshots:'上传快照',heartbeat:'心跳',account_collection:'账号列表',regenerate_sync_key:'重置Key',account_management:'账号管理',query_account_data:'查询数据',query_settings:'查询参数',query_api_logs:'查询日志',ingest_settings:'上传参数',send_login_code:'发送验证码',verify_login_code:'验证登录'}[a]||a||'—';}
-function renderLogs(logs){$('logsBody').innerHTML=logs.length?logs.map(x=>`<tr><td>${fmtIso(x.created_at)}</td><td><code>${esc(x.method)} ${esc(x.path)}</code></td><td>${esc(actionLabel(x.action))}</td><td>${x.mt5_login??'—'}</td><td class="${x.success?'positive':'negative'}">${x.success?'成功':x.status_code}</td><td>${x.item_count??'—'}</td><td>${fmt(x.last_sync_time??x.response_summary?.last_sync_time)}</td><td>${x.duration_ms} ms</td><td>${x.error_code?esc(x.error_code+' '+(x.error_message||'')):'—'}</td></tr>`).join(''):'<tr><td colspan="9" class="muted">暂无日志</td></tr>';}
-function diffSettings(next,prev,prefix=''){
-  const out=[]; const paths=new Set([...Object.keys(next||{}),...Object.keys(prev||{})]);
-  for(const k of paths){
-    const path=prefix?`${prefix}.${k}`:k, nv=next?.[k], ov=prev?.[k];
-    const nObj=nv&&typeof nv==='object', oObj=ov&&typeof ov==='object';
-    if(nObj||oObj) out.push(...diffSettings(nObj?nv:{},oObj?ov:{},path));
-    else if(JSON.stringify(nv)!==JSON.stringify(ov)) out.push({path,from:ov,to:nv});
-  }
-  return out;
-}
-function renderSettings(items){
-  const meta=$('settingsMeta'), box=$('settingsJson'), diffBox=$('settingsDiff');
-  if(!items||!items.length){meta.textContent='暂无配置快照';box.textContent='暂无配置快照';diffBox.innerHTML='—';return;}
-  const latest=items[0], previous=items[1]||null;
-  meta.textContent=`快照时间：${fmt(latest.snapshot_time)} · 接收时间：${fmt(latest.received_at)} · ${latest.group_count} 个参数组 / ${latest.key_count} 个参数`;
-  box.textContent=JSON.stringify(latest.settings,null,2);
-  const diffs=previous?diffSettings(latest.settings,previous.settings):[];
-  diffBox.innerHTML=diffs.length?diffs.map(d=>`<div><code>${esc(d.path)}</code>：${esc(String(d.from??'—'))} → ${esc(String(d.to??'—'))}</div>`).join(''):(previous?'两份配置没有差异':'这是第一份配置快照');
-}
-async function api(path,options={}){
-  options.headers=Object.assign({'Content-Type':'application/json'},options.headers||{});
-  if(token())options.headers.Authorization='Bearer '+token();
-  const res=await fetch(path,options);
-  const data=await res.json().catch(()=>({}));
-  if(!res.ok)throw new Error(data.detail||'请求失败');
-  return data;
-}
-async function copyText(text){try{await navigator.clipboard.writeText(text);alert('已复制');}catch(e){prompt('手动复制：',text);}}
-function showApp(){$('loginCard').classList.add('hidden');$('app').classList.remove('hidden');}
-function showLogin(){$('app').classList.add('hidden');$('loginCard').classList.remove('hidden');}
-$('sendBtn').onclick=async()=>{
-  show('loginMessage','正在发送验证码…',true);
-  try{await api('/api/v1/auth/send-code',{method:'POST',body:JSON.stringify({email:$('email').value.trim()})});show('loginMessage','验证码已发送。本地开发可查看后端控制台或 data/dev-codes/latest.json',true);}
-  catch(e){show('loginMessage',e.message);}
-};
-$('verifyBtn').onclick=async()=>{
-  try{
-    const data=await api('/api/v1/auth/verify-code',{method:'POST',body:JSON.stringify({email:$('email').value.trim(),code:$('code').value.trim()})});
-    localStorage.setItem('tradesync_access_token',data.access_token);
-    show('loginMessage',data.is_new_user?'注册成功，正在进入控制台…':'登录成功，正在进入控制台…',true);
-    setTimeout(initApp,300);
-  }catch(e){show('loginMessage',e.message);}
-};
+function pnlClass(v){return v>0?'positive':v<0?'negative':'';}function num(v){if(v===null||v===undefined||v==="")return null;const n=Number(v);return Number.isFinite(n)?n:null;}function money(v,d=2){const n=num(v);return n===null?'—':n.toFixed(d);}
+function price(v){const n=num(v);return n===null?'—':String(Number(n.toFixed(2)));}function stopLevel(v){const n=num(v);if(n===null)return '—';return n===0?'未设置':price(n);}
+function entryLabel(e){return e===0?'开仓':e===1?'平仓':e===3?'对冲平仓':'开平';}function typeLabel(t){return t===0?'买入':t===1?'卖出':'未知';}function directionLabel(d){return d==='buy'?'买入':d==='sell'?'卖出':'未知';}function strategyLabel(s){return {scalp:'剥头皮',trend:'趋势',manual:'手动',other:'其他'}[s]||s||'—';}
+function hold(sec){sec=Math.max(0,Math.floor(Number(sec)||0));const d=Math.floor(sec/86400),h=Math.floor((sec%86400)/3600),m=Math.floor((sec%3600)/60),s=sec%60,p=n=>String(n).padStart(2,'0');return `${d?d+'天 ':''}${p(h)}:${p(m)}:${p(s)}`;}
+function tzLabel(a){if(a.server_timezone_name)return a.server_timezone_name;const o=num(a.server_gmt_off);if(o===null)return '等待心跳';const abs=Math.abs(o),h=String(Math.floor(abs/3600)).padStart(2,'0'),m=abs%3600;return `UTC${o>=0?'+':'-'}${h}${m?':'+String(Math.floor(m/60)).padStart(2,'0'):''}`;}
+function actionLabel(a){return {query_cursor:'查询游标',ingest_deals:'上传成交',update_cursor:'确认游标',ingest_symbols:'上传品种',ingest_snapshots:'上传快照',ingest_settings:'上传参数',heartbeat:'心跳',account_collection:'账号列表',regenerate_sync_key:'重置Key',account_management:'账号管理',query_account_data:'查询数据',query_settings:'查询参数',query_api_logs:'查询日志',send_login_code:'发送验证码',verify_login_code:'验证登录'}[a]||a||'—';}
+function openDrawer(id){$(id).classList.remove('hidden');$(id).setAttribute('aria-hidden','false');$('drawerBackdrop').classList.remove('hidden');document.body.classList.add('modal-open');}
+function closeDrawer(id){$(id).classList.add('hidden');$(id).setAttribute('aria-hidden','true');if(!$$('.drawer:not(.hidden)').length){$('drawerBackdrop').classList.add('hidden');document.body.classList.remove('modal-open');}}
+function closeAllDrawers(){$$('.drawer').forEach(d=>{d.classList.add('hidden');d.setAttribute('aria-hidden','true')});$('drawerBackdrop').classList.add('hidden');document.body.classList.remove('modal-open');}
+function openBindDrawer(){show('accountMessage','',true);openDrawer('bindDrawer');setTimeout(()=>$('mt5Login').focus(),80);}
+function openSetupDrawer(){if(!selectedId){alert('请先选择或绑定 MT5 账号。');return;}openDrawer('setupDrawer');}
+$$('.tab').forEach(btn=>btn.onclick=()=>{$$('.tab').forEach(x=>x.classList.remove('active'));btn.classList.add('active');['orders','deals','settings','logs'].forEach(n=>$(`tab-${n}`).classList.toggle('hidden',n!==btn.dataset.tab));});
+$$('.bind-account-btn').forEach(b=>b.onclick=openBindDrawer);$$('.setup-account-btn').forEach(b=>b.onclick=openSetupDrawer);$$('[data-close-drawer]').forEach(b=>b.onclick=()=>closeDrawer(b.dataset.closeDrawer));$('drawerBackdrop').onclick=closeAllDrawers;document.addEventListener('keydown',e=>{if(e.key==='Escape')closeAllDrawers();});
+function renderLogs(logs=lastData.logs){const status=$('logStatus').value,q=$('logKeyword').value.trim().toLowerCase();let rows=Array.isArray(logs)?logs:[];if(status)rows=rows.filter(x=>String(!!x.success)===status);if(q)rows=rows.filter(x=>[x.method,x.path,actionLabel(x.action),x.mt5_login,x.error_code,x.error_message].join(' ').toLowerCase().includes(q));$('logsBody').innerHTML=rows.length?rows.map(x=>`<tr><td>${isoTimeCell(x.created_at)}</td><td><code>${esc(x.method)} ${esc(x.path)}</code></td><td>${esc(actionLabel(x.action))}</td><td>${x.mt5_login??'—'}</td><td class="${x.success?'positive':'negative'}">${x.success?'成功':`失败 ${x.status_code??''}`}</td><td class="num">${x.item_count??x.response_summary?.returned_items??'—'}</td><td>${fmt(x.last_sync_time??x.response_summary?.last_sync_time)}</td><td class="num">${x.duration_ms??'—'} ms</td><td class="wrap">${x.error_code?esc(`${x.error_code} ${x.error_message||''}`):'—'}</td></tr>`).join(''):'<tr><td colspan="9" class="muted">没有符合筛选条件的日志</td></tr>';}
+function diffSettings(next,prev,prefix=''){const out=[],paths=new Set([...Object.keys(next||{}),...Object.keys(prev||{})]);for(const k of paths){const path=prefix?`${prefix}.${k}`:k,nv=next?.[k],ov=prev?.[k],no=nv&&typeof nv==='object',oo=ov&&typeof ov==='object';if(no||oo)out.push(...diffSettings(no?nv:{},oo?ov:{},path));else if(JSON.stringify(nv)!==JSON.stringify(ov))out.push({path,from:ov,to:nv});}return out;}
+function renderSettings(items){const meta=$('settingsMeta'),box=$('settingsJson'),diffBox=$('settingsDiff');if(!items||!items.length){meta.textContent='暂无配置快照';box.textContent='暂无配置快照';diffBox.innerHTML='—';return;}const latest=items[0],previous=items[1]||null;meta.textContent=`快照 ${fmt(latest.snapshot_time)} · 接收 ${fmt(latest.received_at)} · ${latest.group_count} 组 / ${latest.key_count} 个参数`;box.textContent=JSON.stringify(latest.settings,null,2);const diffs=previous?diffSettings(latest.settings,previous.settings):[];diffBox.innerHTML=diffs.length?`<div class="diff-list">${diffs.map(d=>`<div class="diff-item"><code>${esc(d.path)}</code>：${esc(String(d.from??'—'))} → ${esc(String(d.to??'—'))}</div>`).join('')}</div>`:(previous?'两份配置没有差异':'这是第一份配置快照');}
+async function api(path,options={}){options.headers=Object.assign({'Content-Type':'application/json'},options.headers||{});if(token())options.headers.Authorization='Bearer '+token();const res=await fetch(path,options),data=await res.json().catch(()=>({}));if(!res.ok)throw new Error(data.error?.message||data.detail||'请求失败');return data;}
+async function copyText(t){if(!t)return;try{await navigator.clipboard.writeText(t);alert('已复制');}catch(e){prompt('手动复制：',t);}}
+function showApp(){$('loginCard').classList.add('hidden');$('app').classList.remove('hidden');if(!$('apiBase').value)$('apiBase').value=window.location.origin;}function showLogin(){$('app').classList.add('hidden');$('loginCard').classList.remove('hidden');}
+$('sendBtn').onclick=async()=>{show('loginMessage','正在发送验证码…',true);try{await api('/api/v1/auth/send-code',{method:'POST',body:JSON.stringify({email:$('email').value.trim()})});show('loginMessage','验证码已发送。本地开发可查看后端控制台或 data/dev-codes/latest.json',true);}catch(e){show('loginMessage',e.message);}};
+$('verifyBtn').onclick=async()=>{try{const data=await api('/api/v1/auth/verify-code',{method:'POST',body:JSON.stringify({email:$('email').value.trim(),code:$('code').value.trim()})});localStorage.setItem('tradesync_access_token',data.access_token);show('loginMessage',data.is_new_user?'注册成功，正在进入控制台…':'登录成功，正在进入控制台…',true);setTimeout(initApp,300);}catch(e){show('loginMessage',e.message);}};
 $('logoutBtn').onclick=()=>{localStorage.removeItem('tradesync_access_token');location.reload();};
-async function initApp(){
-  try{
-    me=await api('/api/v1/users/me');$('userEmail').textContent=me.email;showApp();await loadAccounts(false);
-    setInterval(()=>loadAccounts(true),3000);
-  }catch(e){showLogin();}
-}
-$('createAccountBtn').onclick=async()=>{
-  const mt5_login=Number($('mt5Login').value.trim());
-  if(!mt5_login){show('accountMessage','请输入正确的 MT5 登录号。');return;}
-  const body={mt5_login,label:$('accountLabel').value.trim()||null,broker_server:$('brokerServer').value.trim()||null,account_currency:$('accountCurrency').value.trim()||null,server_gmt_off:$('gmtOffset').value.trim()?Number($('gmtOffset').value.trim()):null};
-  try{
-    const data=await api('/api/v1/accounts',{method:'POST',body:JSON.stringify(body)});
-    freshKeys[data.id]=data.sync_key;selectedId=data.id;
-    show('accountMessage','账号已绑定，同步 Key 已生成。请立刻复制到 EA。',true);
-    await loadAccounts(false);
-  }catch(e){show('accountMessage',e.message);}
-};
+async function initApp(){try{me=await api('/api/v1/users/me');$('userEmail').textContent=me.email;showApp();await loadAccounts(false);setInterval(()=>loadAccounts(true),5000);}catch(e){showLogin();}}
+$('createAccountBtn').onclick=async()=>{const mt5_login=Number($('mt5Login').value.trim());if(!mt5_login){show('accountMessage','请输入正确的 MT5 登录号。');return;}const body={mt5_login,label:$('accountLabel').value.trim()||null,broker_server:$('brokerServer').value.trim()||null,account_currency:$('accountCurrency').value.trim()||null};try{const data=await api('/api/v1/accounts',{method:'POST',body:JSON.stringify(body)});freshKeys[data.id]=data.sync_key;selectedId=data.id;['mt5Login','accountLabel','brokerServer','accountCurrency'].forEach(id=>$(id).value='');await loadAccounts(false);closeDrawer('bindDrawer');$('keyNotice').classList.remove('hidden');openSetupDrawer();}catch(e){show('accountMessage',e.message);}};
 $('refreshBtn').onclick=()=>loadAccounts(false);
-$('resetKeyBtn').onclick=async()=>{
-  if(!selectedId||!confirm('重置后旧 Key 立即失效，需要把新 Key 填回 EA。确定继续？'))return;
-  const data=await api(`/api/v1/accounts/${selectedId}/regenerate-key`,{method:'POST'});
-  freshKeys[selectedId]=data.sync_key;await loadAccounts(false);alert('新同步 Key 已生成，请复制到 EA。');
-};
-$('copyKeyBtn').onclick=()=>copyText($('syncKey').value||'');
-$('copyConfigBtn').onclick=()=>copyText($('eaConfig').value);async function loadAccounts(silent=false){
-  try{
-    accounts=await api('/api/v1/accounts');
-    if(!accounts.find(a=>a.id===selectedId)&&accounts.length)selectedId=accounts[0].id;
-    renderAccounts();
-    if(selectedId)await renderSelected();
-  }catch(e){if(!silent)alert(e.message);}
-}
-function renderAccounts(){
-  const box=$('accountList');
-  if(!accounts.length){box.innerHTML='<p class="muted">还没有绑定账号。</p>';return;}
-  box.innerHTML=accounts.map(a=>`<button class="account-btn ${a.id===selectedId?'active':''}" data-id="${a.id}"><strong>#${a.id} · ${a.mt5_login}</strong><br><span class="small muted">${esc(a.label||a.broker_server||'未命名账号')} · 有效订单 ${a.synced_order_count||0}</span></button>`).join('');
-  box.querySelectorAll('button').forEach(btn=>btn.onclick=()=>{selectedId=Number(btn.dataset.id);renderAccounts();renderSelected();});
-}
-async function renderSelected(){
-  const a=accounts.find(x=>x.id===selectedId);if(!a)return;
-  $('setupEmpty').classList.add('hidden');$('setupPanel').classList.remove('hidden');
-  const age=ageSeconds(a.last_seen_at);
-  const pill=$('connectionPill');
-  pill.className='pill '+(age===null?'offline':age<120?'online':age<900?'recent':'offline');
-  $('connectionText').textContent=age===null?'未收到心跳':age<120?'EA 在线':age<900?`${age} 秒前在线`:`离线（${age} 秒前）`;
-  $('cfgLogin').textContent=a.mt5_login;$('cfgBroker').textContent=a.broker_server||'等待 EA 心跳';
-  $('cfgCurrencyGmt').textContent=`${a.account_currency||'—'} / ${tzLabel(a)}`;
-  $('globalTz').textContent=`MT5 服务器时区：${tzLabel(a)}`;
-  $('globalTz').className='pill '+(a.server_gmt_off===null||a.server_gmt_off===undefined?'offline':'online');
-  $('cfgHeartbeat').textContent=fmtIso(a.last_seen_at);$('cfgLastSync').textContent=fmt(a.last_sync_time);$('cfgSymbols').textContent=`${a.symbol_count||0} 个`;$('cfgSettings').textContent=a.latest_settings_time?`${fmt(a.latest_settings_time)} · ${a.settings_count||0} 份`:'等待 EA 上传';$('cfgSnapshots').textContent=a.latest_snapshot_time?`${fmt(a.latest_snapshot_time)} · 净值 ${Number(a.latest_equity||0).toFixed(2)} / 快照 ${a.snapshot_count||0} 条`:'等待 EA 上传';$('cfgDeals').textContent=`${a.synced_order_count||0} 个有效订单；原始成交 ${a.deal_count} 笔；最新成交：${fmt(a.latest_deal_time)}`;
-  const key=freshKeys[a.id]||'';$('syncKey').value=key||'已隐藏（如未保存，请重置 Key）';
-  const base=$('apiBase').value.trim()||'https://192.168.31.116:8443';
-  $('eaConfig').value=`Inp_EnableSync=true\nInp_ApiBaseURL=${base}\nInp_SecretKey=${key?key:'请先复制刚生成的 sk_live Key；旧 Key 请重置'}\nInp_MaxBatchSize=100\nInp_HistoryDays=7\nInp_TimerSeconds=3\nInp_SendSymbolSpec=true\nInp_SnapshotIntervalSec=30\nInp_HeartbeatIntervalSec=300`;
-  const [deals,positions,logs,settingsSnapshots]=await Promise.all([
-    api(`/api/v1/my/accounts/${a.id}/deals?limit=50`),
-    api(`/api/v1/my/accounts/${a.id}/positions`),
-    api(`/api/v1/my/api-logs?limit=80&mt5_login=${encodeURIComponent(a.mt5_login)}`),
-    api(`/api/v1/my/accounts/${a.id}/settings?limit=20`)
-  ]);
-  renderLogs(logs);
-  renderSettings(settingsSnapshots);
-  $('dealsBody').innerHTML=deals.length?deals.map(d=>`<tr><td>${fmt(d.deal_time)}</td><td>${d.ticket}</td><td>${d.position_id||'—'}</td><td>${esc(d.symbol||'—')}</td><td>${entryLabel(d.entry)}</td><td>${typeLabel(d.type)}</td><td>${d.volume}</td><td>${d.price}</td><td class="${pnlClass(d.profit+d.swap+d.commission)}">${(d.profit+d.swap+d.commission).toFixed(2)}</td><td>${d.magic}<br><span class="muted">${esc(d.comment||'')}</span></td></tr>`).join(''):'<tr><td colspan="10" class="muted">暂无数据</td></tr>';
-  $('positionsBody').innerHTML=positions.length?positions.slice(0,50).map(p=>`<tr><td>${p.position_id}</td><td>${fmt(p.open_time)}</td><td>${esc(p.symbol)}</td><td>${p.strategy}</td><td>${p.direction}</td><td>${p.volume_in} / ${p.volume_out}</td><td>${p.open_price??'—'}</td><td>${p.close_price??'—'}</td><td>${p.sl_price??'—'}</td><td>${p.tp_price??'—'}</td><td>${Number(p.swap_total||0).toFixed(2)}</td><td>${Number(p.commission_total||0).toFixed(2)}</td><td class="${pnlClass(p.net_pnl)}">${p.net_pnl.toFixed(2)}</td><td>${p.is_closed?hold(p.hold_seconds):hold(Math.floor(Date.now()/1000)-p.open_time)+" (持仓中)"}</td></tr>`).join(''):'<tr><td colspan="14" class="muted">暂无数据</td></tr>';
-}
-$('apiBase').addEventListener('change',()=>{if(selectedId)renderSelected();});
-if(token())initApp();else showLogin();
+$('accountSelect').onchange=e=>{if(e.target.value==='__bind__'){e.target.value=String(selectedId??'');openBindDrawer();return;}selectedId=Number(e.target.value);renderSelected();};
+$('resetKeyBtn').onclick=async()=>{if(!selectedId||!confirm('重置后旧 Key 立即失效，需要把新 Key 填回 EA。确定继续？'))return;try{const data=await api(`/api/v1/accounts/${selectedId}/regenerate-key`,{method:'POST'});freshKeys[selectedId]=data.sync_key;$('keyNotice').classList.remove('hidden');await loadAccounts(false);alert('新同步 Key 已生成，请复制到 EA。');}catch(e){alert(e.message);}};
+$('copyKeyBtn').onclick=()=>copyText($('syncKey').value||'');$('copyConfigBtn').onclick=()=>copyText($('eaConfig').value);$('logStatus').onchange=()=>loadAccounts(false);$('logKeyword').oninput=()=>renderLogs();$('clearLogFilter').onclick=()=>{$('logStatus').value='';$('logKeyword').value='';loadAccounts(false);};
+async function loadAccounts(silent=false){try{accounts=await api('/api/v1/accounts');if(!accounts.find(a=>a.id===selectedId)&&accounts.length)selectedId=accounts[0].id;renderAccountSelect();const has=accounts.length>0;$('noAccountState').classList.toggle('hidden',has);$('dashboardPanel').classList.toggle('hidden',!has);$$('.setup-account-btn').forEach(b=>b.disabled=!has);if(has)await renderSelected();else{selectedId=null;$('globalTz').textContent='MT5 服务器时区：等待心跳';if(firstLoad)openBindDrawer();}firstLoad=false;}catch(e){if(!silent)alert(e.message);}}
+function renderAccountSelect(){const s=$('accountSelect');s.innerHTML=accounts.map(a=>`<option value="${a.id}" ${a.id===selectedId?'selected':''}>#${a.id} · ${a.mt5_login} · ${esc(a.label||a.broker_server||'未命名')}</option>`).join('')+`<option value="__bind__">＋ 绑定新账号…</option>`;if(selectedId)s.value=String(selectedId);}
+async function renderSelected(){const a=accounts.find(x=>x.id===selectedId);if(!a)return;const age=ageSeconds(a.last_seen_at),online=age!==null&&age<120,recent=age!==null&&age<900;const statusText=age===null?'未收到心跳':online?'EA 在线':recent?`${age} 秒前在线`:`离线（${age} 秒前）`,statusClass=age===null?'offline':online?'online':recent?'recent':'offline';
+$('accountTitle').textContent=`MT5 ${a.mt5_login}`;$('accountSubtitle').textContent=`${a.label||'未命名账号'} · ${a.broker_server||'券商待心跳上报'} · ${a.account_currency||'币种未知'}`;$('globalTz').textContent=`MT5 服务器时区：${tzLabel(a)}`;
+$('kpiStatus').textContent=statusText;$('kpiStatus').className='value '+(online?'positive':recent?'warn':'negative');$('kpiHeartbeat').textContent=a.last_seen_at?`最近心跳：${fmtIso(a.last_seen_at)}`:'暂无心跳';$('kpiTimezone').textContent=tzLabel(a);$('kpiCursor').textContent=fmt(a.last_sync_time);$('kpiOrders').textContent=a.synced_order_count??0;$('kpiOrderTime').textContent=a.latest_deal_time?`最新成交：${fmt(a.latest_deal_time)}`:'暂无订单';$('kpiDeals').textContent=a.deal_count??0;$('kpiEquity').textContent=a.latest_equity!=null?money(a.latest_equity):'—';$('kpiSnapshot').textContent=a.latest_snapshot_time?`${fmt(a.latest_snapshot_time)} · ${a.snapshot_count||0} 条`:'暂无快照';$('kpiSymbols').textContent=a.symbol_count||0;$('kpiSettings').textContent=a.settings_count||0;$('kpiSettingsSub').textContent=a.latest_settings_time?`最新：${fmt(a.latest_settings_time)}`:'暂无参数快照';
+$('connectionPill').className='pill '+statusClass;$('connectionText').textContent=statusText;$('cfgLogin').textContent=a.mt5_login;$('cfgBroker').textContent=a.broker_server||'等待 EA 心跳';$('cfgCurrencyGmt').textContent=`${a.account_currency||'—'} / ${tzLabel(a)}`;$('cfgHeartbeat').textContent=fmtIso(a.last_seen_at);if(!$('apiBase').value)$('apiBase').value=window.location.origin;const key=freshKeys[a.id]||'';$('syncKey').value=key||'已隐藏（如未保存，请重置 Key）';const base=$('apiBase').value.trim()||window.location.origin;$('eaConfig').value=`Inp_EnableSync=true\nInp_ApiBaseURL=${base}\nInp_SecretKey=${key?key:'请先复制刚生成的 sk_live Key；旧 Key 请重置'}\nInp_MaxBatchSize=100\nInp_HistoryDays=7\nInp_TimerSeconds=3\nInp_SendSymbolSpec=true\nInp_SnapshotIntervalSec=30\nInp_HeartbeatIntervalSec=300`;
+const statusFilter=$('logStatus').value;const logsUrl=`/api/v1/my/api-logs?limit=100&mt5_login=${encodeURIComponent(a.mt5_login)}${statusFilter?`&success=${encodeURIComponent(statusFilter)}`:''}`;
+const results=await Promise.allSettled([api(`/api/v1/my/accounts/${a.id}/deals?limit=50`),api(`/api/v1/my/accounts/${a.id}/positions`),api(logsUrl),api(`/api/v1/my/accounts/${a.id}/settings?limit=20`)]);
+const value=(i)=>results[i].status==='fulfilled'&&Array.isArray(results[i].value)?results[i].value:[];const deals=value(0),positions=value(1),logs=value(2),settingsSnapshots=value(3);lastData={deals,positions,logs,settings:settingsSnapshots};
+const openCount=positions.filter(p=>!p.is_closed).length;$('ordersMeta').textContent=`有效订单 ${a.synced_order_count??positions.length} · 当前展示前 ${Math.min(50,positions.length)} 笔 · 持仓中 ${openCount} 笔`;$('dealsMeta').textContent=`已同步原始成交 ${a.deal_count??deals.length} 笔 · 当前展示最近 ${Math.min(50,deals.length)} 笔`;
+renderLogs(logs);renderSettings(settingsSnapshots);
+$('dealsBody').innerHTML=deals.length?deals.map(d=>{const net=(num(d.profit)||0)+(num(d.swap)||0)+(num(d.commission)||0);return `<tr><td>${timeCell(d.deal_time)}</td><td>${d.ticket}</td><td>${d.position_id||'—'}</td><td>${esc(d.symbol||'—')}</td><td>${entryLabel(d.entry)}</td><td><span class="direction ${d.type===0?'buy':d.type===1?'sell':'unknown'}">${typeLabel(d.type)}</span></td><td class="num">${money(d.volume)}</td><td class="num">${price(d.price)}</td><td class="num ${pnlClass(net)}">${money(net)}</td><td class="wrap">${d.magic??'—'}<br><span class="muted">${esc(d.comment||'')}</span></td></tr>`;}).join(''):'<tr><td colspan="10" class="muted">暂无数据</td></tr>';
+$('positionsBody').innerHTML=positions.length?positions.slice(0,50).map(p=>{const live=Math.max(0,Math.floor(Date.now()/1000)-Number(p.open_time||0)),holdText=p.is_closed?hold(p.hold_seconds):`${hold(live)} · 持仓中`,dir=p.direction==='buy'?'buy':p.direction==='sell'?'sell':'unknown';return `<tr><td><strong>${p.position_id}</strong></td><td>${timeCell(p.open_time)}</td><td>${esc(p.symbol||'—')}</td><td>${esc(strategyLabel(p.strategy))}</td><td><span class="direction ${dir}">${esc(directionLabel(p.direction))}</span></td><td class="num">${money(p.volume_in)} <span class="muted">/</span> ${money(p.volume_out)}</td><td class="num">${price(p.open_price)}</td><td class="num">${price(p.close_price)}</td><td class="num">${stopLevel(p.sl_price)}</td><td class="num">${stopLevel(p.tp_price)}</td><td class="num">${money(p.swap_total)}</td><td class="num">${money(p.commission_total)}</td><td class="num ${pnlClass(num(p.net_pnl))}">${money(p.net_pnl)}</td><td class="num" title="${p.is_closed?Number(p.hold_seconds)||0:live} 秒">${esc(holdText)}</td></tr>`;}).join(''):'<tr><td colspan="15" class="muted">暂无数据</td></tr>';
+$('lastUpdated').textContent=`最后更新：${dateFormatter.format(new Date())}`;$('lastUpdated').className='pill online';}
+$('apiBase').addEventListener('change',()=>{if(selectedId)renderSelected();});if(token())initApp();else showLogin();
 </script>
 </body>
 </html>

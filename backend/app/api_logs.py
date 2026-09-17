@@ -116,9 +116,17 @@ def _summarize_api_response(path: str, payload: object) -> tuple[dict, int | Non
                 summary[f"{key}_returned"] = len(payload[key])
                 item_count = len(payload[key])
     elif isinstance(payload, list):
-        summary["returned_items"] = len(payload)
+        count = len(payload)
+        summary["returned_items"] = count
         if path.endswith("/accounts"):
-            summary["returned_accounts"] = len(payload)
+            summary["returned_accounts"] = count
+        if path.endswith("/deals"):
+            summary["deals_returned"] = count
+        elif path.endswith("/positions"):
+            summary["positions_returned"] = count
+        elif path.endswith("/settings"):
+            summary["settings_returned"] = count
+        item_count = count
 
     if item_count is None and isinstance(summary.get("accepted"), int):
         item_count = summary["accepted"]
@@ -162,7 +170,10 @@ def _write_api_log(
             if key in request.query_params:
                 query_summary[key] = request.query_params[key]
         request_payload = query_summary or None
-    response_payload = _json_object_from_bytes(response_body)
+    try:
+        response_payload = json.loads(response_body.decode("utf-8"))
+    except Exception:
+        response_payload = None
     request_login, request_summary = _summarize_api_request(path, request_payload)
     response_summary, response_login, response_account_id, response_count = _summarize_api_response(path, response_payload)
 
