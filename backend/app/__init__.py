@@ -1,0 +1,1 @@
+'''TradeSync minimal backend package.'''

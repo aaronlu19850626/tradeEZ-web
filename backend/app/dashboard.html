@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>TradeSync 连接控制台</title>
+<style>
+:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;font-family:Arial,"Microsoft YaHei",sans-serif;background:#08111f;color:#e5e7eb}
+button,input,textarea{font:inherit}button{border:0;border-radius:9px;background:#2563eb;color:#fff;padding:10px 14px;cursor:pointer}
+button.secondary{background:#334155}button.danger{background:#b91c1c}button:disabled{opacity:.55;cursor:not-allowed}
+input,textarea{width:100%;padding:10px 11px;border:1px solid #475569;border-radius:9px;background:#0b1220;color:#fff}
+textarea{min-height:92px;resize:vertical;font-family:Consolas,monospace;font-size:12px}.hidden{display:none!important}
+.login-wrap{min-height:100vh;display:grid;place-items:center;padding:20px}.login-card,.card{background:#111827;border:1px solid #263247;border-radius:16px;box-shadow:0 18px 60px rgba(0,0,0,.28)}
+.login-card{width:100%;max-width:430px;padding:28px}h1{margin:0 0 8px;font-size:24px}h2{margin:0 0 14px;font-size:18px}h3{margin:16px 0 8px;font-size:15px;color:#cbd5e1}
+p{color:#94a3b8;line-height:1.55}label{display:block;margin:14px 0 6px;color:#cbd5e1;font-size:13px}.topbar{height:58px;border-bottom:1px solid #263247;background:#0f172a;display:flex;align-items:center;justify-content:space-between;padding:0 22px;position:sticky;top:0;z-index:2}
+.brand{font-weight:700;color:#fff}.brand span{color:#60a5fa}.container{max-width:1280px;margin:22px auto;padding:0 18px}.grid{display:grid;grid-template-columns:360px 1fr;gap:16px}.card{padding:18px;margin-bottom:16px}.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.message{margin-top:10px;font-size:13px;white-space:pre-wrap}.ok{color:#86efac}.err{color:#fca5a5}.muted{color:#94a3b8}.pill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:4px 10px;font-size:12px;font-weight:700}.dot{width:8px;height:8px;border-radius:50%;background:currentColor}
+.online{background:rgba(34,197,94,.14);color:#86efac}.recent{background:rgba(245,158,11,.16);color:#fcd34d}.offline{background:rgba(148,163,184,.14);color:#cbd5e1}
+.account-btn{width:100%;text-align:left;margin:7px 0;background:#1e293b}.account-btn.active{outline:2px solid #3b82f6;background:#172554}.kv{display:grid;grid-template-columns:110px 1fr;gap:6px 10px;font-size:13px;margin:8px 0}.kv div:nth-child(odd){color:#94a3b8}
+code{background:#0b1220;border:1px solid #263247;border-radius:6px;padding:2px 6px}.table-wrap{overflow:auto;border:1px solid #263247;border-radius:12px}table{width:100%;border-collapse:collapse;font-size:12px}th,td{padding:9px 10px;border-bottom:1px solid #1f2a3d;text-align:left;white-space:nowrap}th{color:#93c5fd;background:#0f172a}
+.positive{color:#86efac}.negative{color:#fca5a5}.steps li{margin:8px 0;color:#cbd5e1;line-height:1.45}.inline{display:flex;gap:8px;align-items:center}.small{font-size:12px}
+@media(max-width:900px){.grid{grid-template-columns:1fr}.row{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div id="loginCard" class="login-wrap">
+  <div class="login-card">
+    <h1>TradeSync</h1>
+    <p>邮箱验证码注册 / 登录。新邮箱验证后会自动注册，登录成功后自动进入连接控制台。</p>
+    <label>邮箱</label><input id="email" type="email" placeholder="you@example.com" />
+    <button id="sendBtn" style="width:100%;margin-top:12px;">发送验证码</button>
+    <label>6 位验证码</label><input id="code" inputmode="numeric" maxlength="6" placeholder="查看邮箱或后端控制台" />
+    <button id="verifyBtn" style="width:100%;margin-top:12px;">验证并进入控制台</button>
+    <div id="loginMessage" class="message"></div>
+  </div>
+</div>
+<div id="app" class="hidden">
+  <div class="topbar"><div class="brand">Trade<span>Sync</span> 连接控制台</div><div class="inline"><span id="userEmail" class="muted small"></span><button class="secondary" id="logoutBtn">退出</button></div></div>
+  <div class="container"><div class="grid"><div>    <div class="card">
+      <h2>1. 绑定 MT5 账号</h2>
+      <label>MT5 登录号（必须和终端账号一致）</label><input id="mt5Login" inputmode="numeric" placeholder="例如 88973405" />
+      <label>备注，可选</label><input id="accountLabel" placeholder="例如 实盘 / 模拟盘" />
+      <div class="row"><div><label>券商服务器，可选</label><input id="brokerServer" placeholder="Example-Server" /></div><div><label>账户币种，可选</label><input id="accountCurrency" placeholder="USD" /></div></div>
+      <label>GMT 偏移秒数，可选；EA 成交同步会自动更新</label><input id="gmtOffset" inputmode="numeric" placeholder="例如 10800" />
+      <button id="createAccountBtn" style="width:100%;margin-top:14px;">绑定并生成同步 Key</button>
+      <div id="accountMessage" class="message"></div>
+    </div>
+    <div class="card"><h2>我的 MT5 账号</h2><div id="accountList"><p class="muted">还没有绑定账号。</p></div><button id="refreshBtn" class="secondary" style="width:100%;margin-top:10px;">刷新状态</button></div>
+  </div>
+  <div>
+    <div class="card">
+      <h2>2. 配置 EA 并检查连通性</h2>
+      <div id="setupEmpty" class="muted">先在左侧绑定 MT5 账号。</div>
+      <div id="setupPanel" class="hidden">
+        <div class="inline" style="justify-content:space-between;flex-wrap:wrap;gap:8px;">
+          <div id="connectionPill" class="pill offline"><span class="dot"></span><span id="connectionText">未连接</span></div>
+          <button id="resetKeyBtn" class="danger">重置同步 Key</button>
+        </div>
+        <div class="kv">
+          <div>MT5 账号</div><div id="cfgLogin"></div><div>券商</div><div id="cfgBroker"></div><div>币种/GMT</div><div id="cfgCurrencyGmt"></div><div>最近心跳</div><div id="cfgHeartbeat"></div><div>增量同步点</div><div id="cfgLastSync"></div><div>成交数量</div><div id="cfgDeals"></div>
+        </div>
+        <h3>API 地址</h3><input id="apiBase" value="https://192.168.31.116:8443" />
+        <h3>EA 同步 Key</h3><input id="syncKey" readonly value="生成后只完整显示一次" />
+        <div class="inline" style="margin-top:8px;flex-wrap:wrap;"><button class="secondary" id="copyKeyBtn">复制 Key</button><button class="secondary" id="copyConfigBtn">复制 EA 参数</button></div>
+        <h3>操作步骤</h3><ol class="steps">
+          <li>MT5：工具 → 选项 → EA 交易 → 允许 WebRequest，添加上面的 API 地址。</li>
+          <li>把 <code>TradeSyncProbeEA</code> 挂到任意图表。</li>
+          <li>将 API 地址和网页生成的 <code>sk_live_...</code> 同步 Key 填入 EA 参数。</li>
+          <li>EA 日志出现 Initial sync completed 后，本页心跳和增量同步点会在数秒内刷新。</li>
+        </ol>
+        <h3>EA 参数文本</h3><textarea id="eaConfig" readonly></textarea>
+        <p class="small muted">同步 Key 只在生成或重置时完整展示一次。旧版 dev Key 仅作为本地兼容手段，正式使用请始终使用 sk_live 专属 Key。</p>
+      </div>
+    </div>
+    <div class="card"><h2>最近订单（服务端临时配对）</h2><div class="table-wrap"><table>
+      <thead><tr><th>开仓时间</th><th>品种</th><th>策略</th><th>方向</th><th>手数</th><th>开仓</th><th>平仓</th><th>净盈亏</th><th>持时</th></tr></thead>
+      <tbody id="positionsBody"><tr><td colspan="9" class="muted">暂无数据</td></tr></tbody>
+    </table></div></div>
+    <div class="card"><h2>最近原始成交</h2><div class="table-wrap"><table>
+      <thead><tr><th>时间</th><th>Ticket</th><th>Position</th><th>品种</th><th>类型</th><th>方向</th><th>手数</th><th>价格</th><th>盈亏</th><th>Magic/备注</th></tr></thead>
+      <tbody id="dealsBody"><tr><td colspan="10" class="muted">暂无数据</td></tr></tbody>
+    </table></div></div>
+  </div></div></div>
+</div><script>
+const $ = (id) => document.getElementById(id);
+let me=null, accounts=[], selectedId=null, freshKeys={};
+function show(id,text,ok=false){const el=$(id);el.textContent=text;el.className='message '+(ok?'ok':'err');}
+function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function token(){return localStorage.getItem('tradesync_access_token');}
+function fmt(ts){return ts?new Date(ts*1000).toLocaleString():'—';}
+function fmtIso(v){return v?new Date(v).toLocaleString():'—';}
+function ageSeconds(iso){return iso?Math.max(0,Math.floor((Date.now()-Date.parse(iso))/1000)):null;}
+function pnlClass(v){return v>0?'positive':v<0?'negative':'';}
+function entryLabel(e){return e===0?'开仓':e===1?'平仓':'开平';}
+function typeLabel(t){return t===0?'买':'卖';}
+function hold(sec){if(sec===null||sec===undefined)return '—';const h=Math.floor(sec/3600),m=Math.floor((sec%3600)/60);return (h?h+'小时 ':'')+m+'分钟';}
+async function api(path,options={}){
+  options.headers=Object.assign({'Content-Type':'application/json'},options.headers||{});
+  if(token())options.headers.Authorization='Bearer '+token();
+  const res=await fetch(path,options);
+  const data=await res.json().catch(()=>({}));
+  if(!res.ok)throw new Error(data.detail||'请求失败');
+  return data;
+}
+async function copyText(text){try{await navigator.clipboard.writeText(text);alert('已复制');}catch(e){prompt('手动复制：',text);}}
+function showApp(){$('loginCard').classList.add('hidden');$('app').classList.remove('hidden');}
+function showLogin(){$('app').classList.add('hidden');$('loginCard').classList.remove('hidden');}
+$('sendBtn').onclick=async()=>{
+  show('loginMessage','正在发送验证码…',true);
+  try{await api('/api/v1/auth/send-code',{method:'POST',body:JSON.stringify({email:$('email').value.trim()})});show('loginMessage','验证码已发送。本地开发可查看后端控制台或 data/dev-codes/latest.json',true);}
+  catch(e){show('loginMessage',e.message);}
+};
+$('verifyBtn').onclick=async()=>{
+  try{
+    const data=await api('/api/v1/auth/verify-code',{method:'POST',body:JSON.stringify({email:$('email').value.trim(),code:$('code').value.trim()})});
+    localStorage.setItem('tradesync_access_token',data.access_token);
+    show('loginMessage',data.is_new_user?'注册成功，正在进入控制台…':'登录成功，正在进入控制台…',true);
+    setTimeout(initApp,300);
+  }catch(e){show('loginMessage',e.message);}
+};
+$('logoutBtn').onclick=()=>{localStorage.removeItem('tradesync_access_token');location.reload();};
+async function initApp(){
+  try{
+    me=await api('/api/v1/users/me');$('userEmail').textContent=me.email;showApp();await loadAccounts(false);
+    setInterval(()=>loadAccounts(true),3000);
+  }catch(e){showLogin();}
+}
+$('createAccountBtn').onclick=async()=>{
+  const mt5_login=Number($('mt5Login').value.trim());
+  if(!mt5_login){show('accountMessage','请输入正确的 MT5 登录号。');return;}
+  const body={mt5_login,label:$('accountLabel').value.trim()||null,broker_server:$('brokerServer').value.trim()||null,account_currency:$('accountCurrency').value.trim()||null,server_gmt_off:$('gmtOffset').value.trim()?Number($('gmtOffset').value.trim()):null};
+  try{
+    const data=await api('/api/v1/accounts',{method:'POST',body:JSON.stringify(body)});
+    freshKeys[data.id]=data.sync_key;selectedId=data.id;
+    show('accountMessage','账号已绑定，同步 Key 已生成。请立刻复制到 EA。',true);
+    await loadAccounts(false);
+  }catch(e){show('accountMessage',e.message);}
+};
+$('refreshBtn').onclick=()=>loadAccounts(false);
+$('resetKeyBtn').onclick=async()=>{
+  if(!selectedId||!confirm('重置后旧 Key 立即失效，需要把新 Key 填回 EA。确定继续？'))return;
+  const data=await api(`/api/v1/accounts/${selectedId}/regenerate-key`,{method:'POST'});
+  freshKeys[selectedId]=data.sync_key;await loadAccounts(false);alert('新同步 Key 已生成，请复制到 EA。');
+};
+$('copyKeyBtn').onclick=()=>copyText($('syncKey').value||'');
+$('copyConfigBtn').onclick=()=>copyText($('eaConfig').value);async function loadAccounts(silent=false){
+  try{
+    accounts=await api('/api/v1/accounts');
+    if(!accounts.find(a=>a.id===selectedId)&&accounts.length)selectedId=accounts[0].id;
+    renderAccounts();
+    if(selectedId)await renderSelected();
+  }catch(e){if(!silent)alert(e.message);}
+}
+function renderAccounts(){
+  const box=$('accountList');
+  if(!accounts.length){box.innerHTML='<p class="muted">还没有绑定账号。</p>';return;}
+  box.innerHTML=accounts.map(a=>`<button class="account-btn ${a.id===selectedId?'active':''}" data-id="${a.id}"><strong>#${a.id} · ${a.mt5_login}</strong><br><span class="small muted">${esc(a.label||a.broker_server||'未命名账号')} · 成交 ${a.deal_count}</span></button>`).join('');
+  box.querySelectorAll('button').forEach(btn=>btn.onclick=()=>{selectedId=Number(btn.dataset.id);renderAccounts();renderSelected();});
+}
+async function renderSelected(){
+  const a=accounts.find(x=>x.id===selectedId);if(!a)return;
+  $('setupEmpty').classList.add('hidden');$('setupPanel').classList.remove('hidden');
+  const age=ageSeconds(a.last_seen_at);
+  const pill=$('connectionPill');
+  pill.className='pill '+(age===null?'offline':age<120?'online':age<900?'recent':'offline');
+  $('connectionText').textContent=age===null?'未收到心跳':age<120?'EA 在线':age<900?`${age} 秒前在线`:`离线（${age} 秒前）`;
+  $('cfgLogin').textContent=a.mt5_login;$('cfgBroker').textContent=a.broker_server||'等待 EA 心跳';
+  $('cfgCurrencyGmt').textContent=`${a.account_currency||'—'} / ${a.server_gmt_off===null?'—':a.server_gmt_off}`;
+  $('cfgHeartbeat').textContent=fmtIso(a.last_seen_at);$('cfgLastSync').textContent=fmt(a.last_sync_time);$('cfgDeals').textContent=`${a.deal_count} 笔，最新成交：${fmt(a.latest_deal_time)}`;
+  const key=freshKeys[a.id]||'';$('syncKey').value=key||'已隐藏（如未保存，请重置 Key）';
+  const base=$('apiBase').value.trim()||'https://192.168.31.116:8443';
+  $('eaConfig').value=`Inp_BaseUrl=${base}\nInp_SyncKey=${key?key:'请先复制刚生成的 sk_live Key；旧页面请重置 Key'}\nInp_HistoryDays=7\nInp_TimerSeconds=3\nInp_BatchSize=500\nInp_SendSymbolSpec=true\nInp_SnapshotIntervalSec=30\nInp_HeartbeatIntervalSec=300`;
+  const [deals,positions]=await Promise.all([
+    api(`/api/v1/my/accounts/${a.id}/deals?limit=50`),
+    api(`/api/v1/my/accounts/${a.id}/positions`)
+  ]);
+  $('dealsBody').innerHTML=deals.length?deals.map(d=>`<tr><td>${fmt(d.deal_time)}</td><td>${d.ticket}</td><td>${d.position_id||'—'}</td><td>${esc(d.symbol||'—')}</td><td>${entryLabel(d.entry)}</td><td>${typeLabel(d.type)}</td><td>${d.volume}</td><td>${d.price}</td><td class="${pnlClass(d.profit+d.swap+d.commission)}">${(d.profit+d.swap+d.commission).toFixed(2)}</td><td>${d.magic}<br><span class="muted">${esc(d.comment||'')}</span></td></tr>`).join(''):'<tr><td colspan="10" class="muted">暂无数据</td></tr>';
+  $('positionsBody').innerHTML=positions.length?positions.slice(0,50).map(p=>`<tr><td>${fmt(p.open_time)}</td><td>${esc(p.symbol)}</td><td>${p.strategy}</td><td>${p.direction}</td><td>${p.volume_in} / ${p.volume_out}</td><td>${p.open_price??'—'}</td><td>${p.close_price??'—'}</td><td class="${pnlClass(p.net_pnl)}">${p.net_pnl.toFixed(2)}</td><td>${hold(p.hold_seconds)}</td></tr>`).join(''):'<tr><td colspan="9" class="muted">暂无数据</td></tr>';
+}
+$('apiBase').addEventListener('change',()=>{if(selectedId)renderSelected();});
+if(token())initApp();else showLogin();
+</script>
+</body>
+</html>
