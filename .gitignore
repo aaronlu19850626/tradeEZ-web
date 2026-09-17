@@ -26,3 +26,6 @@ backend/data/dev-codes/
 
 # Local HTTPS development certificates/keys
 backend/certs/
+
+# Local uvicorn runtime logs
+backend/*.log
