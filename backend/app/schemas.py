@@ -99,6 +99,10 @@ class AccountOut(BaseModel):
     last_sync_time: int = 0
     deal_count: int = 0
     latest_deal_time: int | None = None
+    symbol_count: int = 0
+    snapshot_count: int = 0
+    latest_snapshot_time: int | None = None
+    latest_equity: float | None = None
 
 
 class AccountKeyOut(AccountOut):

@@ -57,7 +57,7 @@ code{background:#0b1220;border:1px solid #263247;border-radius:6px;padding:2px 6
           <button id="resetKeyBtn" class="danger">重置同步 Key</button>
         </div>
         <div class="kv">
-          <div>MT5 账号</div><div id="cfgLogin"></div><div>券商</div><div id="cfgBroker"></div><div>币种/GMT</div><div id="cfgCurrencyGmt"></div><div>最近心跳</div><div id="cfgHeartbeat"></div><div>增量同步点</div><div id="cfgLastSync"></div><div>成交数量</div><div id="cfgDeals"></div>
+          <div>MT5 账号</div><div id="cfgLogin"></div><div>券商</div><div id="cfgBroker"></div><div>币种/GMT</div><div id="cfgCurrencyGmt"></div><div>最近心跳</div><div id="cfgHeartbeat"></div><div>增量同步点</div><div id="cfgLastSync"></div><div>品种规格</div><div id="cfgSymbols"></div><div>账户快照</div><div id="cfgSnapshots"></div><div>成交数量</div><div id="cfgDeals"></div>
         </div>
         <h3>API 地址</h3><input id="apiBase" value="https://192.168.31.116:8443" />
         <h3>EA 同步 Key</h3><input id="syncKey" readonly value="生成后只完整显示一次" />
@@ -166,7 +166,7 @@ async function renderSelected(){
   $('connectionText').textContent=age===null?'未收到心跳':age<120?'EA 在线':age<900?`${age} 秒前在线`:`离线（${age} 秒前）`;
   $('cfgLogin').textContent=a.mt5_login;$('cfgBroker').textContent=a.broker_server||'等待 EA 心跳';
   $('cfgCurrencyGmt').textContent=`${a.account_currency||'—'} / ${a.server_gmt_off===null?'—':a.server_gmt_off}`;
-  $('cfgHeartbeat').textContent=fmtIso(a.last_seen_at);$('cfgLastSync').textContent=fmt(a.last_sync_time);$('cfgDeals').textContent=`${a.deal_count} 笔，最新成交：${fmt(a.latest_deal_time)}`;
+  $('cfgHeartbeat').textContent=fmtIso(a.last_seen_at);$('cfgLastSync').textContent=fmt(a.last_sync_time);$('cfgSymbols').textContent=`${a.symbol_count||0} 个`;$('cfgSnapshots').textContent=a.latest_snapshot_time?`${fmt(a.latest_snapshot_time)} · 净值 ${Number(a.latest_equity||0).toFixed(2)} / 快照 ${a.snapshot_count||0} 条`:'等待 EA 上传';$('cfgDeals').textContent=`${a.deal_count} 笔，最新成交：${fmt(a.latest_deal_time)}`;
   const key=freshKeys[a.id]||'';$('syncKey').value=key||'已隐藏（如未保存，请重置 Key）';
   const base=$('apiBase').value.trim()||'https://192.168.31.116:8443';
   $('eaConfig').value=`Inp_BaseUrl=${base}\nInp_SyncKey=${key?key:'请先复制刚生成的 sk_live Key；旧页面请重置 Key'}\nInp_HistoryDays=7\nInp_TimerSeconds=3\nInp_BatchSize=500\nInp_SendSymbolSpec=true\nInp_SnapshotIntervalSec=30\nInp_HeartbeatIntervalSec=300`;

@@ -1,5 +1,42 @@
 # TradeSync API v2.0 现状差距检查
 
+## 0. 2026-09-17 实施后复核（以此节为准）
+
+> 下文第 1 节以后是改造前的差距记录，保留用于追溯。当前代码已经按 v2 完成第一轮可联调实现。
+
+### 已实现
+
+- `POST /api/v1/sync/last_sync_time`
+- `POST /api/v1/ingest/deals`
+- `POST /api/v1/ingest/symbols`
+- `POST /api/v1/ingest/snapshot`
+- `POST /api/v1/sync/heartbeat`
+- `sk_live_...` / `sk_test_...` Bearer Key，服务端仅保存 SHA-256 Hash。
+- 成交按 `(account_login, deal_ticket)` 幂等去重。
+- `last_sync_time` 按 MT5 `DEAL_TIME` 时间戳维护，只增不减。
+- symbols upsert、snapshot 幂等、heartbeat 历史记录与账号在线状态缓存。
+- EA v2 探针：首轮补历史、后续增量、5 秒重叠重扫、成交/品种/快照/心跳上传。
+- 网页控制台显示心跳、增量同步点、品种规格数、最新快照净值和成交数。
+- 局域网 HTTPS、防火墙、证书生成脚本、MT5 EA 安装脚本和 WebRequest 白名单脚本。
+
+### 已验证
+
+- FastAPI 临时干净库回归通过。
+- 2 笔成交首次上传、重复上传、增量点推进、symbols、snapshot、heartbeat、401/400 标准错误均通过。
+- `TradeSyncProbeEA.mq5` 通过 MetaEditor：`0 errors, 0 warnings`。
+- EA 已安装到当前机器 MT5 数据目录的 `MQL5\Experts\TradeEZ`。
+
+### 仍待后续
+
+- 用真实 MT5 账号挂载探针做最终真机验证。
+- HMAC 签名尚未实现；当前使用 Bearer Token。
+- 多 Key、Key 轮换和吊销管理尚未产品化。
+- 生产环境应迁移 PostgreSQL，并把单进程内存限流替换为 Redis 等共享限流。
+- 快照净值曲线和 symbols 明细页面尚未做图表化展示。
+- 余额类成交（balance/credit）仍被探针过滤，后续需要单独模型或运营入账流程。
+
+---
+
 检查日期：2026-09-17  
 依据文档：`docs/API_SPECIFICATION_V2(1).md`  
 当前检查对象：本地 FastAPI 最小联调版、连接控制台、`TradeSyncProbeEA`

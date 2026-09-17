@@ -118,8 +118,16 @@ backend/data/dev-codes/latest.json
 2. 绑定 MT5 登录号。
 3. 复制生成的 `sk_live_...` Key；Key 只完整展示一次，丢失后可重置。
 4. MT5 中打开：**工具 → 选项 → EA 交易 → 允许 WebRequest 到以下 URL**。
-5. 添加服务端地址，例如：`https://192.168.31.116:8443`。
-6. 编译或加载 `../ea/TradeSyncProbeEA.mq5`。
+5. 添加服务端地址，例如：`https://192.168.31.116:8443`。MT5 关闭时也可用脚本自动写入白名单（会备份 `common.ini`）：
+```powershell
+# 在项目根目录执行；MT5 必须先关闭
+powershell -ExecutionPolicy Bypass -File .\ea\enable_mt5_webrequest.ps1
+```
+6. 编译或加载 `../ea/TradeSyncProbeEA.mq5`；也可以关闭 MT5 后运行安装脚本，自动复制到 Navigator 的 `Expert Advisors -> TradeEZ` 目录：
+```powershell
+# 在项目根目录执行；MT5 需要先关闭
+powershell -ExecutionPolicy Bypass -File .\ea\install_to_mt5.ps1
+```
 7. 设置 EA 参数：
 
 ```text
@@ -202,14 +210,25 @@ Authorization: Bearer sk_live_...
 
 旧版成交上传路径保留在 `/internal/legacy/ingest/deals`，仅供旧探针兼容。
 
-## 8. 安全说明
+## 8. API v2 自检
+
+修改后端后，可用临时 SQLite 数据库启动一次性完整回归，不会影响现有 `backend/data/tradesync.db`：
+
+```powershell
+cd D:\projects\TradeEZ\EA\TradeSync-Web\backend
+.\venv\Scripts\python.exe .\scripts\v2_smoke_test.py
+```
+
+覆盖内容：最后同步点、两笔成交首次写入、重复幂等、symbols upsert、snapshot、heartbeat、401/400 标准错误和网页账号统计字段。
+
+## 9. 安全说明
 
 - 服务端只保存同步 Key 的 SHA-256 Hash，不保存明文 Key。
 - `dev-sync-key-change-me` 只作为本地开发兼容，并且要求账号已在网页绑定；生产环境必须修改或禁用。
 - `backend/.env`、SQLite 数据库、证书私钥和 `venv/` 均已通过 `.gitignore` 排除。
 - 当前内存限流只适合单进程开发；多进程 / 生产环境应改为 Redis 等共享存储。
 
-## 9. 编译 EA
+## 10. 编译 EA
 
 ```powershell
 $ea='D:\projects\TradeEZ\EA\TradeSync-Web\ea\TradeSyncProbeEA.mq5'
@@ -220,3 +239,6 @@ Get-Content $log -Raw -Encoding Unicode
 ```
 
 当前源码编译目标：`0 errors, 0 warnings`。
+
+
+

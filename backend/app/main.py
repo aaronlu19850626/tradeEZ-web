@@ -244,9 +244,27 @@ def account_to_out(row: sqlite3.Row, db: sqlite3.Connection) -> AccountOut:
         "SELECT COUNT(*) AS deal_count, MAX(deal_time) AS latest_deal_time FROM deals WHERE account_login = ?",
         (row["mt5_login"],),
     ).fetchone()
+    symbol_stats = db.execute(
+        "SELECT COUNT(*) AS symbol_count FROM symbols WHERE account_login = ?",
+        (row["mt5_login"],),
+    ).fetchone()
+    snapshot_stats = db.execute(
+        """
+        SELECT COUNT(*) AS snapshot_count,
+               MAX(timestamp) AS latest_snapshot_time,
+               (SELECT equity FROM snapshots WHERE account_login = ? ORDER BY timestamp DESC LIMIT 1) AS latest_equity
+        FROM snapshots
+        WHERE account_login = ?
+        """,
+        (row["mt5_login"], row["mt5_login"]),
+    ).fetchone()
     data = dict(row)
     data["deal_count"] = int(stats["deal_count"] or 0)
     data["latest_deal_time"] = stats["latest_deal_time"]
+    data["symbol_count"] = int(symbol_stats["symbol_count"] or 0)
+    data["snapshot_count"] = int(snapshot_stats["snapshot_count"] or 0)
+    data["latest_snapshot_time"] = snapshot_stats["latest_snapshot_time"]
+    data["latest_equity"] = snapshot_stats["latest_equity"]
     return AccountOut.model_validate(data)
 
 
