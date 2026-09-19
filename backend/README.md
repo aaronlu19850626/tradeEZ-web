@@ -1,6 +1,6 @@
 # TradeSync-Web 后端（API v2.1 联调版）
 
-当前版本实现 MT5 EA 与 Web 服务之间的 v2.1 同步契约：**UTC 开仓时间游标、HMAC 请求签名、成交入库与游标推进两阶段提交**。
+当前版本按 [SOP v1.03 新接口说明](<../docs/TradeEZ-SOP_数据同步接口说明(1).md>) 对齐：**UTC 平仓成交时间游标、原始 body HMAC、成交入库与游标推进两阶段提交**。具体约定和验证边界见 [对齐记录](../docs/SOP_CONTRACT_ACCEPTANCE.md)。以下旧版接口文档仅作历史参考。
 
 > 权威接口文档：[../docs/API_SPECIFICATION_V2(2).md](../docs/API_SPECIFICATION_V2(2).md)
 > 技术设计：[../docs/DESIGN(1).md](../docs/DESIGN(1).md)
@@ -18,7 +18,7 @@
 - 成交按 `(account_login, ticket)` 幂等，重复上传返回 `duplicates`。
 - 成交上传只入库，不推进 `last_sync_time`。
 - 所有批次成功后，EA 单独调用游标更新接口。
-- 游标只允许单调推进；目标 `open_time` 必须已有服务端接收的成交，否则返回 `409 CURSOR_AHEAD_OF_DATA`。
+- 游标只允许单调推进；目标时间必须已有服务端接收的 OUT 成交 `deal_time`，否则返回 `409 CURSOR_AHEAD_OF_DATA`。
 - 品种规格、账户快照数组、EA 参数配置快照、心跳均使用 v2.1 新路径；心跳额外携带 MT5 服务器时区作为展示元数据。
 - 独立 API 审计日志模块 `app/api_logs.py`：记录接口、账号、结果、订单数量、游标和耗时，不保存订单明细、Key、验证码或令牌。
 - 控制台有效订单数量按不同 `position_id` 统计；订单列表显示订单号、止损、止盈、库存费、佣金和秒级持仓时间。
@@ -63,6 +63,21 @@ TRADESYNC_SYNC_KEY_ENCRYPTION_SECRET=<another-long-random-secret>
 ```text
 http://127.0.0.1:8000/dashboard
 ```
+
+## 3. SQLite 维护
+
+```powershell
+# 快速物理完整性 + 外键一致性检查
+.\venv\Scripts\python.exe scripts\check_database.py data\tradesync.db --quick
+
+# 在线备份已提交数据（API 无需停机），目标文件不能已存在
+.\venv\Scripts\python.exe scripts\backup_database.py data\tradesync.db backups\tradesync-20260919.db
+
+# 恢复到一个新的数据库文件；确认后再修改 TRADESYNC_DB_PATH 并重启 API
+.\venv\Scripts\python.exe scripts\restore_database.py backups\tradesync-20260919.db data\restored.db
+```
+
+恢复或替换数据库前先停止所有 API；不要手工删除正在使用的 `-wal` / `-shm` 文件。
 
 ## 3. 局域网 HTTPS 启动
 

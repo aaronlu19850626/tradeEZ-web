@@ -232,20 +232,20 @@ def main() -> None:
 
             first_deal = deal(1001, base_open)
             status, body = signed_request(api, "/ingest/deals", deals_payload([first_deal]))
-            assert_ok("first deal is inserted", status == 200 and body == {"accepted": 1, "inserted": 1, "duplicates": 0}, body)
+            assert_ok("first deal is inserted", status == 200 and all(body.get(key) == value for key, value in {"accepted": 1, "inserted": 1, "duplicates": 0}.items()), body)
 
             status, body = signed_request(api, "/sync/last_sync_time", account_body)
             assert_ok("deal upload does not advance cursor", status == 200 and body.get("last_sync_time") == 0, body)
 
             status, body = signed_request(api, "/ingest/deals", deals_payload([first_deal]))
-            assert_ok("duplicate ticket is accepted and counted", status == 200 and body == {"accepted": 1, "inserted": 0, "duplicates": 1}, body)
+            assert_ok("duplicate ticket is accepted and counted", status == 200 and all(body.get(key) == value for key, value in {"accepted": 1, "inserted": 0, "duplicates": 1}.items()), body)
 
-            same_second_deals = [first_deal, deal(1002, base_open, comment="TradeEZ-TR")]
+            same_second_deals = [first_deal, deal(1002, base_open - 60, base_open, entry=1, type=1, comment="TradeEZ-TR")]
             status, body = signed_request(api, "/ingest/deals", deals_payload(same_second_deals))
-            assert_ok("two tickets with the same open_time can coexist", status == 200 and body == {"accepted": 2, "inserted": 1, "duplicates": 1}, body)
+            assert_ok("two tickets with the same open_time can coexist", status == 200 and all(body.get(key) == value for key, value in {"accepted": 2, "inserted": 1, "duplicates": 1}.items()), body)
 
             status, body = signed_request(api, "/ingest/deals", deals_payload(same_second_deals))
-            assert_ok("inclusive same-second boundary safely retransmits", status == 200 and body == {"accepted": 2, "inserted": 0, "duplicates": 2}, body)
+            assert_ok("inclusive same-second boundary safely retransmits", status == 200 and all(body.get(key) == value for key, value in {"accepted": 2, "inserted": 0, "duplicates": 2}.items()), body)
 
             status, body = signed_request(
                 api,
@@ -259,14 +259,14 @@ def main() -> None:
                 "/sync/update_last_sync_time",
                 {"mt5_login": MT5_LOGIN, "last_sync_time": base_open},
             )
-            assert_ok("received open_time advances cursor", status == 200 and body == {"last_sync_time": base_open, "updated": True}, body)
+            assert_ok("received OUT deal_time advances cursor", status == 200 and all(body.get(key) == value for key, value in {"last_sync_time": base_open, "updated": True}.items()), body)
 
             status, body = signed_request(
                 api,
                 "/sync/update_last_sync_time",
                 {"mt5_login": MT5_LOGIN, "last_sync_time": base_open - 10},
             )
-            assert_ok("smaller cursor does not move backwards", status == 200 and body == {"last_sync_time": base_open, "updated": False}, body)
+            assert_ok("smaller cursor does not move backwards", status == 200 and all(body.get(key) == value for key, value in {"last_sync_time": base_open, "updated": False}.items()), body)
 
             invalid_batch = deals_payload([deal(9001, base_open), {**deal(9002, base_open), "ticket": 0}])
             status, body = signed_request(api, "/ingest/deals", invalid_batch)
@@ -278,7 +278,7 @@ def main() -> None:
 
             thousand_deals = [deal(400000 + i, base_open - 2000 + (i % 1000)) for i in range(1000)]
             status, body = signed_request(api, "/ingest/deals", deals_payload(thousand_deals))
-            assert_ok("1000 deals can be processed", status == 200 and body == {"accepted": 1000, "inserted": 1000, "duplicates": 0}, body)
+            assert_ok("1000 deals can be processed", status == 200 and all(body.get(key) == value for key, value in {"accepted": 1000, "inserted": 1000, "duplicates": 0}.items()), body)
 
             status, body = signed_request(api, "/sync/last_sync_time", account_body)
             assert_ok("batch upload still does not implicitly move cursor", status == 200 and body.get("last_sync_time") == base_open, body)
@@ -318,7 +318,7 @@ def main() -> None:
                 "symbols": [{"name": "GOLD#", "digits": 2, "point": 0.01, "tick_value": 1.0, "contract_size": 100.0}],
             }
             status, body = signed_request(api, "/ingest/symbols", symbols_body)
-            assert_ok("v2.1 symbols endpoint accepts spec", status == 200 and body == {"accepted": 1}, body)
+            assert_ok("v2.1 symbols endpoint accepts spec", status == 200 and all(body.get(key) == value for key, value in {"accepted": 1}.items()), body)
 
             snapshots_body = {
                 "mt5_login": MT5_LOGIN,
@@ -331,7 +331,7 @@ def main() -> None:
                 }],
             }
             status, body = signed_request(api, "/ingest/snapshots", snapshots_body)
-            assert_ok("v2.1 snapshots array endpoint accepts snapshot", status == 200 and body == {"accepted": 1}, body)
+            assert_ok("v2.1 snapshots array endpoint accepts snapshot", status == 200 and all(body.get(key) == value for key, value in {"accepted": 1}.items()), body)
 
             settings_time = now - 20
             settings_marker = "https://settings.example/private"
@@ -368,8 +368,8 @@ def main() -> None:
             frequent_settings_body["settings"]["scalp"]["sl_points"] = 360
             status, body = signed_request(api, "/ingest/settings", frequent_settings_body)
             assert_ok(
-                "changed settings cannot be stored more than once per hour",
-                status == 429 and body["error"]["code"] == "SETTINGS_TOO_FREQUENT",
+                "manual settings changes are accepted without a one-hour lockout",
+                status == 200,
                 body,
             )
 
@@ -430,11 +430,11 @@ def main() -> None:
                 "dashboard account stats reflect v2.1 data without temporary handshake fields",
                 status == 200
                 and account["deal_count"] == 1004
-                and account["synced_order_count"] == 1002
+                and account["synced_order_count"] == 1001
                 and account["server_gmt_off"] == 10800
                 and account["server_timezone_name"] == "UTC+3"
-                and account["settings_count"] == 1
-                and account["latest_settings_time"] == settings_time
+                and account["settings_count"] == 2
+                and account["latest_settings_time"] == settings_time + 60
                 and account["symbol_count"] == 1
                 and account["snapshot_count"] == 1
                 and "last_deal_handshake_at" not in account,
@@ -479,7 +479,7 @@ def main() -> None:
             assert_ok(
                 "console can read latest EA settings snapshot",
                 status == 200
-                and latest_settings.get("snapshot_time") == settings_time
+                and latest_settings.get("snapshot_time") == settings_time + 60
                 and latest_settings.get("settings", {}).get("sync", {}).get("api_base_url") == settings_marker
                 and latest_settings.get("group_count") == 6
                 and latest_settings.get("key_count") == 14,
@@ -498,7 +498,8 @@ def main() -> None:
                 "order list includes ticket, stop levels, swap, commission and second-level duration",
                 status == 200
                 and closed_order is not None
-                and close_only_order is None
+                and close_only_order is not None
+                and close_only_order.get("reconciliation_status") == "needs_review"
                 and closed_order.get("tp_price") == 2060.0
                 and closed_order.get("swap_total") == -1.0
                 and closed_order.get("commission_total") == -4.5

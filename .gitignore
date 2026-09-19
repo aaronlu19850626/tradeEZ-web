@@ -29,3 +29,33 @@ backend/certs/
 
 # Local uvicorn runtime logs
 backend/*.log
+
+# Test cache
+.pytest_cache/
+
+# Local previews and database backups
+backups/
+frontend/preview*.log
+
+# Environment files (keep .env.example files)
+.env
+.env.*
+!.env.example
+!.env.local.example
+frontend/.env*.local
+
+# Runtime logs anywhere in the repository
+*.log
+*.log.*
+
+# Runtime SQLite data, caches, backups and generated media
+backend/data/
+backend/backups/
+**/.pytest_cache/
+**/.next/
+**/node_modules/
+frontend/media/
+
+# Local agent tooling
+.agents/
+skills-lock.json

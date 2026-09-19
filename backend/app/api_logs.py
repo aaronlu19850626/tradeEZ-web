@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import threading
 import sqlite3
 import time
 
@@ -11,6 +12,8 @@ from .config import get_settings
 from .security import decode_access_token
 
 settings = get_settings()
+
+LOG_WRITE_LOCK = threading.Lock()
 
 API_ACTIONS = {
     "/api/v1/sync/last_sync_time": "query_cursor",
@@ -75,6 +78,15 @@ def _summarize_api_request(path: str, payload: dict | None) -> tuple[int | None,
         summary["settings_groups"] = len(settings_value)
         summary["settings_keys"] = sum(len(group) for group in settings_value.values() if isinstance(group, dict))
 
+    for key in (
+        "sync_run_id", "batch_index", "batch_count", "deal_count",
+    ):
+        if isinstance(payload.get(key), int):
+            summary[key] = int(payload[key])
+    for key in ("batch_id", "instance_id", "protocol_version", "batch_hash"):
+        value = payload.get(key)
+        if isinstance(value, str) and value:
+            summary[key] = value[:120]
     if isinstance(payload.get("last_sync_time"), int):
         summary["last_sync_time"] = int(payload["last_sync_time"])
     if isinstance(payload.get("snapshot_time"), int):
@@ -82,6 +94,7 @@ def _summarize_api_request(path: str, payload: dict | None) -> tuple[int | None,
     if path.endswith("/auth/send-code") or path.endswith("/auth/verify-code"):
         # Never retain email addresses, codes, tokens, or sync keys.
         summary["has_email"] = bool(payload.get("email"))
+        summary["has_phone"] = bool(payload.get("phone"))
         summary["has_code"] = bool(payload.get("code"))
     return mt5_login, summary
 
@@ -92,9 +105,12 @@ def _summarize_api_response(path: str, payload: object) -> tuple[dict, int | Non
     account_id = None
     item_count = None
     scalar_keys = {
-        "last_sync_time", "updated", "accepted", "inserted", "duplicates",
-        "ok", "server_time", "is_new_user", "id", "mt5_login", "deal_count",
-        "synced_order_count", "symbol_count", "snapshot_count", "code", "message",
+        "last_sync_time", "updated", "accepted", "inserted", "updated",
+        "duplicates", "duplicated", "rejected", "pending_cursor",
+        "handshake_confirmed", "batches_received", "batches_expected",
+        "deals_received", "ok", "server_time", "is_new_user", "id",
+        "mt5_login", "deal_count", "synced_order_count", "symbol_count",
+        "snapshot_count", "code", "message",
     }
 
     if isinstance(payload, dict):
@@ -111,10 +127,12 @@ def _summarize_api_response(path: str, payload: object) -> tuple[dict, int | Non
         data = payload.get("data")
         if isinstance(data, dict) and isinstance(data.get("received_at"), int):
             summary["received_at"] = int(data["received_at"])
-        for key in ("deals", "symbols", "snapshots"):
+        for key in ("deals", "symbols", "snapshots", "items"):
             if isinstance(payload.get(key), list):
                 summary[f"{key}_returned"] = len(payload[key])
                 item_count = len(payload[key])
+        if isinstance(payload.get("total"), int):
+            summary["total"] = int(payload["total"])
     elif isinstance(payload, list):
         count = len(payload)
         summary["returned_items"] = count
@@ -219,13 +237,36 @@ def _write_api_log(
         error_message = str(message)[:300] if message else None
 
     created_at = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+    trace_id = request.headers.get("x-request-id") or request.headers.get("x-trace-id")
+    trace_id = trace_id[:80] if trace_id else None
+    sync_run_id = request_summary.get("sync_run_id") if isinstance(request_summary, dict) else None
+    if not isinstance(sync_run_id, int) and isinstance(response_summary, dict):
+        sync_run_id = response_summary.get("sync_run_id")
+    batch_id = request_summary.get("batch_id") if isinstance(request_summary, dict) else None
+    if not isinstance(batch_id, str) and isinstance(response_summary, dict):
+        batch_id = response_summary.get("batch_id")
+
+    def count_value(source: dict, key: str) -> int | None:
+        value = source.get(key)
+        return int(value) if isinstance(value, int) else None
+
+    inserted_count = count_value(response_summary, "inserted")
+    updated_count = count_value(response_summary, "updated")
+    duplicated_count_raw = response_summary.get("duplicates", response_summary.get("duplicated")) if isinstance(response_summary, dict) else None
+    duplicated_count = int(duplicated_count_raw) if isinstance(duplicated_count_raw, int) else None
+    rejected_count = count_value(response_summary, "rejected")
+
     db.execute(
         """
         INSERT INTO api_logs (
             created_at, user_id, account_id, mt5_login, method, path, action,
             status_code, success, duration_ms, item_count, last_sync_time,
-            request_summary, response_summary, error_code, error_message, client_ip
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            request_summary, response_summary, error_code, error_message, client_ip,
+            trace_id, sync_run_id, batch_id, inserted_count, updated_count,
+            duplicated_count, rejected_count
+        ) SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+          WHERE (? IS NULL AND ? IS NULL)
+             OR EXISTS(SELECT 1 FROM accounts WHERE id=? OR mt5_login=?)
         """,
         (
             created_at, user_id, account_id, mt5_login, request.method, path[:250],
@@ -234,6 +275,10 @@ def _write_api_log(
             json.dumps(request_summary, ensure_ascii=False, separators=(",", ":"), sort_keys=True),
             json.dumps(response_summary, ensure_ascii=False, separators=(",", ":"), sort_keys=True),
             error_code, error_message, request.client.host if request.client else None,
+            trace_id, sync_run_id if isinstance(sync_run_id, int) else None,
+            batch_id if isinstance(batch_id, str) else None,
+            inserted_count, updated_count, duplicated_count, rejected_count,
+            account_id, mt5_login, account_id, mt5_login,
         ),
     )
     db.commit()
@@ -243,6 +288,10 @@ class ApiLogMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request, call_next):
         path = request.url.path
         if not path.startswith("/api/"):
+            return await call_next(request)
+        # Binary images must remain streamed/bounded by the attachment endpoint,
+        # never buffered or decoded as JSON by the audit logger.
+        if path.startswith("/api/v1/my/review-attachments/") or (path.startswith("/api/v1/my/reviews/") and path.endswith("/attachments")):
             return await call_next(request)
 
         request_body = await request.body()
@@ -258,14 +307,15 @@ class ApiLogMiddleware(BaseHTTPMiddleware):
         except Exception:
             duration_ms = int((time.perf_counter() - started) * 1000)
             try:
-                _write_api_log(
-                    db=request.app.state.db,
-                    request=request,
-                    request_body=request_body,
-                    response_body=json.dumps({"error": {"code": "INTERNAL_ERROR"}}).encode("utf-8"),
-                    status_code=500,
-                    duration_ms=duration_ms,
-                )
+                with LOG_WRITE_LOCK:
+                    _write_api_log(
+                        db=request.app.state.db,
+                        request=request,
+                        request_body=request_body,
+                        response_body=json.dumps({"error": {"code": "INTERNAL_ERROR"}}).encode("utf-8"),
+                        status_code=500,
+                        duration_ms=duration_ms,
+                    )
             except Exception:
                 pass
             raise
@@ -277,14 +327,15 @@ class ApiLogMiddleware(BaseHTTPMiddleware):
         duration_ms = int((time.perf_counter() - started) * 1000)
 
         try:
-            _write_api_log(
-                db=request.app.state.db,
-                request=request,
-                request_body=request_body,
-                response_body=response_body,
-                status_code=response.status_code,
-                duration_ms=duration_ms,
-            )
+            with LOG_WRITE_LOCK:
+                _write_api_log(
+                    db=request.app.state.db,
+                    request=request,
+                    request_body=request_body,
+                    response_body=response_body,
+                    status_code=response.status_code,
+                    duration_ms=duration_ms,
+                )
         except Exception as exc:
             print(f"[api-logs] failed to write audit log: {exc}")
 

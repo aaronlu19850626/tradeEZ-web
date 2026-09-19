@@ -1,6 +1,8 @@
 from functools import lru_cache
+from typing import Literal
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import Field, model_validator
 
 
 class Settings(BaseSettings):
@@ -15,15 +17,48 @@ class Settings(BaseSettings):
     # Used to encrypt the recoverable sync secret required for HMAC verification.
     sync_key_encryption_secret: str = ""
     access_token_ttl_hours: int = 24 * 7
-    email_provider: str = "console"  # console | smtp
-    code_ttl_seconds: int = 600
-    code_cooldown_seconds: int = 60
-    code_max_per_hour: int = 5
+    email_provider: Literal["console", "smtp"] = "console"
+    environment: Literal["development", "test", "production"] = "development"
+    auth_test_mode: bool = False
+    sms_provider: Literal["disabled", "aliyun"] = "disabled"
+    aliyun_access_key_id: str = Field(default="", repr=False)
+    aliyun_access_key_secret: str = Field(default="", repr=False)
+    aliyun_sms_sign_name: str = ""
+    aliyun_sms_template_code: str = ""
+    aliyun_sms_code_param: str = Field(default="code", pattern=r"^[A-Za-z][A-Za-z0-9_]{0,31}$")
+    code_max_per_ip_hour: int = Field(default=30, ge=1)
+    code_max_total_per_day: int = Field(default=1000, ge=1)
+    code_ttl_seconds: int = Field(default=600, ge=60, le=1800)
+    code_cooldown_seconds: int = Field(default=60, ge=30)
+    code_max_per_hour: int = Field(default=5, ge=1, le=20)
+    dev_fixed_login_code: str = Field(default="", pattern=r"^(|[0-9]{6})$", repr=False)
+
+    @model_validator(mode="after")
+    def fixed_code_is_console_only(self):
+        if self.dev_fixed_login_code and self.email_provider != "console":
+            raise ValueError("Fixed test login codes require email_provider=console")
+        if self.dev_fixed_login_code not in ("", "123456"):
+            raise ValueError("The legacy test code must be 123456; use AUTH_TEST_MODE instead")
+        if self.environment == "production":
+            if self.auth_test_mode or self.dev_fixed_login_code:
+                raise ValueError("Production forbids fixed verification codes")
+            if self.email_provider != "smtp" or self.sms_provider != "aliyun":
+                raise ValueError("Production requires SMTP and Aliyun SMS")
+            if not all((self.smtp_host, self.smtp_from_email, self.aliyun_access_key_id,
+                        self.aliyun_access_key_secret, self.aliyun_sms_sign_name, self.aliyun_sms_template_code)):
+                raise ValueError("Production email/SMS configuration is incomplete")
+            if not (self.smtp_ssl or self.smtp_starttls):
+                raise ValueError("Production SMTP requires TLS")
+        return self
+
+    @property
+    def test_codes_enabled(self) -> bool:
+        return self.environment != "production" and (self.auth_test_mode or bool(self.dev_fixed_login_code))
 
     smtp_host: str = ""
     smtp_port: int = 587
     smtp_username: str = ""
-    smtp_password: str = ""
+    smtp_password: str = Field(default="", repr=False)
     smtp_from_email: str = ""
     smtp_from_name: str = "TradeSync"
     smtp_starttls: bool = True

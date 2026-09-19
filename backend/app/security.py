@@ -31,7 +31,6 @@ def create_access_token(user: sqlite3.Row, settings: Settings) -> str:
     header = {"alg": "HS256", "typ": "JWT"}
     payload = {
         "sub": str(user["id"]),
-        "email": user["email"],
         "iat": now,
         "exp": now + settings.access_token_ttl_hours * 3600,
     }
@@ -77,7 +76,7 @@ def get_current_user(
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing user token")
 
     payload = decode_access_token(credentials.credentials, settings)
-    user = db.execute("SELECT id, email, created_at, last_login_at FROM users WHERE id = ?", (payload.get("sub"),)).fetchone()
+    user = db.execute("SELECT id, email, phone, created_at, last_login_at FROM users WHERE id = ?", (payload.get("sub"),)).fetchone()
     if user is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User no longer exists")
     return user

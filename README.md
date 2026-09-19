@@ -1,6 +1,6 @@
 # TradeSync-Web / TradeEZ-web
 
-TradeSync-Web 是 TradeEZ 的 MT5 交易数据同步 Web 服务。当前阶段以 **API v2.1（UTC 开仓时间游标 / HMAC / 两阶段提交）** 为准，先打通 EA 与服务端的安全通信、成交同步、品种规格、账户快照和心跳。
+TradeSync-Web 是 TradeEZ 的 MT5 交易数据同步 Web 服务。当前以 [SOP v1.03 新接口说明](<docs/TradeEZ-SOP_数据同步接口说明(1).md>) 为准：UTC 平仓成交时间游标、原始 body HMAC、先保存再提交游标。实现与验收边界见 [对齐记录](docs/SOP_CONTRACT_ACCEPTANCE.md)。
 
 ## 当前能力
 
@@ -14,7 +14,7 @@ TradeSync-Web 是 TradeEZ 的 MT5 交易数据同步 Web 服务。当前阶段�
   - 成交时间、开仓时间、快照时间统一转换为 Unix UTC 秒。
   - `server_gmt_off` 固定传 `0`。
   - 先查 `last_sync_time`，再批量上传成交，全部批次成功后单独推进游标。
-  - 使用包含式边界 `open_time >= last_sync_time`，重复成交按 ticket 幂等。
+  - 按 OUT 的 `deal_time >= last_sync_time` 选择目标持仓，重复成交按账号和 ticket 幂等。
   - 单批最多 1000 条，EA 默认 100 条。
   - 支持品种规格、复数快照数组和携带 MT5 服务器时区的心跳。
 - 独立 API 审计日志模块：只记录接口、账号、结果、数量、游标和耗时，不保存订单明细。
@@ -23,7 +23,7 @@ TradeSync-Web 是 TradeEZ 的 MT5 交易数据同步 Web 服务。当前阶段�
 
 ## 最新需求文档
 
-以以下两份最新文档为准：
+当前接口以 [新说明](<docs/TradeEZ-SOP_数据同步接口说明(1).md>) 为准。以下为旧设计参考，冲突时采用新说明：
 
 - [API 规范 v2.1](<docs/API_SPECIFICATION_V2(2).md>)
 - [技术设计 v1.0 / v2.1 同步契约](<docs/DESIGN(1).md>)
@@ -34,7 +34,7 @@ TradeSync-Web 是 TradeEZ 的 MT5 交易数据同步 Web 服务。当前阶段�
 
 | 方法 | 路径 | 用途 |
 |---|---|---|
-| POST | `/api/v1/sync/last_sync_time` | 查询最后确认的 UTC 开仓时间游标 |
+| POST | `/api/v1/sync/last_sync_time` | 查询最后确认的 OUT 成交 UTC 秒游标 |
 | POST | `/api/v1/ingest/deals` | 批量成交入库，最多 1000 条，不推进游标 |
 | POST | `/api/v1/sync/update_last_sync_time` | 全部批次成功后推进开仓时间游标 |
 | POST | `/api/v1/ingest/symbols` | 上传品种规格 |
