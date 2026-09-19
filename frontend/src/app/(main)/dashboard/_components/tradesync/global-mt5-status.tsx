@@ -63,7 +63,7 @@ export function GlobalMt5Status() {
 
   return (
     <div
-      className="hidden items-center gap-1.5 rounded-md border px-2 py-1 text-xs text-muted-foreground md:flex"
+      className="hidden h-9 min-h-9 items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm text-muted-foreground md:flex"
       title={timezones.length > 1 ? timezones.join("、") : timezone}
     >
       <Globe className="size-3.5" />

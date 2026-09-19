@@ -1,58 +1,14 @@
 "use client";
-
-import Link from "next/link";
-
-import { Command } from "lucide-react";
-import { useShallow } from "zustand/react/shallow";
-
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-} from "@/components/ui/sidebar";
-import { APP_CONFIG } from "@/config/app-config";
+import { Sidebar, SidebarContent, SidebarFooter } from "@/components/ui/sidebar";
 import { sidebarItems } from "@/navigation/sidebar/sidebar-items";
-import { usePreferencesStore } from "@/stores/preferences/preferences-provider";
-
 import { TradeezNavUser } from "../tradesync/tradeez-nav-user";
 import { NavMain } from "./nav-main";
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { sidebarVariant, sidebarCollapsible, isSynced } = usePreferencesStore(
-    useShallow((s) => ({
-      sidebarVariant: s.values.sidebar_variant,
-      sidebarCollapsible: s.values.sidebar_collapsible,
-      isSynced: s.isSynced,
-    })),
-  );
-
-  const variant = isSynced ? sidebarVariant : props.variant;
-  const collapsible = isSynced ? sidebarCollapsible : props.collapsible;
-
+export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
   return (
-    <Sidebar {...props} variant={variant} collapsible={collapsible}>
-      <SidebarHeader>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild>
-              <Link prefetch={false} href="/dashboard/today">
-                <Command />
-                <span className="font-semibold text-base">{APP_CONFIG.name}</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarHeader>
-      <SidebarContent>
-        <NavMain items={sidebarItems} />
-      </SidebarContent>
-      <SidebarFooter>
-        <TradeezNavUser />
-      </SidebarFooter>
+    <Sidebar {...props} variant="sidebar" collapsible="icon" className="top-16! h-[calc(100svh-4rem)]! border-0! group-data-[collapsible=icon]:[&_[data-slot=sidebar-menu-button]]:mx-auto">
+      <SidebarContent><NavMain items={sidebarItems} /></SidebarContent>
+      <SidebarFooter><TradeezNavUser /></SidebarFooter>
     </Sidebar>
   );
 }

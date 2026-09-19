@@ -1,9 +1,9 @@
 # TradeSync-Web 后端（API v2.1 联调版）
 
-当前版本按 [SOP v1.03 新接口说明](<../docs/TradeEZ-SOP_数据同步接口说明(1).md>) 对齐：**UTC 平仓成交时间游标、原始 body HMAC、成交入库与游标推进两阶段提交**。具体约定和验证边界见 [对齐记录](../docs/SOP_CONTRACT_ACCEPTANCE.md)。以下旧版接口文档仅作历史参考。
+当前版本按 [SOP v1.03 新接口说明](<../docs/TradeEZ-SOP数据同步接口说明.md>) 对齐：**UTC 平仓成交时间游标、原始 body HMAC、成交入库与游标推进两阶段提交**。具体约定和验证边界见 [对齐记录](../docs/SOP契约验收.md)。以下旧版接口文档仅作历史参考。
 
-> 权威接口文档：[../docs/API_SPECIFICATION_V2(2).md](../docs/API_SPECIFICATION_V2(2).md)
-> 技术设计：[../docs/DESIGN(1).md](../docs/DESIGN(1).md)
+> 权威接口文档：[../docs/API规范V2-副本2.md](../docs/API规范V2-副本2.md)
+> 技术设计：[../docs/设计说明-副本1.md](../docs/设计说明-副本1.md)
 
 ## 已实现
 

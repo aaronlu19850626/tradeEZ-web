@@ -56,13 +56,9 @@ export function ThemeBootScript() {
           root.setAttribute(definition.attribute, value);
         });
 
-        var mode = preferences.theme_mode;
-        var resolvedMode =
-          mode === "system" && window.matchMedia
-            ? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
-            : mode === "dark"
-              ? "dark"
-              : "light";
+        // TradeEZ uses one fixed light workspace theme. The preference key remains
+        // readable for compatibility, but persisted dark values are intentionally ignored.
+        var resolvedMode = "light";
 
         root.classList.toggle("dark", resolvedMode === "dark");
         root.style.colorScheme = resolvedMode;

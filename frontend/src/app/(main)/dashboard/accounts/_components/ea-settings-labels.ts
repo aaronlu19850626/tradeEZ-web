@@ -1,4 +1,4 @@
-// Display metadata from docs/TradeEZ-SOP_数据同步接口说明(1).md. Never rename protocol keys.
+// Display metadata from docs/TradeEZ-SOP数据同步接口说明.md. Never rename protocol keys.
 export const EA_GROUP_LABELS: Record<string, string> = {
   "basic": "基础设置",
   "risk": "风险控制",

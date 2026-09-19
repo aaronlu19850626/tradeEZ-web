@@ -2,11 +2,6 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
-/* Theme preset styles: these override CSS variables based on the selected data-theme-preset */
-@import "../styles/presets/brutalist.css";
-@import "../styles/presets/soft-pop.css";
-@import "../styles/presets/tangerine.css";
-
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
@@ -48,83 +43,88 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
-  --font-heading: var(--font-sans);
-  --font-sans: var(--font-sans);
+  --color-profit: var(--profit);
+  --color-loss: var(--loss);
+  --color-warning: var(--warning);
+  --font-heading: var(--app-font-sans);
+  --font-sans: var(--app-font-sans);
 }
 
-/* Default theme styles (used when no data-theme-preset is set or when 'default' is selected).
-These serve as the fallback; there is no separate default.css file. */
 :root {
-  --radius: 0.625rem;
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
-
-  /* fonts */
-  --font-sans: var(--font-geist);
-  --font-mono: var(--font-geist-mono);
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
+  --radius: 0.75rem;
+  --background: var(--color-zinc-50);
+  --foreground: var(--color-zinc-900);
+  --card: var(--color-white);
+  --card-foreground: var(--color-zinc-900);
+  --popover: var(--color-white);
+  --popover-foreground: var(--color-zinc-900);
+  --primary: #6b4fc4;
+  --primary-foreground: var(--color-white);
+  --secondary: var(--color-zinc-100);
+  --secondary-foreground: var(--color-zinc-900);
+  --muted: var(--color-zinc-100);
+  --muted-foreground: var(--color-zinc-600);
+  --accent: var(--color-zinc-100);
+  --accent-foreground: var(--color-zinc-900);
+  --destructive: var(--color-rose-700);
+  --border: var(--color-zinc-200);
+  --input: var(--color-zinc-300);
+  --ring: #8065d6;
+  --chart-1: var(--color-blue-600);
+  --chart-2: var(--color-emerald-600);
+  --chart-3: var(--color-amber-600);
+  --chart-4: var(--color-violet-600);
+  --chart-5: var(--color-cyan-600);
+  --profit: var(--color-emerald-700);
+  --loss: var(--color-rose-700);
+  --warning: var(--color-amber-700);
+  --sidebar: #1e0b3a;
+  --sidebar-foreground: #f7f3ff;
+  --sidebar-primary: #6b4fc4;
+  --sidebar-primary-foreground: var(--color-white);
+  --sidebar-accent: #30204d;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #35204f;
+  --sidebar-ring: #8065d6;
+  --app-font-sans: Arial, "Microsoft YaHei", "PingFang SC", system-ui, sans-serif;
+  --app-font-mono: "Cascadia Mono", "SFMono-Regular", Consolas, monospace;
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --background: var(--color-zinc-950);
+  --foreground: var(--color-zinc-100);
+  --card: var(--color-zinc-900);
+  --card-foreground: var(--color-zinc-100);
+  --popover: var(--color-zinc-900);
+  --popover-foreground: var(--color-zinc-100);
+  --primary: var(--color-blue-600);
+  --primary-foreground: var(--color-white);
+  --secondary: var(--color-zinc-800);
+  --secondary-foreground: var(--color-zinc-100);
+  --muted: var(--color-zinc-800);
+  --muted-foreground: var(--color-zinc-400);
+  --accent: var(--color-zinc-800);
+  --accent-foreground: var(--color-zinc-100);
+  --destructive: var(--color-rose-400);
+  --border: var(--color-zinc-800);
+  --input: var(--color-zinc-700);
+  --ring: var(--color-blue-500);
+  --chart-1: var(--color-blue-500);
+  --chart-2: var(--color-emerald-400);
+  --chart-3: var(--color-amber-400);
+  --chart-4: var(--color-violet-400);
+  --chart-5: var(--color-cyan-400);
+  --profit: var(--color-emerald-400);
+  --loss: var(--color-rose-400);
+  --warning: var(--color-amber-400);
+  --sidebar: var(--color-zinc-900);
+  --sidebar-foreground: var(--color-zinc-100);
+  --sidebar-primary: var(--color-blue-600);
+  --sidebar-primary-foreground: var(--color-white);
+  --sidebar-accent: var(--color-zinc-800);
+  --sidebar-accent-foreground: var(--color-zinc-100);
+  --sidebar-border: var(--color-zinc-800);
+  --sidebar-ring: var(--color-blue-500);
 }
 
 @layer base {
@@ -134,103 +134,110 @@ These serve as the fallback; there is no separate default.css file. */
 
   body {
     @apply bg-background text-foreground;
-    font-family: var(--font-sans), system-ui, sans-serif;
+    font-family: var(--app-font-sans);
+    font-size: 15px;
+    font-variant-numeric: tabular-nums;
   }
   html {
     @apply font-sans;
   }
-}
 
-@layer utilities {
-  [data-theme-preset]:not([data-theme-preset="default"]) .shadow-2xs {
-    box-shadow: var(--shadow-2xs);
-  }
-
-  [data-theme-preset]:not([data-theme-preset="default"]) .shadow-xs {
-    box-shadow: var(--shadow-xs);
+  /* Global readability baseline: keep the existing layout, but give text and controls
+     enough visual weight for a dense trading workbench. */
+  [data-slot="button"] {
+    min-height: 2.25rem;
+    font-size: 0.9375rem;
   }
 
-  [data-theme-preset]:not([data-theme-preset="default"]) .shadow-sm {
-    box-shadow: var(--shadow-sm);
+  /* Make interactive controls consistently discoverable across every module. */
+  a[href],
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  label:has(input[type="file"]) {
+    cursor: pointer;
   }
 
-  [data-theme-preset]:not([data-theme-preset="default"]) .shadow {
-    box-shadow: var(--shadow);
+  [data-slot="button"][data-size="sm"] {
+    min-height: 2.5rem;
+    font-size: 0.875rem;
   }
 
-  [data-theme-preset]:not([data-theme-preset="default"]) .shadow-md {
-    box-shadow: var(--shadow-md);
+  [data-slot="card-header"] {
+    padding-block: 0.75rem;
   }
 
-  [data-theme-preset]:not([data-theme-preset="default"]) .shadow-lg {
-    box-shadow: var(--shadow-lg);
+  [data-slot="button"][data-size="lg"] {
+    min-height: 2.5rem;
   }
 
-  [data-theme-preset]:not([data-theme-preset="default"]) .shadow-xl {
-    box-shadow: var(--shadow-xl);
+  [data-slot="button"][data-size="icon"],
+  [data-slot="button"][data-size="icon-sm"] {
+    min-height: 2rem;
   }
 
-  [data-theme-preset]:not([data-theme-preset="default"]) .shadow-2xl {
-    box-shadow: var(--shadow-2xl);
+  [data-slot="button"][data-size="icon-xs"] {
+    min-height: 1.75rem;
   }
 
-  html[data-font="inter"] body {
-    --font-sans: var(--font-inter);
-  }
-  html[data-font="notoSans"] body {
-    --font-sans: var(--font-noto-sans);
-  }
-  html[data-font="nunitoSans"] body {
-    --font-sans: var(--font-nunito-sans);
-  }
-  html[data-font="figtree"] body {
-    --font-sans: var(--font-figtree);
-  }
-  html[data-font="roboto"] body {
-    --font-sans: var(--font-roboto);
-  }
-  html[data-font="geist"] body {
-    --font-sans: var(--font-geist);
-  }
-  html[data-font="raleway"] body {
-    --font-sans: var(--font-raleway);
-  }
-  html[data-font="dmSans"] body {
-    --font-sans: var(--font-dm-sans);
-  }
-  html[data-font="publicSans"] body {
-    --font-sans: var(--font-public-sans);
-  }
-  html[data-font="outfit"] body {
-    --font-sans: var(--font-outfit);
-  }
-  html[data-font="geistMono"] body {
-    --font-sans: var(--font-geist-mono);
-  }
-  html[data-font="geistPixelSquare"] body {
-    --font-sans: var(--font-geist-pixel-square);
-  }
-  html[data-font="jetBrainsMono"] body {
-    --font-sans: var(--font-jetbrains-mono);
-  }
-  html[data-font="notoSerif"] body {
-    --font-sans: var(--font-noto-serif);
-  }
-  html[data-font="robotoSlab"] body {
-    --font-sans: var(--font-roboto-slab);
-  }
-  html[data-font="merriweather"] body {
-    --font-sans: var(--font-merriweather);
-  }
-  html[data-font="lora"] body {
-    --font-sans: var(--font-lora);
-  }
-  html[data-font="playfairDisplay"] body {
-    --font-sans: var(--font-playfair-display);
+  [data-slot="button"][data-size="icon-lg"] {
+    min-height: 2.25rem;
   }
 
-  html body:has([data-landing-page]) {
-    --font-sans: var(--font-geist);
+  [data-slot="input"],
+  [data-slot="textarea"],
+  [data-slot="select-trigger"] {
+    min-height: 2.5rem;
+    font-size: 0.9375rem;
+  }
+
+  table {
+    font-size: 0.9375rem;
+  }
+
+  /* Global analytics surface: quiet panels, lavender table headers, and clear data hierarchy. */
+  [data-slot="card"] {
+    border: 0 !important;
+    box-shadow: 0 3px 14px rgb(32 20 61 / 8%) !important;
+  }
+
+  [data-slot="card-title"] {
+    color: var(--foreground);
+    font-size: 0.9375rem;
+    font-weight: 650;
+  }
+
+  [data-slot="card-content"] {
+    line-height: 1.45;
+  }
+
+  [data-slot="card-content"].metric-value,
+  [data-slot="card-title"].metric-value {
+    font-size: 1.875rem;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    transform: translateY(-0.2rem);
+  }
+
+  [data-slot="table-header"] {
+    background: #efedf8;
+  }
+
+  [data-slot="table-head"] {
+    color: #3f365d;
+    font-size: 0.875rem;
+    font-weight: 650;
+  }
+
+  [data-slot="table-cell"] {
+    border-color: #e8e5f0;
+  }
+
+  .text-xs {
+    font-size: 0.8125rem;
+  }
+
+  .account-center-card [data-slot="table-container"] {
+    overflow: visible;
   }
 }
 
@@ -284,5 +291,61 @@ html {
   [data-print-root] [data-print-paper] * {
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
+  }
+}
+/* Collapsing navigation releases width to the header and page workspace. */
+@media (min-width: 768px) {
+  [data-slot="sidebar"][data-state="collapsed"] ~ [data-slot="sidebar-inset"] > header,
+  [data-slot="sidebar"][data-state="collapsed"] ~ [data-slot="sidebar-inset"] > [data-slot="dashboard-workspace"],
+  [data-slot="sidebar"][data-state="collapsed"] ~ [data-slot="sidebar-inset"] > [data-slot="dashboard-workspace"] > * {
+    width: 100%;
+    max-width: none !important;
+  }
+}
+.tradeez-topbar-controls > button,
+.tradeez-topbar-controls > div > div {
+  background: var(--sidebar-accent);
+  color: var(--sidebar-foreground);
+  border-color: var(--sidebar-border);
+}
+
+.tradeez-topbar-controls > button:hover {
+  background: var(--sidebar);
+}
+
+.tradeez-shell [data-collapsible="icon"] [data-slot="sidebar-footer"] [data-sidebar="menu-button"] {
+  margin-inline: auto;
+  padding: 0 !important;
+  justify-content: center;
+  gap: 0;
+}
+
+.tradeez-shell [data-collapsible="icon"] [data-slot="sidebar-footer"] [data-sidebar="menu-button"] > .grid,
+.tradeez-shell [data-collapsible="icon"] [data-slot="sidebar-footer"] [data-sidebar="menu-button"] > svg {
+  display: none;
+}
+
+.tradeez-shell [data-collapsible="icon"] [data-slot="sidebar-footer"] [data-slot="avatar"] {
+  flex-shrink: 0;
+}
+
+/* Keep navigation and the released workspace moving together. */
+.tradeez-shell [data-slot="sidebar-gap"],
+.tradeez-shell [data-slot="sidebar-container"],
+.tradeez-shell [data-slot="sidebar-menu-button"] {
+  transition-duration: 320ms;
+  transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.tradeez-shell [data-slot="dashboard-workspace"] > * {
+  width: 100%;
+  max-width: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tradeez-shell [data-slot="sidebar-gap"],
+  .tradeez-shell [data-slot="sidebar-container"],
+  .tradeez-shell [data-slot="sidebar-menu-button"] {
+    transition-duration: 0ms;
   }
 }

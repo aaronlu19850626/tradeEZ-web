@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowRight, Link2, RefreshCw } from "lucide-react";
+import { ArrowRight, CircleHelp, Link2, RefreshCw } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   api,
   type Account,
@@ -168,8 +169,8 @@ function Metric({ title, value, hint }: { title: string; value: string | number;
   return (
     <Card>
       <CardHeader>
-        <CardDescription>{title}</CardDescription>
-        <CardTitle className="line-clamp-2 text-2xl">{value}</CardTitle>
+        <CardDescription className="flex items-center gap-1">{title}<Tooltip><TooltipTrigger asChild><button type="button" className="text-muted-foreground/70 hover:text-foreground" aria-label={`${title}说明`}><CircleHelp className="size-3.5" /></button></TooltipTrigger><TooltipContent>{hint}</TooltipContent></Tooltip></CardDescription>
+        <CardTitle className="metric-value line-clamp-2">{value}</CardTitle>
       </CardHeader>
       <CardContent className="text-muted-foreground text-xs">{hint}</CardContent>
     </Card>

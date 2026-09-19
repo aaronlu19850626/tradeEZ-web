@@ -1,6 +1,8 @@
 # TradeSync-Web / TradeEZ-web
 
-TradeSync-Web 是 TradeEZ 的 MT5 交易数据同步 Web 服务。当前以 [SOP v1.03 新接口说明](<docs/TradeEZ-SOP_数据同步接口说明(1).md>) 为准：UTC 平仓成交时间游标、原始 body HMAC、先保存再提交游标。实现与验收边界见 [对齐记录](docs/SOP_CONTRACT_ACCEPTANCE.md)。
+新电脑 / Codex 接手请先阅读 [迁移与接手指南](docs/迁移与接手指南.md) 和 [项目文档索引](docs/项目文档索引.md)。当前前端已确认，下一步开发交易账户模块后台接口、真实联调与测试。
+
+TradeSync-Web 是 TradeEZ 的 MT5 交易数据同步 Web 服务。当前以 [SOP v1.03 新接口说明](<docs/TradeEZ-SOP数据同步接口说明.md>) 为准：UTC 平仓成交时间游标、原始 body HMAC、先保存再提交游标。实现与验收边界见 [对齐记录](docs/SOP契约验收.md)。
 
 ## 当前能力
 
@@ -23,10 +25,10 @@ TradeSync-Web 是 TradeEZ 的 MT5 交易数据同步 Web 服务。当前以 [SOP
 
 ## 最新需求文档
 
-当前接口以 [新说明](<docs/TradeEZ-SOP_数据同步接口说明(1).md>) 为准。以下为旧设计参考，冲突时采用新说明：
+当前接口以 [新说明](<docs/TradeEZ-SOP数据同步接口说明.md>) 为准。以下为旧设计参考，冲突时采用新说明：
 
-- [API 规范 v2.1](<docs/API_SPECIFICATION_V2(2).md>)
-- [技术设计 v1.0 / v2.1 同步契约](<docs/DESIGN(1).md>)
+- [API 规范 v2.1](<docs/API规范V2-副本2.md>)
+- [技术设计 v1.0 / v2.1 同步契约](<docs/设计说明-副本1.md>)
 
 旧文档和临时握手设计仅用于历史参考，不再作为 EA 对接契约。
 

@@ -38,7 +38,7 @@
 ---
 
 检查日期：2026-09-17  
-依据文档：`docs/API_SPECIFICATION_V2(1).md`  
+依据文档：`docs/API规范V2-副本1.md`
 当前检查对象：本地 FastAPI 最小联调版、连接控制台、`TradeSyncProbeEA`
 
 ---
