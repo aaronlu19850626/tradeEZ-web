@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-import sqlite3
+from app.db import DBConnection, DBRow
+
 from fastapi import APIRouter, Depends, Query
 from ..db import get_db
 from ..security import get_current_user
@@ -18,8 +19,8 @@ def deal_detail(
     ticket: int,
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
-    db: sqlite3.Connection = Depends(get_db),
-    user: sqlite3.Row = Depends(get_current_user),
+    db: DBConnection = Depends(get_db),
+    user: DBRow = Depends(get_current_user),
 ) -> DealDetailOut:
     return service.deal_detail(account_id, ticket, page, page_size, db, user)
 
@@ -36,8 +37,8 @@ def my_raw_deals(
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=200),
     sort: str = Query("deal_time_desc", pattern="^(deal_time_desc|deal_time_asc|open_time_desc|open_time_asc|ticket_desc|ticket_asc)$"),
-    db: sqlite3.Connection = Depends(get_db),
-    user: sqlite3.Row = Depends(get_current_user),
+    db: DBConnection = Depends(get_db),
+    user: DBRow = Depends(get_current_user),
 ) -> RawDealPageOut:
     return service.my_raw_deals(account_id, ticket, position_id, order_id, symbol, entry, start_time, end_time, page, page_size, sort, db, user)
 
@@ -46,8 +47,8 @@ def my_raw_deals(
 def my_account_deals(
     account_id: int,
     limit: int = Query(100, ge=1, le=500),
-    db: sqlite3.Connection = Depends(get_db),
-    user: sqlite3.Row = Depends(get_current_user),
+    db: DBConnection = Depends(get_db),
+    user: DBRow = Depends(get_current_user),
 ) -> list[DealOut]:
     return service.my_account_deals(account_id, limit, db, user)
 
@@ -56,8 +57,8 @@ def my_account_deals(
 def my_account_settings(
     account_id: int,
     limit: int = Query(20, ge=1, le=100),
-    db: sqlite3.Connection = Depends(get_db),
-    user: sqlite3.Row = Depends(get_current_user),
+    db: DBConnection = Depends(get_db),
+    user: DBRow = Depends(get_current_user),
 ) -> list[EaSettingsSnapshotOut]:
     return service.my_account_settings(account_id, limit, db, user)
 

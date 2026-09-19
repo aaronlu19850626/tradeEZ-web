@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+from app.db import DBConnection
+
 import json
 import threading
-import sqlite3
 import time
 
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -165,7 +166,7 @@ def _extract_path_account_id(path: str) -> int | None:
 
 def _write_api_log(
     *,
-    db: sqlite3.Connection,
+    db: DBConnection,
     request,
     request_body: bytes,
     response_body: bytes,
@@ -265,7 +266,7 @@ def _write_api_log(
             trace_id, sync_run_id, batch_id, inserted_count, updated_count,
             duplicated_count, rejected_count
         ) SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
-          WHERE (? IS NULL AND ? IS NULL)
+          WHERE (?::integer IS NULL AND ?::bigint IS NULL)
              OR EXISTS(SELECT 1 FROM accounts WHERE id=? OR mt5_login=?)
         """,
         (

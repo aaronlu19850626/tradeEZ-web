@@ -1,6 +1,6 @@
+from app.db import DBConnection
 import hashlib
 import json
-import sqlite3
 from datetime import date, datetime, timedelta, timezone
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
@@ -87,7 +87,7 @@ def review_out(row, current):
 
 
 @router.get("/daily-review")
-def get_daily_review(account_id: int = Query(gt=0), review_date: date = Query(), timezone_name: str = Query("Asia/Shanghai", alias="timezone"), db: sqlite3.Connection = Depends(get_db), user=Depends(get_current_user)):
+def get_daily_review(account_id: int = Query(gt=0), review_date: date = Query(), timezone_name: str = Query("Asia/Shanghai", alias="timezone"), db: DBConnection = Depends(get_db), user=Depends(get_current_user)):
     if db.execute("SELECT 1 FROM accounts WHERE id=? AND user_id=?", (account_id, user["id"])).fetchone() is None: raise HTTPException(404, "账户不存在")
     try: ZoneInfo(timezone_name)
     except ZoneInfoNotFoundError: raise HTTPException(422, "无效时区")
@@ -97,7 +97,7 @@ def get_daily_review(account_id: int = Query(gt=0), review_date: date = Query(),
 
 
 @router.put("/daily-review")
-def save_daily_review(payload: DailyReviewInput, complete: bool = Query(False), db: sqlite3.Connection = Depends(get_db), user=Depends(get_current_user)):
+def save_daily_review(payload: DailyReviewInput, complete: bool = Query(False), db: DBConnection = Depends(get_db), user=Depends(get_current_user)):
     if db.execute("SELECT 1 FROM accounts WHERE id=? AND user_id=?", (payload.account_id, user["id"])).fetchone() is None: raise HTTPException(404, "账户不存在")
     if complete and (not payload.data_reviewed or not all((payload.plan_difference, payload.execution_review, payload.keep_behavior, payload.main_problem)) or not (payload.next_action or payload.no_new_action)):
         raise HTTPException(400, "提交日总结前请核对汇总、回答必答问题并明确下一步行动")

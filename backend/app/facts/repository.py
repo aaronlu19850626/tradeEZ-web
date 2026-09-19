@@ -1,18 +1,19 @@
 from __future__ import annotations
 
-import sqlite3
+from app.db import DBConnection, DBRow
 
 
-def deal_by_ticket(db: sqlite3.Connection, account_login: int, ticket: int) -> sqlite3.Row | None:
+
+def deal_by_ticket(db: DBConnection, account_login: int, ticket: int) -> DBRow | None:
     return db.execute(
         "SELECT * FROM deals WHERE account_login=? AND ticket=?", (account_login, ticket)
     ).fetchone()
 
 
 def source_batches(
-    db: sqlite3.Connection, account_id: int, account_login: int,
+    db: DBConnection, account_id: int, account_login: int,
     ticket: int, page: int, page_size: int,
-) -> tuple[list[sqlite3.Row], int]:
+) -> tuple[list[DBRow], int]:
     where = "b.account_id=? AND r.account_login=? AND r.deal_ticket=?"
     params = (account_id, account_login, ticket)
     total = db.execute(
@@ -28,7 +29,7 @@ def source_batches(
 
 
 def raw_deals(
-    db: sqlite3.Connection,
+    db: DBConnection,
     user_id: int,
     account_login: int | None,
     ticket: int | None,
@@ -41,7 +42,7 @@ def raw_deals(
     page: int,
     page_size: int,
     sort: str,
-) -> tuple[list[sqlite3.Row], int]:
+) -> tuple[list[DBRow], int]:
     where = ["d.account_login IN (SELECT mt5_login FROM accounts WHERE user_id = ?)"]
     params: list[object] = [user_id]
     if account_login is not None:
@@ -91,7 +92,7 @@ def raw_deals(
     return rows, total
 
 
-def account_deals(db: sqlite3.Connection, account_login: int, limit: int) -> list[sqlite3.Row]:
+def account_deals(db: DBConnection, account_login: int, limit: int) -> list[DBRow]:
     rows = db.execute(
         "SELECT * FROM deals WHERE account_login = ? ORDER BY deal_time DESC, ticket DESC LIMIT ?",
         (account_login, limit),
@@ -100,7 +101,7 @@ def account_deals(db: sqlite3.Connection, account_login: int, limit: int) -> lis
     return rows
 
 
-def account_settings(db: sqlite3.Connection, account_login: int, limit: int) -> list[sqlite3.Row]:
+def account_settings(db: DBConnection, account_login: int, limit: int) -> list[DBRow]:
     rows = db.execute(
         """
         SELECT id, account_login, snapshot_time, settings_json, group_count,
@@ -117,12 +118,12 @@ def account_settings(db: sqlite3.Connection, account_login: int, limit: int) -> 
 
 
 def account_snapshots(
-    db: sqlite3.Connection,
+    db: DBConnection,
     account_login: int,
     start_time: int | None,
     end_time: int | None,
     limit: int,
-) -> tuple[list[sqlite3.Row], int]:
+) -> tuple[list[DBRow], int]:
     where = ["account_login = ?"]
     params: list[object] = [account_login]
     if start_time is not None:
@@ -152,12 +153,12 @@ def account_snapshots(
 
 
 def account_symbols(
-    db: sqlite3.Connection,
+    db: DBConnection,
     account_login: int,
     q: str | None,
     page: int,
     page_size: int,
-) -> tuple[list[sqlite3.Row], int]:
+) -> tuple[list[DBRow], int]:
     where = ["account_login = ?"]
     params: list[object] = [account_login]
     if q:

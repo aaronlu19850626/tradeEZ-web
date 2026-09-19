@@ -1,5 +1,6 @@
+import psycopg
+from app.db import DBConnection
 import json
-import sqlite3
 from datetime import date, datetime, timedelta, timezone
 from typing import Literal
 from zoneinfo import ZoneInfo
@@ -60,7 +61,7 @@ def out(db, row):
 
 
 @router.get("/intentions")
-def list_intentions(account_id: int = Query(gt=0), plan_date: date = Query(), db: sqlite3.Connection = Depends(get_db), user=Depends(get_current_user)):
+def list_intentions(account_id: int = Query(gt=0), plan_date: date = Query(), db: DBConnection = Depends(get_db), user=Depends(get_current_user)):
     owned_account(db, user["id"], account_id); projection.refresh(db, user["id"])
     plan = db.execute("SELECT * FROM day_plans WHERE user_id=? AND account_id=? AND plan_date=?", (user["id"], account_id, plan_date.isoformat())).fetchone()
     scenarios = json.loads(plan["content_json"]).get("scenarios", []) if plan else []
@@ -71,7 +72,7 @@ def list_intentions(account_id: int = Query(gt=0), plan_date: date = Query(), db
 
 
 @router.post("/intentions", status_code=201)
-def create_intention(payload: IntentionCreate, db: sqlite3.Connection = Depends(get_db), user=Depends(get_current_user)):
+def create_intention(payload: IntentionCreate, db: DBConnection = Depends(get_db), user=Depends(get_current_user)):
     owned_account(db, user["id"], payload.account_id)
     if payload.day_plan_id:
         plan = db.execute("SELECT * FROM day_plans WHERE id=? AND user_id=? AND account_id=?", (payload.day_plan_id, user["id"], payload.account_id)).fetchone()
@@ -86,7 +87,7 @@ def create_intention(payload: IntentionCreate, db: sqlite3.Connection = Depends(
 
 
 @router.post("/intentions/{intention_id}/transition")
-def transition(intention_id: int, payload: Transition, db: sqlite3.Connection = Depends(get_db), user=Depends(get_current_user)):
+def transition(intention_id: int, payload: Transition, db: DBConnection = Depends(get_db), user=Depends(get_current_user)):
     row = owned_intention(db, user["id"], intention_id)
     allowed = {"watching": {"prepared", "abandoned", "invalidated", "expired"}, "prepared": {"watching", "executed_unlinked", "abandoned", "invalidated", "expired"},
                "executed_unlinked": {"linked", "abandoned"}, "linked": set(), "abandoned": set(), "invalidated": set(), "expired": set()}
@@ -98,7 +99,7 @@ def transition(intention_id: int, payload: Transition, db: sqlite3.Connection = 
 
 
 @router.get("/intentions/{intention_id}/candidates")
-def candidates(intention_id: int, db: sqlite3.Connection = Depends(get_db), user=Depends(get_current_user)):
+def candidates(intention_id: int, db: DBConnection = Depends(get_db), user=Depends(get_current_user)):
     row = owned_intention(db, user["id"], intention_id); projection.refresh(db, user["id"])
     return [dict(trade_id=item["id"], symbol=item["symbol"], direction=item["direction"], open_time=item["open_time"], close_time=item["close_time"])
             for item in db.execute("""SELECT t.* FROM trade_lifecycles t LEFT JOIN trade_intentions i ON i.linked_trade_id=t.id
@@ -107,7 +108,7 @@ def candidates(intention_id: int, db: sqlite3.Connection = Depends(get_db), user
 
 
 @router.post("/intentions/{intention_id}/link")
-def link(intention_id: int, payload: LinkInput, db: sqlite3.Connection = Depends(get_db), user=Depends(get_current_user)):
+def link(intention_id: int, payload: LinkInput, db: DBConnection = Depends(get_db), user=Depends(get_current_user)):
     row = owned_intention(db, user["id"], intention_id)
     if row["state"] not in ("prepared", "executed_unlinked"): raise HTTPException(409, "当前意图状态不能关联交易")
     trade = db.execute("""SELECT t.* FROM trade_lifecycles t JOIN accounts a ON a.id=t.account_id
@@ -119,5 +120,5 @@ def link(intention_id: int, payload: LinkInput, db: sqlite3.Connection = Depends
             updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE id=?""", (payload.trade_id, intention_id))
         db.execute("INSERT INTO intention_events(intention_id,from_state,to_state,reason) VALUES(?,?,'linked','人工确认关联完整交易')", (intention_id, row["state"]))
         return out(db, db.execute("SELECT * FROM trade_intentions WHERE id=?", (intention_id,)).fetchone())
-    except sqlite3.IntegrityError:
+    except psycopg.errors.IntegrityError:
         raise HTTPException(409, "该完整交易已关联其他意图")

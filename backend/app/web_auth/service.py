@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+from app.db import DBConnection, DBRow
+
 import hashlib
 import hmac
 import secrets
-import sqlite3
 import time
 
 from fastapi import HTTPException, status
@@ -28,7 +29,7 @@ def code_hash(email: str, code: str) -> str:
     return hashlib.sha256(raw).hexdigest()
 
 
-def send_login_code(payload: SendCodeIn, db: sqlite3.Connection, client_ip: str | None = None) -> SendCodeOut:
+def send_login_code(payload: SendCodeIn, db: DBConnection, client_ip: str | None = None) -> SendCodeOut:
     db.execute("BEGIN IMMEDIATE")
     try:
         now = int(time.time())
@@ -90,7 +91,7 @@ def send_login_code(payload: SendCodeIn, db: sqlite3.Connection, client_ip: str 
             db.rollback()
 
 
-def verify_login_code(payload: VerifyCodeIn, db: sqlite3.Connection) -> VerifyCodeOut:
+def verify_login_code(payload: VerifyCodeIn, db: DBConnection) -> VerifyCodeOut:
     db.execute("BEGIN IMMEDIATE")
     try:
         now = int(time.time())
@@ -128,5 +129,5 @@ def verify_login_code(payload: VerifyCodeIn, db: sqlite3.Connection) -> VerifyCo
             db.rollback()
 
 
-def read_current_user(current_user: sqlite3.Row) -> UserOut:
+def read_current_user(current_user: DBRow) -> UserOut:
     return UserOut.model_validate(dict(current_user))

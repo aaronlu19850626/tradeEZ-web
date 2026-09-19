@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-import sqlite3
+from app.db import DBConnection, DBRow
 
 
-def position_deals(db: sqlite3.Connection, account_login: int) -> list[sqlite3.Row]:
+
+def position_deals(db: DBConnection, account_login: int) -> list[DBRow]:
     rows = db.execute(
         """
         SELECT * FROM deals
@@ -18,5 +19,5 @@ def position_deals(db: sqlite3.Connection, account_login: int) -> list[sqlite3.R
     return rows
 
 
-def owned_accounts(db: sqlite3.Connection, user_id: int) -> list[sqlite3.Row]:
+def owned_accounts(db: DBConnection, user_id: int) -> list[DBRow]:
     return db.execute("SELECT * FROM accounts WHERE user_id=? ORDER BY id ASC", (user_id,)).fetchall()

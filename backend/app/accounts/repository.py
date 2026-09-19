@@ -1,15 +1,16 @@
 """SQL persistence only; transaction boundaries belong to service functions."""
 from __future__ import annotations
 
-import sqlite3
+from app.db import DBCursor, DBConnection
+
 from collections.abc import Sequence
 
 
-def find_key_prefix(db: sqlite3.Connection, params: Sequence[object]) -> sqlite3.Cursor:
+def find_key_prefix(db: DBConnection, params: Sequence[object]) -> DBCursor:
     return db.execute("SELECT 1 FROM accounts WHERE key_prefix = ?", params)
 
 
-def deal_statistics(db: sqlite3.Connection, params: Sequence[object]) -> sqlite3.Cursor:
+def deal_statistics(db: DBConnection, params: Sequence[object]) -> DBCursor:
     return db.execute("""
         SELECT
             COUNT(*) AS deal_count,
@@ -29,11 +30,11 @@ def deal_statistics(db: sqlite3.Connection, params: Sequence[object]) -> sqlite3
         """, params)
 
 
-def symbol_statistics(db: sqlite3.Connection, params: Sequence[object]) -> sqlite3.Cursor:
+def symbol_statistics(db: DBConnection, params: Sequence[object]) -> DBCursor:
     return db.execute("SELECT COUNT(*) AS symbol_count FROM symbols WHERE account_login = ?", params)
 
 
-def snapshot_statistics(db: sqlite3.Connection, params: Sequence[object]) -> sqlite3.Cursor:
+def snapshot_statistics(db: DBConnection, params: Sequence[object]) -> DBCursor:
     return db.execute("""
         SELECT COUNT(*) AS snapshot_count,
                MAX(timestamp) AS latest_snapshot_time,
@@ -43,7 +44,7 @@ def snapshot_statistics(db: sqlite3.Connection, params: Sequence[object]) -> sql
         """, params)
 
 
-def settings_statistics(db: sqlite3.Connection, params: Sequence[object]) -> sqlite3.Cursor:
+def settings_statistics(db: DBConnection, params: Sequence[object]) -> DBCursor:
     return db.execute("""
         SELECT COUNT(*) AS settings_count,
                MAX(snapshot_time) AS latest_settings_time
@@ -52,15 +53,15 @@ def settings_statistics(db: sqlite3.Connection, params: Sequence[object]) -> sql
         """, params)
 
 
-def find_owned_account(db: sqlite3.Connection, params: Sequence[object]) -> sqlite3.Cursor:
+def find_owned_account(db: DBConnection, params: Sequence[object]) -> DBCursor:
     return db.execute("SELECT * FROM accounts WHERE id = ? AND user_id = ?", params)
 
 
-def find_login(db: sqlite3.Connection, params: Sequence[object]) -> sqlite3.Cursor:
+def find_login(db: DBConnection, params: Sequence[object]) -> DBCursor:
     return db.execute("SELECT id, user_id FROM accounts WHERE mt5_login = ?", params)
 
 
-def insert_account(db: sqlite3.Connection, params: Sequence[object]) -> sqlite3.Cursor:
+def insert_account(db: DBConnection, params: Sequence[object]) -> DBCursor:
     return db.execute("""
         INSERT INTO accounts (
             user_id, mt5_login, label, broker_server, account_currency,
@@ -71,15 +72,15 @@ def insert_account(db: sqlite3.Connection, params: Sequence[object]) -> sqlite3.
         """, params)
 
 
-def find_by_id(db: sqlite3.Connection, params: Sequence[object]) -> sqlite3.Cursor:
+def find_by_id(db: DBConnection, params: Sequence[object]) -> DBCursor:
     return db.execute("SELECT * FROM accounts WHERE id = ?", params)
 
 
-def list_owned_accounts(db: sqlite3.Connection, params: Sequence[object]) -> sqlite3.Cursor:
+def list_owned_accounts(db: DBConnection, params: Sequence[object]) -> DBCursor:
     return db.execute("SELECT * FROM accounts WHERE user_id = ? ORDER BY created_at DESC, id DESC", params)
 
 
-def update_fields(db: sqlite3.Connection, account_id: int, user_id: int, values: dict[str, object]) -> None:
+def update_fields(db: DBConnection, account_id: int, user_id: int, values: dict[str, object]) -> None:
     allowed = {"label", "notes", "broker_server", "account_currency", "status", "sync_start_time", "server_timezone_name"}
     if not values or not values.keys() <= allowed:
         raise ValueError("Account update fields must use the repository whitelist")
@@ -92,7 +93,7 @@ def update_fields(db: sqlite3.Connection, account_id: int, user_id: int, values:
     )
 
 
-def replace_key(db: sqlite3.Connection, params: Sequence[object]) -> sqlite3.Cursor:
+def replace_key(db: DBConnection, params: Sequence[object]) -> DBCursor:
     return db.execute("""
         UPDATE accounts SET
             key_prefix = ?,

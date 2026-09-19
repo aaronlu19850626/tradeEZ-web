@@ -1,76 +1,90 @@
-"""Alembic entry point shared by application startup and the CLI."""
+"""PostgreSQL schema bootstrap for TradeSync."""
 from __future__ import annotations
 
 from pathlib import Path
 from threading import RLock
-import sqlite3
-import time
 
-from alembic import command
 from alembic.config import Config
-from sqlalchemy import URL, create_engine, event
-from sqlalchemy.pool import NullPool
+
+from .db import connect_db
 
 BACKEND_ROOT = Path(__file__).resolve().parents[1]
+MIGRATIONS_ROOT = BACKEND_ROOT / "migrations"
 _migration_lock = RLock()
-
-
-def enable_wal(connection) -> None:
-    """SQLite may skip the busy handler during concurrent journal-mode changes."""
-    deadline = time.monotonic() + 30
-    connection.execute("PRAGMA busy_timeout=1000")
-    try:
-        while True:
-            try:
-                connection.execute("PRAGMA journal_mode=WAL").fetchone()
-                return
-            except sqlite3.OperationalError as exc:
-                error = getattr(exc, "sqlite_errorcode", 0) & 0xFF
-                if error not in (sqlite3.SQLITE_BUSY, sqlite3.SQLITE_LOCKED) or time.monotonic() >= deadline:
-                    raise
-                time.sleep(0.05)
-    finally:
-        connection.execute("PRAGMA busy_timeout=30000")
+BASELINE_REVISION = "0022_postgresql_baseline"
+SCHEMA_VERSION = "0023_trade_dirty_triggers"
 
 
 def migration_config() -> Config:
     config = Config(str(BACKEND_ROOT / "alembic.ini"))
-    config.set_main_option("script_location", str(BACKEND_ROOT / "migrations").replace("%", "%%"))
+    config.set_main_option("script_location", str(MIGRATIONS_ROOT).replace("%", "%%"))
     return config
 
 
-def migration_engine(db_path: str):
-    path = Path(db_path).resolve()
-    path.parent.mkdir(parents=True, exist_ok=True)
-    engine = create_engine(
-        URL.create("sqlite", database=str(path)),
-        poolclass=NullPool,
-        connect_args={"timeout": 30},
-    )
-
-    @event.listens_for(engine, "connect")
-    def configure_connection(connection, _record):
-        connection.isolation_level = None
-        connection.execute("PRAGMA busy_timeout=30000")
-        connection.execute("PRAGMA foreign_keys=ON")
-        enable_wal(connection)
-
-    @event.listens_for(engine, "begin")
-    def begin_transaction(connection):
-        # Lock before Alembic reads its version table, including concurrent starts.
-        connection.exec_driver_sql("BEGIN IMMEDIATE")
-
-    return engine
+def _table_exists(db, table_name: str) -> bool:
+    row = db.execute("SELECT to_regclass(%s)::text AS table_name", (table_name,)).fetchone()
+    return row is not None and row[0] is not None
 
 
-def upgrade_database(db_path: str) -> None:
-    # Alembic's environment proxy is process-global; serialize local invocations.
+def _current_revision(db) -> str | None:
+    if not _table_exists(db, "alembic_version"):
+        return None
+    row = db.execute("SELECT version_num FROM alembic_version LIMIT 1").fetchone()
+    return row[0] if row is not None else None
+
+
+def upgrade_database(url: str | None = None) -> None:
+    """Create or upgrade the PostgreSQL schema used by the application.
+
+    A new database is created from the current baseline SQL and then brought
+    forward through idempotent PostgreSQL migrations. Existing 0022 databases
+    are upgraded to 0023 on startup.
+    """
     with _migration_lock:
-        engine = migration_engine(db_path)
+        schema_sql = (MIGRATIONS_ROOT / "postgres_schema.sql").read_text(encoding="utf-8")
+        steps = {
+            BASELINE_REVISION: MIGRATIONS_ROOT / "versions" / "0023_trade_dirty_triggers.sql",
+        }
+        db = connect_db(autocommit=False, application_name="tradesync-migration")
         try:
-            with engine.begin() as connection:
-                config = migration_config()
-                config.attributes["connection"] = connection
-                command.upgrade(config, "head")
+            revision = _current_revision(db)
+            if revision == SCHEMA_VERSION:
+                return
+            if revision is not None and revision not in steps:
+                raise RuntimeError(
+                    f"Unsupported database revision {revision!r}; expected {SCHEMA_VERSION!r}"
+                )
+
+            if revision is None:
+                occupied = db.execute(
+                    """
+                    SELECT COUNT(*) AS table_count
+                      FROM information_schema.tables
+                     WHERE table_schema = current_schema()
+                       AND table_type = 'BASE TABLE'
+                    """
+                ).fetchone()
+                if occupied is not None and int(occupied[0]) > 0:
+                    raise RuntimeError(
+                        "Current PostgreSQL schema already contains tables but alembic_version is missing; "
+                        "refusing to create the baseline automatically"
+                    )
+                db.execute(schema_sql)
+                revision = BASELINE_REVISION
+
+            while revision in steps:
+                step_sql = steps[revision].read_text(encoding="utf-8")
+                db.execute(step_sql)
+                next_revision = SCHEMA_VERSION if revision == BASELINE_REVISION else None
+                db.execute(
+                    "UPDATE alembic_version SET version_num = %s WHERE version_num = %s",
+                    (next_revision, revision),
+                )
+                revision = next_revision
+
+            db.commit()
+        except Exception:
+            db.rollback()
+            raise
         finally:
-            engine.dispose()
+            db.close()

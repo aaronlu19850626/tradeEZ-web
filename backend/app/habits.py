@@ -1,4 +1,4 @@
-import sqlite3
+from app.db import DBConnection
 from datetime import date, datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -27,7 +27,7 @@ def percentage(done, total): return round(done / total * 100, 1) if total else N
 
 
 @router.get("/habit-summary")
-def habit_summary(start_date: date, end_date: date, db: sqlite3.Connection = Depends(get_db), user=Depends(get_current_user)):
+def habit_summary(start_date: date, end_date: date, db: DBConnection = Depends(get_db), user=Depends(get_current_user)):
     if end_date < start_date or (end_date - start_date).days > 366: raise HTTPException(400, "日期范围无效或超过 366 天")
     days = (end_date - start_date).days + 1
     plans = db.execute("SELECT COUNT(*),SUM(status='confirmed') FROM day_plans WHERE user_id=? AND plan_date>=? AND plan_date<=?", (user["id"], start_date.isoformat(), end_date.isoformat())).fetchone()
@@ -47,21 +47,21 @@ def out(row): return dict(row)
 
 
 @router.get("/reminders")
-def list_reminders(status: str | None = Query(None, pattern="^(open|done|snoozed)$"), db: sqlite3.Connection = Depends(get_db), user=Depends(get_current_user)):
+def list_reminders(status: str | None = Query(None, pattern="^(open|done|snoozed)$"), db: DBConnection = Depends(get_db), user=Depends(get_current_user)):
     params = (user["id"], status) if status else (user["id"],)
     rows = db.execute("SELECT * FROM reminders WHERE user_id=?" + (" AND status=?" if status else "") + " ORDER BY status='open' DESC,due_at IS NULL,due_at,id DESC", params).fetchall()
     return [out(row) for row in rows]
 
 
 @router.post("/reminders", status_code=201)
-def create_reminder(payload: ReminderCreate, db: sqlite3.Connection = Depends(get_db), user=Depends(get_current_user)):
+def create_reminder(payload: ReminderCreate, db: DBConnection = Depends(get_db), user=Depends(get_current_user)):
     due = payload.due_at.astimezone(timezone.utc).isoformat().replace("+00:00", "Z") if payload.due_at else None
     cursor = db.execute("INSERT INTO reminders(user_id,title,due_at) VALUES(?,?,?)", (user["id"], payload.title, due))
     return out(db.execute("SELECT * FROM reminders WHERE id=?", (cursor.lastrowid,)).fetchone())
 
 
 @router.patch("/reminders/{reminder_id}")
-def update_reminder(reminder_id: int, payload: ReminderPatch, db: sqlite3.Connection = Depends(get_db), user=Depends(get_current_user)):
+def update_reminder(reminder_id: int, payload: ReminderPatch, db: DBConnection = Depends(get_db), user=Depends(get_current_user)):
     row = db.execute("SELECT * FROM reminders WHERE id=? AND user_id=?", (reminder_id, user["id"])).fetchone()
     if row is None: raise HTTPException(404, "提醒不存在")
     if row["revision"] != payload.expected_revision: raise HTTPException(409, "提醒已被修改，请重新加载")

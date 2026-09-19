@@ -4,17 +4,11 @@ import hashlib
 import hmac
 import json
 import os
-import sqlite3
 import time
-from pathlib import Path
-import tempfile
 
 import pytest
 
 
-TEST_DIRECTORY = tempfile.TemporaryDirectory(prefix="tradesync-handshake-")
-TEST_DB = Path(TEST_DIRECTORY.name) / "test.db"
-os.environ["TRADESYNC_DB_PATH"] = str(TEST_DB)
 os.environ["TRADESYNC_SYNC_KEY_ENCRYPTION_SECRET"] = "unit-test-encryption-secret"
 os.environ["TRADESYNC_AUTH_SECRET"] = "unit-test-auth-secret"
 os.environ["TRADESYNC_EMAIL_PROVIDER"] = "console"
@@ -130,9 +124,9 @@ def test_failed_user_creation_rolls_back_code_consumption(client, db, monkeypatc
     db.execute("INSERT INTO auth_codes(email,code_hash,expires_at,created_at) VALUES(?,?,?,?)", (email, service.code_hash(email, "123456"), now+600, now))
     db.commit()
     def fail(*args):
-        raise sqlite3.OperationalError("injected user creation failure")
+        raise RuntimeError("injected user creation failure")
     monkeypatch.setattr(service.repository, "insert_user", fail)
-    with pytest.raises(sqlite3.OperationalError, match="injected"):
+    with pytest.raises(RuntimeError, match="injected"):
         service.verify_login_code(VerifyCodeIn(email=email, code="123456"), db)
     assert not db.in_transaction
     assert db.execute("SELECT consumed FROM auth_codes WHERE email=?", (email,)).fetchone()[0] == 0
@@ -208,18 +202,16 @@ def test_fact_and_log_queries_isolate_accounts_and_paginate_stably(client, db):
 
 
 @pytest.fixture(scope="module")
-def client():
-    with TestClient(app) as client:
-        yield client
+def client(pg_client):
+    return pg_client
+
+
 @pytest.fixture(scope="module")
-def db(client):
-    conn = sqlite3.connect(TEST_DB)
-    conn.row_factory = sqlite3.Row
-    yield conn
-    conn.close()
+def db(pg_db):
+    return pg_db
 
 
-def make_account(db: sqlite3.Connection, login: int, status: str = "active") -> str:
+def make_account(db, login: int, status: str = "active") -> str:
     user = db.execute("SELECT id FROM users WHERE email = ?", ("tester@example.com",)).fetchone()
     if user is None:
         cursor = db.execute("INSERT INTO users (email) VALUES (?)", ("tester@example.com",))
@@ -745,12 +737,25 @@ def test_batch_storage_failure_rolls_back_all_rows(client, db):
         "batch_index": 0, "batch_count": 1,
         "deals": [deal(t, position=t, entry=0, deal_type=0, open_time=now, deal_time=now) for t in (11001, 11002)],
     })
-    db.execute("CREATE TEMP TRIGGER fail_second_deal BEFORE INSERT ON deals WHEN NEW.ticket=11002 BEGIN SELECT RAISE(ABORT, 'injected failure'); END")
+    db.execute(
+        """
+        CREATE OR REPLACE FUNCTION fail_second_deal() RETURNS trigger LANGUAGE plpgsql AS $$
+        BEGIN
+            IF NEW.ticket = 11002 THEN
+                RAISE EXCEPTION 'injected failure';
+            END IF;
+            RETURN NEW;
+        END;
+        $$
+        """
+    )
+    db.execute("CREATE TRIGGER fail_second_deal BEFORE INSERT ON deals FOR EACH ROW EXECUTE FUNCTION fail_second_deal()")
     try:
-        with pytest.raises(sqlite3.IntegrityError, match="injected failure"):
+        with pytest.raises(Exception, match="injected failure"):
             ingest_deals_v21(payload, account, db)
     finally:
-        db.execute("DROP TRIGGER fail_second_deal")
+        db.execute("DROP TRIGGER fail_second_deal ON deals")
+        db.execute("DROP FUNCTION fail_second_deal()")
     assert not db.in_transaction
     assert db.execute("SELECT COUNT(*) FROM deals WHERE account_login=?", (login,)).fetchone()[0] == 0
     assert db.execute("SELECT COUNT(*) FROM sync_batches WHERE sync_run_id=?", (run["sync_run_id"],)).fetchone()[0] == 0
@@ -963,7 +968,8 @@ def test_account_reset_and_delete_fence_old_requests(client, db):
     assert signed_post(client, "/api/v1/ingest/deals", new_key, {"mt5_login": login, "deals": rows}).status_code == 401
     assert db.execute("SELECT COUNT(*) FROM deals WHERE account_login=?", (login,)).fetchone()[0] == 0
     assert db.execute("SELECT COUNT(*) FROM api_logs WHERE account_id=? OR mt5_login=?", (account["id"], login)).fetchone()[0] == 0
-    assert db.execute("PRAGMA foreign_key_check").fetchall() == []
+    from app.maintenance import _foreign_key_violations
+    assert _foreign_key_violations(db) == []
 
 
 def test_account_reset_failure_rolls_back_facts_and_key(client, db):
@@ -975,12 +981,20 @@ def test_account_reset_failure_rolls_back_facts_and_key(client, db):
     user = db.execute("SELECT * FROM users WHERE id=?", (account["user_id"],)).fetchone()
     signed_post(client, "/api/v1/ingest/deals", key, {"mt5_login": login, "deals": [deal(42003, position=42003, entry=0, deal_type=0, open_time=100, deal_time=100)]})
     scope = preview(db, user, account["id"])
-    db.execute("CREATE TEMP TRIGGER reject_reset BEFORE UPDATE ON accounts BEGIN SELECT RAISE(ABORT,'injected reset failure'); END")
+    db.execute(
+        """
+        CREATE OR REPLACE FUNCTION reject_reset() RETURNS trigger LANGUAGE plpgsql AS $$
+        BEGIN RAISE EXCEPTION 'injected reset failure'; END;
+        $$
+        """
+    )
+    db.execute("CREATE TRIGGER reject_reset BEFORE UPDATE ON accounts FOR EACH ROW EXECUTE FUNCTION reject_reset()")
     try:
-        with pytest.raises(sqlite3.IntegrityError):
+        with pytest.raises(Exception, match="injected reset failure"):
             execute(db, user, account["id"], AccountResetIn(confirm_login=str(login), revision=scope["revision"], sync_start_time=50), reset=True)
     finally:
-        db.execute("DROP TRIGGER reject_reset")
+        db.execute("DROP TRIGGER reject_reset ON accounts")
+        db.execute("DROP FUNCTION reject_reset()")
     assert db.execute("SELECT key_hash FROM accounts WHERE id=?", (account["id"],)).fetchone()[0] == account["key_hash"]
     assert db.execute("SELECT COUNT(*) FROM deals WHERE account_login=?", (login,)).fetchone()[0] == 1
     assert not db.in_transaction
@@ -1145,14 +1159,25 @@ def test_tag_rename_merge_is_scoped_atomic_and_revision_protected(client, db):
     assert client.post(apply_path, headers=owner, json={**body, "revision": preview["revision"]}).status_code == 409
     preview = client.post(preview_path, headers=owner, json=body).json()
     # Failure during the second update must roll back the first update as well.
-    db.execute("""CREATE TEMP TRIGGER fail_tag_change BEFORE UPDATE ON trade_reviews
-        WHEN OLD.position_id=44002 BEGIN SELECT RAISE(ABORT, 'test rollback'); END""")
+    db.execute(
+        """
+        CREATE OR REPLACE FUNCTION fail_tag_change() RETURNS trigger LANGUAGE plpgsql AS $$
+        BEGIN
+            IF OLD.position_id = 44002 THEN RAISE EXCEPTION 'test rollback'; END IF;
+            RETURN NEW;
+        END;
+        $$
+        """
+    )
+    db.execute("CREATE TRIGGER fail_tag_change BEFORE UPDATE ON trade_reviews FOR EACH ROW EXECUTE FUNCTION fail_tag_change()")
     from app.trades import tag_maintenance
     user_id = db.execute("SELECT user_id FROM accounts WHERE id=?", (ids[0],)).fetchone()[0]
-    with pytest.raises(sqlite3.IntegrityError):
+    with pytest.raises(Exception, match="test rollback"):
         tag_maintenance.apply(db, user_id, tag_maintenance.TagApply(**body, revision=preview["revision"]))
+    db.rollback()
     assert all("原标签" in json.loads(row[0]) for row in db.execute("SELECT tags_json FROM trade_reviews WHERE account_id=?", (ids[0],)))
-    db.execute("DROP TRIGGER fail_tag_change")
+    db.execute("DROP TRIGGER fail_tag_change ON trade_reviews")
+    db.execute("DROP FUNCTION fail_tag_change()")
     db.commit()
     result = client.post(apply_path, headers=owner, json={**body, "revision": preview["revision"]})
     assert result.status_code == 200 and result.json()["updated_reviews"] == 2

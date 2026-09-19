@@ -1,6 +1,6 @@
+from app.db import DBConnection
 import hashlib
 import io
-import sqlite3
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import Response
@@ -70,13 +70,13 @@ def store(db, user_id, review_id, raw):
 
 
 @router.get("/api/v1/my/reviews/{review_id}/attachments")
-def list_files(review_id: int, db: sqlite3.Connection = Depends(get_db), user=Depends(get_current_user)):
+def list_files(review_id: int, db: DBConnection = Depends(get_db), user=Depends(get_current_user)):
     owned_review(db, user["id"], review_id)
     return [dict(row) for row in db.execute(f"SELECT {META} FROM review_attachments WHERE review_id=? ORDER BY id", (review_id,))]
 
 
 @router.post("/api/v1/my/reviews/{review_id}/attachments", status_code=201)
-async def upload(review_id: int, request: Request, db: sqlite3.Connection = Depends(get_db), user=Depends(get_current_user)):
+async def upload(review_id: int, request: Request, db: DBConnection = Depends(get_db), user=Depends(get_current_user)):
     owned_review(db, user["id"], review_id)
     raw = bytearray()
     async for chunk in request.stream():
@@ -95,13 +95,13 @@ def owned_file(db, user_id, file_id):
 
 
 @router.get("/api/v1/my/review-attachments/{file_id}")
-def content(file_id: int, db: sqlite3.Connection = Depends(get_db), user=Depends(get_current_user)):
+def content(file_id: int, db: DBConnection = Depends(get_db), user=Depends(get_current_user)):
     row = owned_file(db, user["id"], file_id)
     return Response(row["data"], media_type="image/png", headers={"Cache-Control": "private, no-store", "X-Content-Type-Options": "nosniff", "Content-Disposition": f'inline; filename="review-{file_id}.png"'})
 
 
 @router.delete("/api/v1/my/review-attachments/{file_id}")
-def delete(file_id: int, db: sqlite3.Connection = Depends(get_db), user=Depends(get_current_user)):
+def delete(file_id: int, db: DBConnection = Depends(get_db), user=Depends(get_current_user)):
     db.execute("BEGIN IMMEDIATE")
     try:
         owned_file(db, user["id"], file_id)

@@ -1,5 +1,5 @@
+from app.db import DBConnection
 import json
-import sqlite3
 from datetime import date, datetime, timedelta, timezone
 from typing import Literal
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
@@ -92,13 +92,13 @@ def validate_playbooks(db, user_id, ids):
 
 
 @router.get("/day-plan")
-def get_plan(account_id: int = Query(gt=0), plan_date: date = Query(), db: sqlite3.Connection = Depends(get_db), user=Depends(get_current_user)):
+def get_plan(account_id: int = Query(gt=0), plan_date: date = Query(), db: DBConnection = Depends(get_db), user=Depends(get_current_user)):
     account_owned(db, user["id"], account_id)
     return plan_out(db.execute("SELECT * FROM day_plans WHERE user_id=? AND account_id=? AND plan_date=?", (user["id"], account_id, plan_date.isoformat())).fetchone())
 
 
 @router.put("/day-plan")
-def save_plan(payload: PlanInput, db: sqlite3.Connection = Depends(get_db), user=Depends(get_current_user)):
+def save_plan(payload: PlanInput, db: DBConnection = Depends(get_db), user=Depends(get_current_user)):
     account_owned(db, user["id"], payload.account_id)
     ids = list(dict.fromkeys(payload.allowed_playbook_version_ids + [s.playbook_version_id for s in payload.scenarios if s.playbook_version_id]))
     validate_playbooks(db, user["id"], ids)
@@ -121,7 +121,7 @@ def save_plan(payload: PlanInput, db: sqlite3.Connection = Depends(get_db), user
 
 
 @router.post("/day-plans/{plan_id}/confirm")
-def confirm_plan(plan_id: int, expected_revision: int = Query(ge=1), db: sqlite3.Connection = Depends(get_db), user=Depends(get_current_user)):
+def confirm_plan(plan_id: int, expected_revision: int = Query(ge=1), db: DBConnection = Depends(get_db), user=Depends(get_current_user)):
     projection.refresh(db, user["id"])
     db.execute("BEGIN IMMEDIATE")
     try:

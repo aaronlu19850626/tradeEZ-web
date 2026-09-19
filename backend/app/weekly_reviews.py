@@ -1,6 +1,6 @@
+from app.db import DBConnection
 import hashlib
 import json
-import sqlite3
 from datetime import date, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -67,7 +67,7 @@ def review_out(row, current):
 
 
 @router.get("/weekly-review")
-def get_weekly_review(week_start: date = Query(), db: sqlite3.Connection = Depends(get_db), user=Depends(get_current_user)):
+def get_weekly_review(week_start: date = Query(), db: DBConnection = Depends(get_db), user=Depends(get_current_user)):
     if week_start.weekday() != 0: raise HTTPException(400, "周起始日期必须是星期一")
     current = summary(db, user["id"], week_start)
     row = db.execute("SELECT * FROM weekly_reviews WHERE user_id=? AND week_start=?", (user["id"], week_start.isoformat())).fetchone()
@@ -75,7 +75,7 @@ def get_weekly_review(week_start: date = Query(), db: sqlite3.Connection = Depen
 
 
 @router.put("/weekly-review")
-def save_weekly_review(payload: WeeklyInput, complete: bool = Query(False), db: sqlite3.Connection = Depends(get_db), user=Depends(get_current_user)):
+def save_weekly_review(payload: WeeklyInput, complete: bool = Query(False), db: DBConnection = Depends(get_db), user=Depends(get_current_user)):
     if complete and not all((payload.achievements, payload.recurring_problems, payload.next_focus)):
         raise HTTPException(400, "提交周复盘前请完成三项总结")
     current = summary(db, user["id"], payload.week_start); digest = hashlib.sha256(json.dumps(current, sort_keys=True).encode()).hexdigest()
@@ -100,20 +100,20 @@ def action_out(row): return dict(row)
 
 
 @router.get("/improvement-actions")
-def list_actions(status: str | None = Query(None, pattern="^(active|completed|abandoned)$"), db: sqlite3.Connection = Depends(get_db), user=Depends(get_current_user)):
+def list_actions(status: str | None = Query(None, pattern="^(active|completed|abandoned)$"), db: DBConnection = Depends(get_db), user=Depends(get_current_user)):
     rows = db.execute("SELECT * FROM improvement_actions WHERE user_id=?" + (" AND status=?" if status else "") + " ORDER BY status='active' DESC,target_date IS NULL,target_date,id DESC", (user["id"], status) if status else (user["id"],)).fetchall()
     return [action_out(row) for row in rows]
 
 
 @router.post("/improvement-actions", status_code=201)
-def create_action(payload: ActionCreate, db: sqlite3.Connection = Depends(get_db), user=Depends(get_current_user)):
+def create_action(payload: ActionCreate, db: DBConnection = Depends(get_db), user=Depends(get_current_user)):
     if payload.weekly_review_id and db.execute("SELECT 1 FROM weekly_reviews WHERE id=? AND user_id=?", (payload.weekly_review_id, user["id"])).fetchone() is None: raise HTTPException(404, "周复盘不存在")
     cursor = db.execute("INSERT INTO improvement_actions(user_id,weekly_review_id,title,success_measure,target_date) VALUES(?,?,?,?,?)", (user["id"], payload.weekly_review_id, payload.title, payload.success_measure, payload.target_date.isoformat() if payload.target_date else None))
     return action_out(db.execute("SELECT * FROM improvement_actions WHERE id=?", (cursor.lastrowid,)).fetchone())
 
 
 @router.patch("/improvement-actions/{action_id}")
-def update_action(action_id: int, payload: ActionPatch, db: sqlite3.Connection = Depends(get_db), user=Depends(get_current_user)):
+def update_action(action_id: int, payload: ActionPatch, db: DBConnection = Depends(get_db), user=Depends(get_current_user)):
     row = db.execute("SELECT * FROM improvement_actions WHERE id=? AND user_id=?", (action_id, user["id"])).fetchone()
     if row is None: raise HTTPException(404, "行动不存在")
     if row["revision"] != payload.expected_revision: raise HTTPException(409, "行动已被修改，请重新加载")

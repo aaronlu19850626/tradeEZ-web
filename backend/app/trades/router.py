@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-import sqlite3
+from app.db import DBConnection, DBRow
+
 import csv
 import io
 from datetime import date
@@ -20,36 +21,36 @@ router = APIRouter(tags=["trades-queries"])
 
 
 @router.get("/api/v1/my/tag-definitions")
-def tag_definitions(db: sqlite3.Connection = Depends(get_db), user: sqlite3.Row = Depends(get_current_user)):
+def tag_definitions(db: DBConnection = Depends(get_db), user: DBRow = Depends(get_current_user)):
     return tag_maintenance.definitions(db, user["id"])
 
 
 @router.patch("/api/v1/my/tag-definitions/{definition_id}")
-def tag_definition_update(definition_id: int, payload: tag_maintenance.DefinitionPatch, db: sqlite3.Connection = Depends(get_db), user: sqlite3.Row = Depends(get_current_user)):
+def tag_definition_update(definition_id: int, payload: tag_maintenance.DefinitionPatch, db: DBConnection = Depends(get_db), user: DBRow = Depends(get_current_user)):
     return tag_maintenance.update_definition(db, user["id"], definition_id, payload)
 
 
 @router.post("/api/v1/my/review-tags/bulk")
-def tag_bulk(payload: tag_maintenance.BulkTags, db: sqlite3.Connection = Depends(get_db), user: sqlite3.Row = Depends(get_current_user)):
+def tag_bulk(payload: tag_maintenance.BulkTags, db: DBConnection = Depends(get_db), user: DBRow = Depends(get_current_user)):
     return tag_maintenance.bulk_tags(db, user["id"], payload)
 
 
 @router.post("/api/v1/my/review-tags/change-preview")
 def tag_change_preview(payload: tag_maintenance.TagChange,
-                       db: sqlite3.Connection = Depends(get_db), user: sqlite3.Row = Depends(get_current_user)):
+                       db: DBConnection = Depends(get_db), user: DBRow = Depends(get_current_user)):
     return tag_maintenance.preview(db, user["id"], payload)
 
 
 @router.post("/api/v1/my/review-tags/change")
 def tag_change_apply(payload: tag_maintenance.TagApply,
-                     db: sqlite3.Connection = Depends(get_db), user: sqlite3.Row = Depends(get_current_user)):
+                     db: DBConnection = Depends(get_db), user: DBRow = Depends(get_current_user)):
     return tag_maintenance.apply(db, user["id"], payload)
 
 
 @router.get("/api/v1/my/review-tags")
 def review_tags(page: int = Query(1, ge=1), page_size: int = Query(20, ge=1, le=100),
                 account_id: int | None = Query(None, ge=1), q: str | None = Query(None, max_length=40),
-                db: sqlite3.Connection = Depends(get_db), user: sqlite3.Row = Depends(get_current_user)):
+                db: DBConnection = Depends(get_db), user: DBRow = Depends(get_current_user)):
     return reviews.list_tags(db, user["id"], page, page_size, account_id, q)
 
 
@@ -61,23 +62,23 @@ def review_list(page: int = Query(1, ge=1), page_size: int = Query(30, ge=1, le=
                 q: str | None = Query(None, max_length=200),
                 association: Literal["linked", "orphan"] | None = None,
                 emotion: Emotion | None = None, primary_error: ErrorCode | None = None,
-                db: sqlite3.Connection = Depends(get_db), user: sqlite3.Row = Depends(get_current_user)):
+                db: DBConnection = Depends(get_db), user: DBRow = Depends(get_current_user)):
     return reviews.list_reviews(db, user["id"], page, page_size, account_id, status, tag, q, association, emotion, primary_error)
 
 
 @router.get("/api/v1/my/trades/{trade_id}/review")
-def review_get(trade_id: int, db: sqlite3.Connection = Depends(get_db), user: sqlite3.Row = Depends(get_current_user)):
+def review_get(trade_id: int, db: DBConnection = Depends(get_db), user: DBRow = Depends(get_current_user)):
     return reviews.get_review(db, user["id"], trade_id)
 
 
 @router.put("/api/v1/my/trades/{trade_id}/review")
-def review_put(trade_id: int, payload: reviews.ReviewInput, db: sqlite3.Connection = Depends(get_db), user: sqlite3.Row = Depends(get_current_user)):
+def review_put(trade_id: int, payload: reviews.ReviewInput, db: DBConnection = Depends(get_db), user: DBRow = Depends(get_current_user)):
     return reviews.save_review(db, user["id"], trade_id, payload)
 
 
 @router.get("/api/v1/my/trades/{trade_id}/review/versions")
 def review_versions(trade_id: int, page: int = Query(1, ge=1), page_size: int = Query(10, ge=1, le=50),
-                    db: sqlite3.Connection = Depends(get_db), user: sqlite3.Row = Depends(get_current_user)):
+                    db: DBConnection = Depends(get_db), user: DBRow = Depends(get_current_user)):
     return reviews.list_versions(db, user["id"], trade_id, page, page_size)
 
 
@@ -89,7 +90,7 @@ def performance(account_id: int, start_date: date, end_date: date,
                 review_status: Literal["unwritten", "draft", "reviewed"] | None = None,
                 setup_id: int | None = Query(None, ge=1),
                 execution_status: Literal["unrated", "compliant", "violations", "insufficient"] | None = None,
-                db: sqlite3.Connection = Depends(get_db), user: sqlite3.Row = Depends(get_current_user)):
+                db: DBConnection = Depends(get_db), user: DBRow = Depends(get_current_user)):
     from .analytics import report
     return report(db, user["id"], account_id, start_date, end_date, symbol, direction, tag, review_status, setup_id, execution_status)
 
@@ -102,7 +103,7 @@ def performance_export(account_id: int, start_date: date, end_date: date,
                 review_status: Literal["unwritten", "draft", "reviewed"] | None = None,
                 setup_id: int | None = Query(None, ge=1),
                 execution_status: Literal["unrated", "compliant", "violations", "insufficient"] | None = None,
-                db: sqlite3.Connection = Depends(get_db), user: sqlite3.Row = Depends(get_current_user)):
+                db: DBConnection = Depends(get_db), user: DBRow = Depends(get_current_user)):
     from .analytics import report
     data = report(db, user["id"], account_id, start_date, end_date, symbol, direction, tag, review_status, setup_id, execution_status)
     output = io.StringIO(newline="")
@@ -120,7 +121,7 @@ def performance_export(account_id: int, start_date: date, end_date: date,
 
 @router.get("/api/v1/my/trades/{trade_id}", response_model=TradeDetailOut)
 def trade_detail(trade_id: int, page: int = Query(1, ge=1), page_size: int = Query(50, ge=1, le=200),
-                 db: sqlite3.Connection = Depends(get_db), user: sqlite3.Row = Depends(get_current_user)):
+                 db: DBConnection = Depends(get_db), user: DBRow = Depends(get_current_user)):
     projection.refresh(db, user["id"])
     db.execute("BEGIN")
     try:
@@ -142,13 +143,13 @@ def trade_detail(trade_id: int, page: int = Query(1, ge=1), page_size: int = Que
 
 
 @router.get("/api/v1/my/trades/{trade_id}/reconciliation")
-def reconciliation_get(trade_id: int, db: sqlite3.Connection = Depends(get_db), user: sqlite3.Row = Depends(get_current_user)):
+def reconciliation_get(trade_id: int, db: DBConnection = Depends(get_db), user: DBRow = Depends(get_current_user)):
     return reconciliation.get_case(db, user["id"], trade_id)
 
 
 @router.put("/api/v1/my/trades/{trade_id}/reconciliation")
 def reconciliation_put(trade_id: int, payload: reconciliation.ReconciliationUpdate,
-                       db: sqlite3.Connection = Depends(get_db), user: sqlite3.Row = Depends(get_current_user)):
+                       db: DBConnection = Depends(get_db), user: DBRow = Depends(get_current_user)):
     return reconciliation.update_case(db, user["id"], trade_id, payload)
 
 @router.get("/api/v1/my/orders", response_model=OrderPageOut)
@@ -164,8 +165,8 @@ def my_orders(
     start_time: int | None = Query(default=None, ge=0),
     end_time: int | None = Query(default=None, ge=0),
     sort: str = Query("open_time_desc", pattern="^(open_time_desc|open_time_asc|close_time_desc|close_time_asc)$"),
-    db: sqlite3.Connection = Depends(get_db),
-    user: sqlite3.Row = Depends(get_current_user),
+    db: DBConnection = Depends(get_db),
+    user: DBRow = Depends(get_current_user),
 ) -> OrderPageOut:
     return service.my_orders(account_id, page, page_size, symbol, direction, status_filter, start_time, end_time, sort, db, user, review_status, reconciliation_case)
 
@@ -174,7 +175,7 @@ def my_orders(
 def my_account_positions(
     account_id: int,
     include_closed: bool = True,
-    db: sqlite3.Connection = Depends(get_db),
-    user: sqlite3.Row = Depends(get_current_user),
+    db: DBConnection = Depends(get_db),
+    user: DBRow = Depends(get_current_user),
 ) -> list[PositionOut]:
     return service.my_account_positions(account_id, include_closed, db, user)

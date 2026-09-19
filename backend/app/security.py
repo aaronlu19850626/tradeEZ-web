@@ -1,10 +1,11 @@
 from __future__ import annotations
 
+from app.db import DBConnection, DBRow
+
 import base64
 import hashlib
 import hmac
 import json
-import sqlite3
 import time
 from typing import Any
 
@@ -26,7 +27,7 @@ def b64url_decode(data: str) -> bytes:
     return base64.urlsafe_b64decode(data + padding)
 
 
-def create_access_token(user: sqlite3.Row, settings: Settings) -> str:
+def create_access_token(user: DBRow, settings: Settings) -> str:
     now = int(time.time())
     header = {"alg": "HS256", "typ": "JWT"}
     payload = {
@@ -69,9 +70,9 @@ def decode_access_token(token: str, settings: Settings) -> dict[str, Any]:
 
 def get_current_user(
     credentials: HTTPAuthorizationCredentials | None = Depends(user_bearer),
-    db: sqlite3.Connection = Depends(get_db),
+    db: DBConnection = Depends(get_db),
     settings: Settings = Depends(get_settings),
-) -> sqlite3.Row:
+) -> DBRow:
     if credentials is None or credentials.scheme.lower() != "bearer":
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing user token")
 

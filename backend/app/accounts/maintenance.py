@@ -11,6 +11,19 @@ from ..schemas import AccountKeyOut
 
 LOGIN_TABLES = ("deals", "snapshots", "symbols", "ea_settings_history", "heartbeat_history", "heartbeats")
 ID_TABLES = ("trade_lifecycles", "sync_runs", "sync_batches", "ea_instances", "trade_reviews")
+ORDER_COLUMN = {
+    "deals": "id",
+    "snapshots": "id",
+    "symbols": "id",
+    "ea_settings_history": "id",
+    "heartbeat_history": "id",
+    "heartbeats": "account_login",
+    "trade_lifecycles": "id",
+    "sync_runs": "id",
+    "sync_batches": "id",
+    "ea_instances": "id",
+    "trade_reviews": "id",
+}
 
 
 def snapshot(db, account):
@@ -19,7 +32,7 @@ def snapshot(db, account):
     digest.update(json.dumps([account[k] for k in ("id", "mt5_login", "key_hash", "sync_start_time", "last_sync_time", "status", "resync_pending", "notes", "config_revision")]).encode())
     counts = {}
     for table, column, value in [(t, "account_login", account["mt5_login"]) for t in LOGIN_TABLES] + [(t, "account_id", account["id"]) for t in ID_TABLES]:
-        rows = db.execute(f"SELECT * FROM {table} WHERE {column}=? ORDER BY rowid", (value,)).fetchall()
+        rows = db.execute(f"SELECT * FROM {table} WHERE {column}=? ORDER BY {ORDER_COLUMN[table]}", (value,)).fetchall()
         counts[table] = len(rows)
         # Heartbeats can arrive continuously while the user is confirming.
         if table not in ("heartbeat_history", "heartbeats", "ea_instances"):

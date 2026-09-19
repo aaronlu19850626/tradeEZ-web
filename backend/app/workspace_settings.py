@@ -1,4 +1,4 @@
-import sqlite3
+from app.db import DBConnection
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -34,12 +34,12 @@ def output(row):
 
 
 @router.get("/workspace-settings")
-def get_workspace_settings(db: sqlite3.Connection = Depends(get_db), user=Depends(get_current_user)):
+def get_workspace_settings(db: DBConnection = Depends(get_db), user=Depends(get_current_user)):
     return output(db.execute("SELECT * FROM workspace_settings WHERE user_id=?", (user["id"],)).fetchone())
 
 
 @router.put("/workspace-settings")
-def save_workspace_settings(payload: SettingsInput, db: sqlite3.Connection = Depends(get_db), user=Depends(get_current_user)):
+def save_workspace_settings(payload: SettingsInput, db: DBConnection = Depends(get_db), user=Depends(get_current_user)):
     db.execute("BEGIN IMMEDIATE")
     try:
         old = db.execute("SELECT * FROM workspace_settings WHERE user_id=?", (user["id"],)).fetchone()

@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+from app.db import DBConnection, DBRow
+
 import hashlib
 import secrets
-import sqlite3
 
 from fastapi import HTTPException, status
 from ..config import get_settings
@@ -22,7 +23,7 @@ def hash_sync_secret(secret: str) -> str:
     return hashlib.sha256(secret.encode("utf-8")).hexdigest()
 
 
-def generate_sync_key(db: sqlite3.Connection) -> tuple[str, str, str, str, str]:
+def generate_sync_key(db: DBConnection) -> tuple[str, str, str, str, str]:
     while True:
         secret = secrets.token_urlsafe(32)
         prefix = secret[:12]
@@ -34,7 +35,7 @@ def generate_sync_key(db: sqlite3.Connection) -> tuple[str, str, str, str, str]:
     return full_key, prefix, hash_sync_secret(full_key), encrypted, environment
 
 
-def account_to_out(row: sqlite3.Row, db: sqlite3.Connection) -> AccountOut:
+def account_to_out(row: DBRow, db: DBConnection) -> AccountOut:
     stats = repository.deal_statistics(db, (row["mt5_login"],)).fetchone()
     symbol_stats = repository.symbol_statistics(db, (row["mt5_login"],)).fetchone()
     snapshot_stats = repository.snapshot_statistics(db, (row["mt5_login"], row["mt5_login"])).fetchone()
@@ -80,16 +81,19 @@ def account_to_out(row: sqlite3.Row, db: sqlite3.Connection) -> AccountOut:
     return AccountOut.model_validate(data)
 
 
-def get_owned_account(account_id: int, user: sqlite3.Row, db: sqlite3.Connection) -> sqlite3.Row:
+def get_owned_account(account_id: int, user: DBRow, db: DBConnection) -> DBRow:
     row = repository.find_owned_account(db, (account_id, user["id"])).fetchone()
     if row is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="MT5 account not found")
     return row
 
 
-def create_account(payload: AccountCreateIn, db: sqlite3.Connection, user: sqlite3.Row) -> AccountKeyOut:
+def create_account(payload: AccountCreateIn, db: DBConnection, user: DBRow) -> AccountKeyOut:
     db.execute("BEGIN IMMEDIATE")
     try:
+        # Serialize concurrent binding of the same MT5 login. The second request
+        # waits for the first transaction and then sees the existing account.
+        db.execute("SELECT pg_advisory_xact_lock(%s)", (payload.mt5_login,)).fetchone()
         existing = repository.find_login(db, (payload.mt5_login,)).fetchone()
         if existing is not None:
             if int(existing["user_id"]) == int(user["id"]):
@@ -113,22 +117,27 @@ def create_account(payload: AccountCreateIn, db: sqlite3.Connection, user: sqlit
             db.rollback()
 
 
-def list_accounts(db: sqlite3.Connection, user: sqlite3.Row) -> list[AccountOut]:
+def list_accounts(db: DBConnection, user: DBRow) -> list[AccountOut]:
     from ..trades.projection import refresh
     refresh(db, user["id"])
     rows = repository.list_owned_accounts(db, (user["id"],)).fetchall()
     return [account_to_out(row, db) for row in rows]
 
 
-def get_account(account_id: int, db: sqlite3.Connection, user: sqlite3.Row) -> AccountOut:
+def get_account(account_id: int, db: DBConnection, user: DBRow) -> AccountOut:
     from ..trades.projection import refresh
     refresh(db, user["id"])
     return account_to_out(get_owned_account(account_id, user, db), db)
 
 
-def update_account(account_id: int, payload: AccountUpdateIn, db: sqlite3.Connection, user: sqlite3.Row) -> AccountOut:
+def update_account(account_id: int, payload: AccountUpdateIn, db: DBConnection, user: DBRow) -> AccountOut:
     db.execute("BEGIN IMMEDIATE")
     try:
+        # Serialize concurrent edits to the same account. In PostgreSQL Read
+        # Committed isolation, the second request waits here and then sees the
+        # configuration revision written by the first request.
+        db.execute("SELECT id FROM accounts WHERE id = ? AND user_id = ? FOR UPDATE",
+                   (account_id, user["id"])).fetchone()
         account = get_owned_account(account_id, user, db)
         if "notes" in payload.model_fields_set and payload.expected_revision is None:
             raise HTTPException(400, "修改备注需要提供账户配置版本，请刷新后重试")
@@ -160,7 +169,7 @@ def update_account(account_id: int, payload: AccountUpdateIn, db: sqlite3.Connec
             db.rollback()
 
 
-def regenerate_account_key(account_id: int, db: sqlite3.Connection, user: sqlite3.Row) -> AccountKeyOut:
+def regenerate_account_key(account_id: int, db: DBConnection, user: DBRow) -> AccountKeyOut:
     db.execute("BEGIN IMMEDIATE")
     try:
         account = get_owned_account(account_id, user, db)

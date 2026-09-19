@@ -9,7 +9,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, field_serial
 
 
 class WebIdentityModel(BaseModel):
-    """Keep Python/SQLite integers; protect identifiers in browser JSON responses."""
+    """Keep 64-bit Python integers; protect identifiers in browser JSON responses."""
 
     @field_serializer("ticket", "position_id", "order_id", "magic", "account_login", "mt5_login", "anchor_ticket", "deal_ticket",
                       check_fields=False, when_used="json")

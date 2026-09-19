@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-import sqlite3
+from app.db import DBConnection, DBRow
+
 from fastapi import HTTPException, status
 from ..accounts.service import get_owned_account
 from ..schemas import PositionOut, OrderPageOut
@@ -8,11 +9,11 @@ from . import repository, projection
 from .aggregation import build_positions
 
 
-def pair_positions(db: sqlite3.Connection, account_login: int, include_closed: bool = True) -> list[PositionOut]:
+def pair_positions(db: DBConnection, account_login: int, include_closed: bool = True) -> list[PositionOut]:
     return build_positions(account_login, repository.position_deals(db, account_login), include_closed)
 
 
-def my_orders(account_id: int | None, page: int, page_size: int, symbol: str | None, direction: str | None, status_filter: str | None, start_time: int | None, end_time: int | None, sort: str, db: sqlite3.Connection, user: sqlite3.Row, review_status: str | None = None, reconciliation_case: str | None = None) -> OrderPageOut:
+def my_orders(account_id: int | None, page: int, page_size: int, symbol: str | None, direction: str | None, status_filter: str | None, start_time: int | None, end_time: int | None, sort: str, db: DBConnection, user: DBRow, review_status: str | None = None, reconciliation_case: str | None = None) -> OrderPageOut:
     accounts = repository.owned_accounts(db, user["id"])
     if account_id is not None:
         accounts = [row for row in accounts if int(row["id"]) == account_id]
@@ -38,6 +39,6 @@ def my_orders(account_id: int | None, page: int, page_size: int, symbol: str | N
     )
 
 
-def my_account_positions(account_id: int, include_closed: bool, db: sqlite3.Connection, user: sqlite3.Row) -> list[PositionOut]:
+def my_account_positions(account_id: int, include_closed: bool, db: DBConnection, user: DBRow) -> list[PositionOut]:
     account = get_owned_account(account_id, user, db)
     return pair_positions(db, int(account["mt5_login"]), include_closed=include_closed)

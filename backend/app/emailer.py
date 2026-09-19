@@ -36,7 +36,7 @@ def _send_console(to_email: str, code: str, subject: str, body: str, settings: S
     print("============================================\n", flush=True)
 
     # Convenience for local development only. This directory is git-ignored.
-    dev_dir = Path(settings.db_path).parent / "dev-codes"
+    dev_dir = Path(__file__).resolve().parents[1] / "data" / "dev-codes"
     dev_dir.mkdir(parents=True, exist_ok=True)
     latest = dev_dir / "latest.json"
     latest.write_text(

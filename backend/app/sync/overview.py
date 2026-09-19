@@ -1,7 +1,8 @@
 """Cross-account synchronization health overview for the web workbench."""
 from __future__ import annotations
 
-import sqlite3
+from app.db import DBConnection, DBRow
+
 import time
 from datetime import datetime, timezone
 
@@ -25,7 +26,7 @@ def _parse_utc(value: str | None) -> datetime | None:
     return datetime.fromisoformat(value.replace("Z", "+00:00"))
 
 
-def build_overview(db: sqlite3.Connection, user: sqlite3.Row, heartbeat_stale_after: int) -> SyncOverviewOut:
+def build_overview(db: DBConnection, user: DBRow, heartbeat_stale_after: int) -> SyncOverviewOut:
     # Reuse the account projection so lifecycle counters and auth-error state are current.
     from ..accounts.service import list_accounts
     from ..trades.projection import refresh
@@ -149,7 +150,7 @@ router = APIRouter(tags=["sync-overview"])
 @router.get("/api/v1/my/sync-overview", response_model=SyncOverviewOut)
 def sync_overview(
     heartbeat_stale_after: int = Query(1800, ge=60, le=604800),
-    db: sqlite3.Connection = Depends(get_db),
-    user: sqlite3.Row = Depends(get_current_user),
+    db: DBConnection = Depends(get_db),
+    user: DBRow = Depends(get_current_user),
 ) -> SyncOverviewOut:
     return build_overview(db, user, heartbeat_stale_after)

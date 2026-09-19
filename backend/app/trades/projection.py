@@ -1,12 +1,12 @@
+from app.db import DBConnection
 """Derived trades: dirty rows, rebuilds and source references commit together."""
 import json
-import sqlite3
 
 from .lifecycle import build_lifecycles
 from ..schemas import TradeOut
 
 
-def refresh(db: sqlite3.Connection, user_id: int):
+def refresh(db: DBConnection, user_id: int):
     pending = """SELECT d.account_login,d.position_id,a.id AS account_id
                  FROM trade_dirty_positions d JOIN accounts a ON a.mt5_login=d.account_login
                  WHERE a.user_id=? ORDER BY a.id,d.position_id"""

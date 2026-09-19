@@ -22,14 +22,14 @@
 - 品种规格、账户快照数组、EA 参数配置快照、心跳均使用 v2.1 新路径；心跳额外携带 MT5 服务器时区作为展示元数据。
 - 独立 API 审计日志模块 `app/api_logs.py`：记录接口、账号、结果、订单数量、游标和耗时，不保存订单明细、Key、验证码或令牌。
 - 控制台有效订单数量按不同 `position_id` 统计；订单列表显示订单号、止损、止盈、库存费、佣金和秒级持仓时间。
-- SQLite 本地存储，便于局域网联调；生产环境再迁移 PostgreSQL。
+- PostgreSQL 18 主存储；本地联调建议使用独立的 `tradesync_test` / `tradesync_smoke` 数据库，不能直接指向生产库。
 
 ## 目录
 
 ```text
 backend/app/              FastAPI 服务、网页控制台、数据模型
 backend/scripts/          HTTPS、防火墙、v2.1 自检等脚本
-backend/data/             本地 SQLite / 控制台验证码（不提交）
+backend/data/             旧 SQLite 迁移源和备份（新运行时不再使用）
 backend/certs/            本地开发证书（不提交）
 ../ea/                    MT5 EA 源码
 ```
@@ -43,9 +43,10 @@ py -m venv venv
 copy .env.example .env
 ```
 
-请在 `.env` 中设置强随机值：
+请在 `.env` 中设置数据库和强随机值：
 
 ```env
+TRADESYNC_DATABASE_URL=postgresql://tradeez:<password>@127.0.0.1:5432/tradeez
 TRADESYNC_AUTH_SECRET=<long-random-secret>
 TRADESYNC_SYNC_KEY_ENCRYPTION_SECRET=<another-long-random-secret>
 ```
@@ -64,22 +65,25 @@ TRADESYNC_SYNC_KEY_ENCRYPTION_SECRET=<another-long-random-secret>
 http://127.0.0.1:8000/dashboard
 ```
 
-## 3. SQLite 维护
+## 3. PostgreSQL 维护
 
 ```powershell
-# 快速物理完整性 + 外键一致性检查
-.\venv\Scripts\python.exe scripts\check_database.py data\tradesync.db --quick
+# 连通性、版本和外键一致性检查
+.\venv\Scripts\python.exe scripts\check_database.py --quick
 
-# 在线备份已提交数据（API 无需停机），目标文件不能已存在
-.\venv\Scripts\python.exe scripts\backup_database.py data\tradesync.db backups\tradesync-20260919.db
+# 自定义格式在线备份，目标文件不能已存在
+.\venv\Scripts\python.exe scripts\backup_database.py backups\tradesync-20260919.dump
 
-# 恢复到一个新的数据库文件；确认后再修改 TRADESYNC_DB_PATH 并重启 API
-.\venv\Scripts\python.exe scripts\restore_database.py backups\tradesync-20260919.db data\restored.db
+# 从旧 SQLite 一次性迁移（会自动先备份 SQLite；PG 已有数据时需显式加 --truncate-target）
+.\venv\Scripts\python.exe scripts\migrate_sqlite_to_pg.py --sqlite data\tradesync.db
+
+# 恢复会 DROP/CREATE 目标数据库，必须显式确认
+.\venv\Scripts\python.exe scripts\restore_database.py backups\tradesync-20260919.dump --url "$env:TRADESYNC_DATABASE_URL" --yes
 ```
 
-恢复或替换数据库前先停止所有 API；不要手工删除正在使用的 `-wal` / `-shm` 文件。
+生产环境 PostgreSQL 只监听 `127.0.0.1:5432`；远程迁移测试结束后应立即关闭公网 5432。备份和恢复需要与服务器大版本兼容的 `pg_dump` / `pg_restore`（PostgreSQL 18 使用 18 版客户端）。
 
-## 3. 局域网 HTTPS 启动
+## 4. 局域网 HTTPS 启动
 
 生成证书（脚本会自动加入本机名和当前首选局域网 IP）：
 
@@ -270,5 +274,5 @@ cd D:\projects\TradeEZ\EA\TradeSync-Web
 - v2.1 之前创建的旧 Key 没有可恢复密文，过渡期只允许 Bearer；请在网页重置 Key 后启用完整 HMAC。
 - 如果加密密文无法解密，服务端会失败关闭并提示检查加密密钥或轮换 Key。
 - `dev-sync-key-change-me` 只作为本地开发兼容，不作为 EA 正式配置。
-- `.env`、SQLite、证书私钥、`venv/`、日志均不提交。
+- `.env`、旧 SQLite 数据/备份、证书私钥、`venv/`、日志均不提交。
 - 当前内存限流只适合单进程开发；多进程 / 生产环境应使用共享限流存储。

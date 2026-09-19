@@ -1,8 +1,9 @@
 from __future__ import annotations
-import sqlite3
+
+from app.db import DBRow
 from ..v2_models import ApiError
 
-def ensure_account_active(account: sqlite3.Row) -> None:
+def ensure_account_active(account: DBRow) -> None:
     if "status" in account.keys() and str(account["status"] or "active") != "active":
         raise ApiError(
             code="ACCOUNT_DISABLED",

@@ -449,7 +449,7 @@ export function clearToken() {
 
 export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const token = getToken();
-  const base = typeof window !== "undefined" && window.location.hostname === "192.168.31.116" ? "/api/v1" : API_BASE_URL;
+  const base = API_BASE_URL;
   const request = () => fetch(`${base}${path}`, {
       ...init,
       headers: {
@@ -502,7 +502,7 @@ export interface TradeReconciliation {
 }
 
 export async function attachmentBlob(id: number): Promise<Blob> {
-  const base = typeof window !== "undefined" && window.location.hostname === "192.168.31.116" ? "/api/v1" : API_BASE_URL;
+  const base = API_BASE_URL;
   const token = getToken();
   const response = await fetch(`${base}/my/review-attachments/${id}`, { headers: token ? { Authorization: `Bearer ${token}` } : {}, cache: "no-store" });
   if (!response.ok) throw new Error(response.status === 404 ? "附件不存在或无权访问" : "截图读取失败，请重试");
@@ -510,7 +510,7 @@ export async function attachmentBlob(id: number): Promise<Blob> {
 }
 
 export async function performanceCsv(params: URLSearchParams): Promise<Blob> {
-  const base = typeof window !== "undefined" && window.location.hostname === "192.168.31.116" ? "/api/v1" : API_BASE_URL;
+  const base = API_BASE_URL;
   const token = getToken();
   const response = await fetch(`${base}/my/performance/export?${params}`, { headers: token ? { Authorization: `Bearer ${token}` } : {}, cache: "no-store" });
   if (!response.ok) throw new Error("交易分析导出失败，请重试");

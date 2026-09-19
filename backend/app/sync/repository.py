@@ -1,14 +1,15 @@
 """Batch persistence helpers; the service owns commit and rollback."""
 from __future__ import annotations
+
+from app.db import DBConnection, DBRow
 import json
 import hmac
-import sqlite3
 from ..common.encoding import utc_now_iso, canonical_json, sha256_hex
 from ..v2_models import ApiError, IngestDealsRequest
 from ..accounts.policies import ensure_account_active
 
 
-def begin_account_write(db: sqlite3.Connection, account: sqlite3.Row) -> sqlite3.Row:
+def begin_account_write(db: DBConnection, account: DBRow) -> DBRow:
     """Lock before refreshing state: authentication may precede another writer."""
     db.execute("BEGIN IMMEDIATE")
     current = db.execute("SELECT * FROM accounts WHERE id = ?", (account["id"],)).fetchone()
@@ -30,9 +31,9 @@ def ensure_unique_tickets(payload: IngestDealsRequest) -> None:
 
 
 def upsert_ea_instance(
-    db: sqlite3.Connection,
+    db: DBConnection,
     *,
-    account: sqlite3.Row,
+    account: DBRow,
     instance_id: str | None,
     display_name: str | None = None,
     protocol_version: str | None = None,
@@ -62,8 +63,8 @@ def upsert_ea_instance(
 
 
 def start_sync_run(
-    db: sqlite3.Connection,
-    account: sqlite3.Row,
+    db: DBConnection,
+    account: DBRow,
     *,
     instance_id: str | None = None,
     instance_name: str | None = None,
@@ -100,7 +101,7 @@ def start_sync_run(
     return int(cursor.lastrowid)
 
 
-def get_open_sync_run(db: sqlite3.Connection, account: sqlite3.Row, run_id: int) -> sqlite3.Row:
+def get_open_sync_run(db: DBConnection, account: DBRow, run_id: int) -> DBRow:
     run = db.execute(
         "SELECT * FROM sync_runs WHERE id = ? AND account_id = ?",
         (run_id, account["id"]),
@@ -131,7 +132,7 @@ def validate_batch_envelope(payload: IngestDealsRequest) -> None:
         raise ApiError(code="INVALID_BATCH_INDEX", message="batch_index must be smaller than batch_count", status_code=400)
 
 
-def refresh_run_totals(db: sqlite3.Connection, run_id: int) -> None:
+def refresh_run_totals(db: DBConnection, run_id: int) -> None:
     db.execute(
         """
         UPDATE sync_runs
@@ -150,8 +151,8 @@ def refresh_run_totals(db: sqlite3.Connection, run_id: int) -> None:
 
 
 def store_deal_batch(
-    db: sqlite3.Connection,
-    account: sqlite3.Row,
+    db: DBConnection,
+    account: DBRow,
     payload: IngestDealsRequest,
 ) -> dict[str, object]:
     assert payload.sync_run_id is not None
@@ -211,76 +212,71 @@ def store_deal_batch(
          payload.batch_count, len(payload.deals), payload.request_hash, payload_hash, utc_now_iso()),
     )
     batch_row_id = int(batch_cursor.lastrowid)
-    try:
-        for deal in payload.deals:
-            raw = json.dumps(deal.model_dump(), ensure_ascii=False, separators=(",", ":"), sort_keys=True)
-            current = db.execute(
-                "SELECT id, raw_json FROM deals WHERE account_login = ? AND ticket = ?",
-                (payload.mt5_login, deal.ticket),
-            ).fetchone()
-            if current is None:
-                cursor = db.execute(
+    for deal in payload.deals:
+        raw = json.dumps(deal.model_dump(), ensure_ascii=False, separators=(",", ":"), sort_keys=True)
+        current = db.execute(
+            "SELECT id, raw_json FROM deals WHERE account_login = ? AND ticket = ?",
+            (payload.mt5_login, deal.ticket),
+        ).fetchone()
+        if current is None:
+            cursor = db.execute(
+                """
+                INSERT INTO deals (
+                    account_login, ticket, position_id, order_id, symbol,
+                    entry, type, volume, price, sl_price, tp_price,
+                    profit, swap, commission, magic, comment,
+                    open_time, deal_time, server_gmt_off, raw_json
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    payload.mt5_login, deal.ticket, deal.position_id, deal.order_id,
+                    deal.symbol, deal.entry, deal.type, deal.volume, deal.price,
+                    deal.sl_price, deal.tp_price, deal.profit, deal.swap,
+                    deal.commission, deal.magic, deal.comment, deal.open_time,
+                    deal.deal_time, 0, raw,
+                ),
+            )
+            deal_row_id = int(cursor.lastrowid)
+            inserted += 1
+        else:
+            deal_row_id = int(current["id"])
+            if current["raw_json"] != raw:
+                db.execute(
                     """
-                    INSERT INTO deals (
-                        account_login, ticket, position_id, order_id, symbol,
-                        entry, type, volume, price, sl_price, tp_price,
-                        profit, swap, commission, magic, comment,
-                        open_time, deal_time, server_gmt_off, raw_json
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    UPDATE deals SET
+                        position_id=?, order_id=?, symbol=?, entry=?, type=?, volume=?,
+                        price=?, sl_price=?, tp_price=?, profit=?, swap=?, commission=?,
+                        magic=?, comment=?, open_time=?, deal_time=?, raw_json=?
+                    WHERE id=?
                     """,
                     (
-                        payload.mt5_login, deal.ticket, deal.position_id, deal.order_id,
-                        deal.symbol, deal.entry, deal.type, deal.volume, deal.price,
-                        deal.sl_price, deal.tp_price, deal.profit, deal.swap,
-                        deal.commission, deal.magic, deal.comment, deal.open_time,
-                        deal.deal_time, 0, raw,
+                        deal.position_id, deal.order_id, deal.symbol, deal.entry, deal.type,
+                        deal.volume, deal.price, deal.sl_price, deal.tp_price, deal.profit,
+                        deal.swap, deal.commission, deal.magic, deal.comment, deal.open_time,
+                        deal.deal_time, raw, deal_row_id,
                     ),
                 )
-                deal_row_id = int(cursor.lastrowid)
-                inserted += 1
+                updated += 1
             else:
-                deal_row_id = int(current["id"])
-                if current["raw_json"] != raw:
-                    db.execute(
-                        """
-                        UPDATE deals SET
-                            position_id=?, order_id=?, symbol=?, entry=?, type=?, volume=?,
-                            price=?, sl_price=?, tp_price=?, profit=?, swap=?, commission=?,
-                            magic=?, comment=?, open_time=?, deal_time=?, raw_json=?
-                        WHERE id=?
-                        """,
-                        (
-                            deal.position_id, deal.order_id, deal.symbol, deal.entry, deal.type,
-                            deal.volume, deal.price, deal.sl_price, deal.tp_price, deal.profit,
-                            deal.swap, deal.commission, deal.magic, deal.comment, deal.open_time,
-                            deal.deal_time, raw, deal_row_id,
-                        ),
-                    )
-                    updated += 1
-                else:
-                    duplicated += 1
-            db.execute(
-                """
-                INSERT OR IGNORE INTO sync_batch_refs (
-                    sync_batch_id, account_login, deal_ticket, deal_row_id
-                ) VALUES (?, ?, ?, ?)
-                """,
-                (batch_row_id, payload.mt5_login, deal.ticket, deal_row_id),
-            )
+                duplicated += 1
         db.execute(
             """
-            UPDATE sync_batches
-               SET inserted_count=?, updated_count=?, duplicated_count=?,
-                   rejected_count=?, status='received', updated_at=?
-             WHERE id=?
+            INSERT OR IGNORE INTO sync_batch_refs (
+                sync_batch_id, account_login, deal_ticket, deal_row_id
+            ) VALUES (?, ?, ?, ?)
             """,
-            (inserted, updated, duplicated, rejected, utc_now_iso(), batch_row_id),
+            (batch_row_id, payload.mt5_login, deal.ticket, deal_row_id),
         )
-        refresh_run_totals(db, payload.sync_run_id)
-    except Exception:
-        db.execute("UPDATE sync_batches SET status='failed', updated_at=? WHERE id=?", (utc_now_iso(), batch_row_id))
-        raise
-
+    db.execute(
+        """
+        UPDATE sync_batches
+           SET inserted_count=?, updated_count=?, duplicated_count=?,
+               rejected_count=?, status='received', updated_at=?
+         WHERE id=?
+        """,
+        (inserted, updated, duplicated, rejected, utc_now_iso(), batch_row_id),
+    )
+    refresh_run_totals(db, payload.sync_run_id)
     return {
         "accepted": len(payload.deals),
         "inserted": inserted,

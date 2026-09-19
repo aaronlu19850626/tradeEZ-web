@@ -1,5 +1,5 @@
+from app.db import DBConnection
 import json
-import sqlite3
 from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -49,7 +49,7 @@ def evaluation_out(row, rules=None):
 
 
 @router.get("/reviews/{review_id}/evaluation")
-def get_evaluation(review_id: int, db: sqlite3.Connection = Depends(get_db), user=Depends(get_current_user)):
+def get_evaluation(review_id: int, db: DBConnection = Depends(get_db), user=Depends(get_current_user)):
     owned_review(db, user["id"], review_id)
     choices = [dict(id=row["id"], setup_id=row["setup_id"], setup_name=row["setup_name"], version=row["version"],
                     active=row["setup_status"] == "active", rules=json.loads(row["rules_json"])) for row in db.execute("""SELECT v.*,s.name AS setup_name,s.status AS setup_status FROM playbook_versions v
@@ -64,7 +64,7 @@ def get_evaluation(review_id: int, db: sqlite3.Connection = Depends(get_db), use
 
 
 @router.put("/reviews/{review_id}/evaluation")
-def save_evaluation(review_id: int, payload: EvaluationInput, db: sqlite3.Connection = Depends(get_db), user=Depends(get_current_user)):
+def save_evaluation(review_id: int, payload: EvaluationInput, db: DBConnection = Depends(get_db), user=Depends(get_current_user)):
     owned_review(db, user["id"], review_id); version = published_version(db, user["id"], payload.playbook_version_id)
     rules = json.loads(version["rules_json"]); by_key = {rule["key"]: rule for rule in rules}
     if len({answer.rule_key for answer in payload.answers}) != len(payload.answers): raise HTTPException(400, "同一规则不能重复回答")

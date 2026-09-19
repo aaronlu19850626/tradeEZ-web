@@ -1,7 +1,8 @@
 from __future__ import annotations
+
+from app.db import DBConnection, DBRow
 import hashlib
 import hmac
-import sqlite3
 import time
 from fastapi import Request
 from ..config import get_settings
@@ -31,7 +32,7 @@ def hash_secret(secret: str) -> str:
     return hashlib.sha256(secret.encode("utf-8")).hexdigest()
 
 
-def _verify_hmac(account: sqlite3.Row, token: str, raw_body: bytes, x_timestamp: str | None, x_signature: str | None) -> None:
+def _verify_hmac(account: DBRow, token: str, raw_body: bytes, x_timestamp: str | None, x_signature: str | None) -> None:
     encrypted_key = account["key_encrypted"] if "key_encrypted" in account.keys() else None
     recovered = decrypt_sync_key(encrypted_key, settings)
 
@@ -79,8 +80,8 @@ async def authenticate_v2(
     authorization: str | None,
     x_timestamp: str | None,
     x_signature: str | None,
-    db: sqlite3.Connection,
-) -> sqlite3.Row:
+    db: DBConnection,
+) -> DBRow:
     if not authorization:
         raise ApiError(code="MISSING_SECRET_KEY", message="Authorization header is required", status_code=401)
     if not authorization.startswith("Bearer "):
@@ -143,11 +144,11 @@ async def get_bound_account(
     authorization: str | None,
     x_timestamp: str | None,
     x_signature: str | None,
-    db: sqlite3.Connection,
+    db: DBConnection,
     scope: str,
     window_seconds: int = 60,
     rate_limit: int | None = None,
-) -> sqlite3.Row:
+) -> DBRow:
     account = await authenticate_v2(request, payload.mt5_login, authorization, x_timestamp, x_signature, db)
     effective_limit = rate_limit if rate_limit is not None else RATE_LIMITS[scope]
     check_rate_limit(scope, str(account["id"]), effective_limit, window_seconds)

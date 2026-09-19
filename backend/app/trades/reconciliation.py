@@ -1,4 +1,4 @@
-import sqlite3
+from app.db import DBConnection
 from typing import Literal
 
 from fastapi import HTTPException
@@ -21,7 +21,7 @@ class ReconciliationUpdate(BaseModel):
         return self
 
 
-def _trade(db: sqlite3.Connection, user_id: int, trade_id: int):
+def _trade(db: DBConnection, user_id: int, trade_id: int):
     row = db.execute("""SELECT t.* FROM trade_lifecycles t JOIN accounts a ON a.id=t.account_id
         WHERE t.id=? AND a.user_id=?""", (trade_id, user_id)).fetchone()
     if row is None:
@@ -29,7 +29,7 @@ def _trade(db: sqlite3.Connection, user_id: int, trade_id: int):
     return row
 
 
-def get_case(db: sqlite3.Connection, user_id: int, trade_id: int):
+def get_case(db: DBConnection, user_id: int, trade_id: int):
     trade = _trade(db, user_id, trade_id)
     case = db.execute("""SELECT * FROM trade_reconciliation_cases
         WHERE user_id=? AND account_id=? AND position_id=? AND anchor_ticket=?""",
@@ -42,7 +42,7 @@ def get_case(db: sqlite3.Connection, user_id: int, trade_id: int):
             "updated_at": case["updated_at"], "events": [dict(row) for row in events]}
 
 
-def update_case(db: sqlite3.Connection, user_id: int, trade_id: int, payload: ReconciliationUpdate):
+def update_case(db: DBConnection, user_id: int, trade_id: int, payload: ReconciliationUpdate):
     trade = _trade(db, user_id, trade_id)
     if trade["status"] != "needs_review" and payload.state != "resolved":
         raise HTTPException(409, "Only trades requiring review can open a reconciliation case")

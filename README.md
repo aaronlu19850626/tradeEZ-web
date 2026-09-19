@@ -18,7 +18,7 @@ TradeSync-Web 是 TradeEZ 的 MT5 交易数据同步 Web 服务。当前以 [SOP
   - 单批最多 1000 条，EA 默认 100 条。
   - 支持品种规格、复数快照数组和携带 MT5 服务器时区的心跳。
 - 独立 API 审计日志模块：只记录接口、账号、结果、数量、游标和耗时，不保存订单明细。
-- SQLite 本地库和网页连接控制台。
+- PostgreSQL 主数据库，本地和局域网联调通过 `TRADESYNC_DATABASE_URL` 指向独立测试库。
 - MetaEditor 编译目标：0 errors / 0 warnings。
 
 ## 最新需求文档
@@ -45,7 +45,7 @@ TradeSync-Web 是 TradeEZ 的 MT5 交易数据同步 Web 服务。当前以 [SOP
 ## 仓库结构
 
 ```text
-backend/   FastAPI 服务、网页控制台、SQLite 数据层、HTTPS/测试脚本
+backend/   FastAPI 服务、网页控制台、PostgreSQL 数据层、HTTPS/测试脚本
 ea/        MT5 EA 源码（.ex5 和编译日志不提交）
 docs/      PRD、设计、API 规范和部署文档
 ```
@@ -57,6 +57,7 @@ cd D:\projects\TradeEZ\EA\TradeSync-Web\backend
 py -m venv venv
 .\venv\Scripts\python.exe -m pip install -r requirements.txt
 copy .env.example .env
+# 编辑 .env，填写 TRADESYNC_DATABASE_URL，例如 postgresql://tradeez:***@127.0.0.1:5432/tradeez
 .\venv\Scripts\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
 ```
 
@@ -77,14 +78,14 @@ cd D:\projects\TradeEZ\EA\TradeSync-Web
 .\backend\venv\Scripts\python.exe .\backend\scripts\v2_smoke_test.py
 ```
 
-该测试使用临时 SQLite 数据库，覆盖 HMAC 成功/失败、防重放时间窗、403 账号不匹配、成交幂等、同秒边界、两阶段提交、409 游标保护、1000/1001 批次限制、品种、快照和心跳。
+该测试使用独立的 `tradesync_smoke` PostgreSQL 数据库（会清空该库的 public schema），覆盖 HMAC 成功/失败、防重放时间窗、403 账号不匹配、成交幂等、同秒边界、两阶段提交、409 游标保护、1000/1001 批次限制、品种、快照和心跳。
 
 ## 不提交的本地文件
 
 - Python 虚拟环境。
 - `backend/.env`。
-- SQLite 数据库、WAL/SHM 和本地验证码。
+- 旧 SQLite 数据库备份、PostgreSQL 测试库数据和本地验证码。
 - HTTPS 证书与私钥。
 - EA `.ex5`、编译日志和服务运行日志。
 
-当前 SQLite / 内存限流适合局域网联调；生产环境建议迁移 PostgreSQL、共享限流、公网域名和可信 CA 证书。
+当前 PostgreSQL / 内存限流适合第一阶段局域网联调；后续公网生产建议补充共享限流、公网域名和可信 CA 证书。

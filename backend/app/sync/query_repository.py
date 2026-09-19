@@ -1,16 +1,17 @@
 from __future__ import annotations
 
-import sqlite3
+from app.db import DBConnection, DBRow
 
 
-def owned_run(db: sqlite3.Connection, user_id: int, run_id: int) -> sqlite3.Row | None:
+
+def owned_run(db: DBConnection, user_id: int, run_id: int) -> DBRow | None:
     return db.execute(
         "SELECT r.* FROM sync_runs r JOIN accounts a ON a.id=r.account_id WHERE r.id=? AND a.user_id=?",
         (run_id, user_id),
     ).fetchone()
 
 
-def run_batches(db: sqlite3.Connection, run_id: int, page: int, page_size: int) -> tuple[list[sqlite3.Row], int]:
+def run_batches(db: DBConnection, run_id: int, page: int, page_size: int) -> tuple[list[DBRow], int]:
     total = int(db.execute("SELECT COUNT(*) FROM sync_batches WHERE sync_run_id=?", (run_id,)).fetchone()[0])
     rows = db.execute(
         """SELECT id, batch_id, batch_index, batch_count, item_count, inserted_count,
@@ -22,9 +23,9 @@ def run_batches(db: sqlite3.Connection, run_id: int, page: int, page_size: int) 
 
 
 def sync_runs(
-    db: sqlite3.Connection, user_id: int, account_id: int | None,
+    db: DBConnection, user_id: int, account_id: int | None,
     run_status: str | None, page: int, page_size: int,
-) -> tuple[list[sqlite3.Row], int]:
+) -> tuple[list[DBRow], int]:
     where = ["a.user_id = ?"]
     params: list[object] = [user_id]
     if account_id is not None:
@@ -53,9 +54,9 @@ def sync_runs(
 
 
 def api_logs(
-    db: sqlite3.Connection, user_id: int, limit: int,
+    db: DBConnection, user_id: int, limit: int,
     mt5_login: int | None, success: bool | None,
-) -> list[sqlite3.Row]:
+) -> list[DBRow]:
     where = [
         "(l.user_id = ? OR l.account_id IN (SELECT id FROM accounts WHERE user_id = ?) OR l.mt5_login IN (SELECT mt5_login FROM accounts WHERE user_id = ?))"
     ]

@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+from app.db import DBConnection, DBRow
+
 import hmac
 import json
-import sqlite3
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -19,7 +20,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from .api_logs import ApiLogMiddleware
 from .config import get_settings
-from .db import get_db, init_db
+from .db import DBConnection, DBRow, connect_db, get_db, init_db
 from .schemas import (
     DealBatchIn,
     DealBatchOut,
@@ -69,19 +70,11 @@ def require_sync_key(
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    init_db(settings.db_path)
+    init_db(settings.database_url)
     # The audit-log middleware keeps a dedicated connection. Business endpoints
     # use a per-request connection from app.db.get_db to avoid shared transaction
     # state when several EA batches arrive concurrently.
-    app.state.db = sqlite3.connect(
-        settings.db_path,
-        check_same_thread=False,
-        timeout=30,
-        isolation_level=None,
-    )
-    app.state.db.row_factory = sqlite3.Row
-    app.state.db.execute("PRAGMA foreign_keys=ON")
-    app.state.db.execute("PRAGMA busy_timeout=30000")
+    app.state.db = connect_db(application_name="tradesync-middleware")
     yield
     app.state.db.close()
 
@@ -163,7 +156,7 @@ def healthz() -> dict[str, str]:
 
 
 @app.get("/readyz", include_in_schema=False)
-def readyz(db: sqlite3.Connection = Depends(get_db)) -> JSONResponse:
+def readyz(db: DBConnection = Depends(get_db)) -> JSONResponse:
     """Readiness probe: database reachable and migrated to the expected revision."""
     from alembic.script import ScriptDirectory
     from .migrations import migration_config
@@ -171,7 +164,7 @@ def readyz(db: sqlite3.Connection = Depends(get_db)) -> JSONResponse:
     try:
         db.execute("SELECT 1").fetchone()
         row = db.execute("SELECT version_num FROM alembic_version").fetchone()
-    except sqlite3.DatabaseError:
+    except Exception:
         return JSONResponse(status_code=503, content={"status": "not-ready", "database": "unavailable"})
     current = row["version_num"] if row is not None else None
     if current != expected:
@@ -190,8 +183,8 @@ def root():
 def authenticate_ingest(
     credentials: HTTPAuthorizationCredentials | None,
     account_login: int,
-    db: sqlite3.Connection,
-) -> sqlite3.Row | None:
+    db: DBConnection,
+) -> DBRow | None:
     if credentials is None or credentials.scheme.lower() != "bearer":
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing Bearer sync key")
 
@@ -227,7 +220,7 @@ def authenticate_ingest(
 def ingest_deals(
     payload: DealBatchIn,
     credentials: HTTPAuthorizationCredentials | None = Depends(bearer),
-    db: sqlite3.Connection = Depends(get_db),
+    db: DBConnection = Depends(get_db),
 ) -> DealBatchOut:
     authenticate_ingest(credentials, payload.account_login, db)
     accepted = 0
@@ -239,25 +232,25 @@ def ingest_deals(
         authenticate_ingest(credentials, payload.account_login, db)
         for deal in payload.deals:
             raw = json.dumps(deal.model_dump(), ensure_ascii=False, separators=(",", ":"), sort_keys=True)
-            try:
-                cursor = db.execute(
-                    """
-                    INSERT INTO deals (
-                        account_login, ticket, position_id, order_id, symbol,
-                        entry, type, volume, price, sl_price, tp_price,
-                        profit, swap, commission, magic, comment,
-                        open_time, deal_time, server_gmt_off, raw_json
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    """,
-                    (payload.account_login, deal.ticket, deal.position_id, deal.order_id, deal.symbol,
-                     deal.entry, deal.type, deal.volume, deal.price, deal.sl_price, deal.tp_price,
-                     deal.profit, deal.swap, deal.commission, deal.magic, deal.comment,
-                     deal.deal_time, deal.deal_time, payload.server_gmt_off, raw),
-                )
-                if cursor.rowcount == 1:
-                    accepted += 1
-                    items.append(DealItemResult(ticket=deal.ticket, status="accepted"))
-            except sqlite3.IntegrityError:
+            cursor = db.execute(
+                """
+                INSERT INTO deals (
+                    account_login, ticket, position_id, order_id, symbol,
+                    entry, type, volume, price, sl_price, tp_price,
+                    profit, swap, commission, magic, comment,
+                    open_time, deal_time, server_gmt_off, raw_json
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(account_login, ticket) DO NOTHING
+                """,
+                (payload.account_login, deal.ticket, deal.position_id, deal.order_id, deal.symbol,
+                 deal.entry, deal.type, deal.volume, deal.price, deal.sl_price, deal.tp_price,
+                 deal.profit, deal.swap, deal.commission, deal.magic, deal.comment,
+                 deal.deal_time, deal.deal_time, payload.server_gmt_off, raw),
+            )
+            if cursor.rowcount == 1:
+                accepted += 1
+                items.append(DealItemResult(ticket=deal.ticket, status="accepted"))
+            else:
                 duplicated += 1
                 items.append(DealItemResult(ticket=deal.ticket, status="duplicated"))
         db.commit()
@@ -280,7 +273,7 @@ def ingest_deals(
 def heartbeat(
     payload: HeartbeatIn,
     credentials: HTTPAuthorizationCredentials | None = Depends(bearer),
-    db: sqlite3.Connection = Depends(get_db),
+    db: DBConnection = Depends(get_db),
 ) -> HeartbeatOut:
     account = authenticate_ingest(credentials, payload.account_login, db)
     raw = json.dumps(payload.model_dump(), ensure_ascii=False, sort_keys=True)
@@ -324,9 +317,9 @@ def heartbeat(
 def list_deals(
     account_login: int = Query(..., ge=0),
     limit: int = Query(100, ge=1, le=1000),
-    db: sqlite3.Connection = Depends(get_db),
+    db: DBConnection = Depends(get_db),
     _: None = Depends(require_sync_key),
-) -> list[sqlite3.Row]:
+) -> list[DBRow]:
     rows = db.execute(
         "SELECT * FROM deals WHERE account_login = ? ORDER BY deal_time DESC, ticket DESC LIMIT ?",
         (account_login, limit),
@@ -338,7 +331,7 @@ def list_deals(
 def list_positions_compat(
     account_login: int = Query(..., ge=0),
     include_closed: bool = True,
-    db: sqlite3.Connection = Depends(get_db),
+    db: DBConnection = Depends(get_db),
     _: None = Depends(require_sync_key),
 ) -> list[PositionOut]:
     return pair_positions(db, account_login, include_closed=include_closed)
@@ -346,7 +339,7 @@ def list_positions_compat(
 
 @app.get("/api/v1/heartbeats")
 def list_heartbeats(
-    db: sqlite3.Connection = Depends(get_db),
+    db: DBConnection = Depends(get_db),
     _: None = Depends(require_sync_key),
 ) -> list[dict]:
     rows = db.execute(

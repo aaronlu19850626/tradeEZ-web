@@ -1,5 +1,6 @@
 from __future__ import annotations
-import sqlite3
+
+from app.db import DBConnection
 from fastapi import APIRouter, Depends, Header, Request
 from starlette.concurrency import run_in_threadpool
 from ..db import get_db
@@ -34,7 +35,7 @@ async def get_last_sync_time(
     authorization: str | None = Header(default=None),
     x_timestamp: str | None = Header(default=None),
     x_signature: str | None = Header(default=None),
-    db: sqlite3.Connection = Depends(get_db),
+    db: DBConnection = Depends(get_db),
 ) -> LastSyncTimeResponse:
     account = await authenticate_v2(request, payload.mt5_login, authorization, x_timestamp, x_signature, db)
     check_rate_limit("last_sync_time", str(account["id"]), RATE_LIMITS["last_sync_time"])
@@ -48,7 +49,7 @@ async def ingest_deals_v21(
     authorization: str | None = Header(default=None),
     x_timestamp: str | None = Header(default=None),
     x_signature: str | None = Header(default=None),
-    db: sqlite3.Connection = Depends(get_db),
+    db: DBConnection = Depends(get_db),
 ) -> IngestDealsResponse:
     account = await get_bound_account(
         request,
@@ -71,7 +72,7 @@ async def update_last_sync_time(
     authorization: str | None = Header(default=None),
     x_timestamp: str | None = Header(default=None),
     x_signature: str | None = Header(default=None),
-    db: sqlite3.Connection = Depends(get_db),
+    db: DBConnection = Depends(get_db),
 ) -> UpdateLastSyncTimeResponse:
     account = await authenticate_v2(request, payload.mt5_login, authorization, x_timestamp, x_signature, db)
     ensure_account_active(account)
@@ -87,7 +88,7 @@ async def ingest_symbols_v21(
     authorization: str | None = Header(default=None),
     x_timestamp: str | None = Header(default=None),
     x_signature: str | None = Header(default=None),
-    db: sqlite3.Connection = Depends(get_db),
+    db: DBConnection = Depends(get_db),
 ) -> IngestSymbolsResponse:
     account = await get_bound_account(request, payload, authorization, x_timestamp, x_signature, db, "symbols")
     return await run_in_threadpool(service.ingest_symbols_v21, payload, account, db)
@@ -100,7 +101,7 @@ async def ingest_snapshots_v21(
     authorization: str | None = Header(default=None),
     x_timestamp: str | None = Header(default=None),
     x_signature: str | None = Header(default=None),
-    db: sqlite3.Connection = Depends(get_db),
+    db: DBConnection = Depends(get_db),
 ) -> IngestSnapshotsResponse:
     account = await get_bound_account(
         request, payload, authorization, x_timestamp, x_signature, db, "snapshots", window_seconds=3600
@@ -115,7 +116,7 @@ async def ingest_settings_v21(
     authorization: str | None = Header(default=None),
     x_timestamp: str | None = Header(default=None),
     x_signature: str | None = Header(default=None),
-    db: sqlite3.Connection = Depends(get_db),
+    db: DBConnection = Depends(get_db),
 ) -> IngestSettingsResponse:
     account = await get_bound_account(
         request, payload, authorization, x_timestamp, x_signature, db, "settings", window_seconds=3600
@@ -130,7 +131,7 @@ async def heartbeat_v21(
     authorization: str | None = Header(default=None),
     x_timestamp: str | None = Header(default=None),
     x_signature: str | None = Header(default=None),
-    db: sqlite3.Connection = Depends(get_db),
+    db: DBConnection = Depends(get_db),
 ) -> HeartbeatResponse:
     account = await authenticate_v2(request, payload.mt5_login, authorization, x_timestamp, x_signature, db)
     check_rate_limit("heartbeat", str(account["id"]), RATE_LIMITS["heartbeat"], 3600)

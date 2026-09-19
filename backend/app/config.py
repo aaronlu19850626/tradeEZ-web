@@ -9,7 +9,7 @@ class Settings(BaseSettings):
     """Configuration for the MT5 communication and email-auth milestone."""
 
     sync_key: str = "dev-sync-key-change-me"
-    db_path: str = "data/tradesync.db"
+    database_url: str = ""
     cors_origins: str = "*"
 
     # Email verification-code login

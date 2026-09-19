@@ -1,5 +1,6 @@
+import psycopg
+from app.db import DBConnection
 import json
-import sqlite3
 from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -92,12 +93,12 @@ def setup_out(db, row):
 
 
 @router.get("/setups")
-def list_setups(db: sqlite3.Connection = Depends(get_db), user=Depends(get_current_user)):
+def list_setups(db: DBConnection = Depends(get_db), user=Depends(get_current_user)):
     return [setup_out(db, row) for row in db.execute("SELECT * FROM setups WHERE user_id=? ORDER BY status,name,id", (user["id"],))]
 
 
 @router.post("/setups", status_code=201)
-def create_setup(payload: SetupInput, db: sqlite3.Connection = Depends(get_db), user=Depends(get_current_user)):
+def create_setup(payload: SetupInput, db: DBConnection = Depends(get_db), user=Depends(get_current_user)):
     db.execute("BEGIN IMMEDIATE")
     try:
         cursor = db.execute("INSERT INTO setups(user_id,name,description,symbols_json,directions_json) VALUES(?,?,?,?,?)",
@@ -105,26 +106,26 @@ def create_setup(payload: SetupInput, db: sqlite3.Connection = Depends(get_db), 
         db.execute("INSERT INTO playbook_versions(setup_id,version,content_json,rules_json) VALUES(?,1,'{}','[]')", (cursor.lastrowid,))
         row = db.execute("SELECT * FROM setups WHERE id=?", (cursor.lastrowid,)).fetchone(); db.commit()
         return setup_out(db, row)
-    except sqlite3.IntegrityError:
+    except psycopg.errors.IntegrityError:
         db.rollback(); raise HTTPException(409, "Setup 名称已存在")
     except Exception:
         db.rollback(); raise
 
 
 @router.patch("/setups/{setup_id}")
-def update_setup(setup_id: int, payload: SetupPatch, db: sqlite3.Connection = Depends(get_db), user=Depends(get_current_user)):
+def update_setup(setup_id: int, payload: SetupPatch, db: DBConnection = Depends(get_db), user=Depends(get_current_user)):
     owned_setup(db, user["id"], setup_id)
     try:
         db.execute("""UPDATE setups SET name=?,description=?,symbols_json=?,directions_json=?,status=?,
             updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE id=?""", (payload.name, payload.description,
             json.dumps(payload.symbols, ensure_ascii=False), json.dumps(payload.directions), payload.status, setup_id))
         return setup_out(db, db.execute("SELECT * FROM setups WHERE id=?", (setup_id,)).fetchone())
-    except sqlite3.IntegrityError:
+    except psycopg.errors.IntegrityError:
         raise HTTPException(409, "Setup 名称已存在")
 
 
 @router.post("/setups/{setup_id}/draft")
-def create_draft(setup_id: int, db: sqlite3.Connection = Depends(get_db), user=Depends(get_current_user)):
+def create_draft(setup_id: int, db: DBConnection = Depends(get_db), user=Depends(get_current_user)):
     owned_setup(db, user["id"], setup_id)
     current = db.execute("SELECT * FROM playbook_versions WHERE setup_id=? AND status='draft'", (setup_id,)).fetchone()
     if current: return version_out(current)
@@ -135,7 +136,7 @@ def create_draft(setup_id: int, db: sqlite3.Connection = Depends(get_db), user=D
 
 
 @router.put("/playbook-versions/{version_id}")
-def save_draft(version_id: int, payload: PlaybookInput, db: sqlite3.Connection = Depends(get_db), user=Depends(get_current_user)):
+def save_draft(version_id: int, payload: PlaybookInput, db: DBConnection = Depends(get_db), user=Depends(get_current_user)):
     row = db.execute("""SELECT v.* FROM playbook_versions v JOIN setups s ON s.id=v.setup_id
         WHERE v.id=? AND s.user_id=?""", (version_id, user["id"])).fetchone()
     if row is None: raise HTTPException(404, "Playbook 版本不存在")
@@ -148,7 +149,7 @@ def save_draft(version_id: int, payload: PlaybookInput, db: sqlite3.Connection =
 
 
 @router.post("/playbook-versions/{version_id}/publish")
-def publish(version_id: int, expected_revision: int, db: sqlite3.Connection = Depends(get_db), user=Depends(get_current_user)):
+def publish(version_id: int, expected_revision: int, db: DBConnection = Depends(get_db), user=Depends(get_current_user)):
     row = db.execute("""SELECT v.*,s.status AS setup_status FROM playbook_versions v JOIN setups s ON s.id=v.setup_id
         WHERE v.id=? AND s.user_id=?""", (version_id, user["id"])).fetchone()
     if row is None: raise HTTPException(404, "Playbook 版本不存在")

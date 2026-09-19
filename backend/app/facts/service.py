@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-import sqlite3
+from app.db import DBConnection, DBRow
+
 import json
 from fastapi import HTTPException
 from ..schemas import DealDetailOut, DealSourceBatchOut
@@ -12,7 +13,7 @@ from . import repository
 
 def deal_detail(
     account_id: int, ticket: int, page: int, page_size: int,
-    db: sqlite3.Connection, user: sqlite3.Row,
+    db: DBConnection, user: DBRow,
 ) -> DealDetailOut:
     account = get_owned_account(account_id, user, db)
     login = int(account["mt5_login"])
@@ -27,7 +28,7 @@ def deal_detail(
     )
 
 
-def my_raw_deals(account_id: int | None, ticket: int | None, position_id: int | None, order_id: int | None, symbol: str | None, entry: int | None, start_time: int | None, end_time: int | None, page: int, page_size: int, sort: str, db: sqlite3.Connection, user: sqlite3.Row) -> RawDealPageOut:
+def my_raw_deals(account_id: int | None, ticket: int | None, position_id: int | None, order_id: int | None, symbol: str | None, entry: int | None, start_time: int | None, end_time: int | None, page: int, page_size: int, sort: str, db: DBConnection, user: DBRow) -> RawDealPageOut:
     account_login = None
     if account_id is not None:
         account_login = int(get_owned_account(account_id, user, db)["mt5_login"])
@@ -35,12 +36,12 @@ def my_raw_deals(account_id: int | None, ticket: int | None, position_id: int | 
     return RawDealPageOut(items=[DealOut.model_validate(dict(row)) for row in rows], total=total, page=page, page_size=page_size)
 
 
-def my_account_deals(account_id: int, limit: int, db: sqlite3.Connection, user: sqlite3.Row) -> list[DealOut]:
+def my_account_deals(account_id: int, limit: int, db: DBConnection, user: DBRow) -> list[DealOut]:
     account = get_owned_account(account_id, user, db)
     return [DealOut.model_validate(dict(row)) for row in repository.account_deals(db, int(account["mt5_login"]), limit)]
 
 
-def my_account_settings(account_id: int, limit: int, db: sqlite3.Connection, user: sqlite3.Row) -> list[EaSettingsSnapshotOut]:
+def my_account_settings(account_id: int, limit: int, db: DBConnection, user: DBRow) -> list[EaSettingsSnapshotOut]:
     account = get_owned_account(account_id, user, db)
     rows = repository.account_settings(db, int(account["mt5_login"]), limit)
     result: list[EaSettingsSnapshotOut] = []

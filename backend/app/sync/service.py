@@ -1,9 +1,10 @@
 """Sync operations and transactions independent of HTTP request objects."""
 from __future__ import annotations
+
+from app.db import DBConnection, DBRow
 import hashlib
 import hmac
 import json
-import sqlite3
 import time
 from ..accounts.policies import ensure_account_active
 from ..common.encoding import utc_now_iso, canonical_json, sha256_hex
@@ -26,7 +27,7 @@ from ..v2_models import (
     UpdateLastSyncTimeResponse,
 )
 
-def get_last_sync_time(payload: AccountRequest, account: sqlite3.Row, db: sqlite3.Connection) -> LastSyncTimeResponse:
+def get_last_sync_time(payload: AccountRequest, account: DBRow, db: DBConnection) -> LastSyncTimeResponse:
     try:
         account = begin_account_write(db, account)
         run_id = start_sync_run(
@@ -51,7 +52,7 @@ def get_last_sync_time(payload: AccountRequest, account: sqlite3.Row, db: sqlite
     )
 
 
-def ingest_deals_v21(payload: IngestDealsRequest, account: sqlite3.Row, db: sqlite3.Connection) -> IngestDealsResponse:
+def ingest_deals_v21(payload: IngestDealsRequest, account: DBRow, db: DBConnection) -> IngestDealsResponse:
     ensure_unique_tickets(payload)
 
     try:
@@ -123,7 +124,7 @@ def ingest_deals_v21(payload: IngestDealsRequest, account: sqlite3.Row, db: sqli
     return IngestDealsResponse(**result)
 
 
-def update_last_sync_time(payload: UpdateLastSyncTimeRequest, account: sqlite3.Row, db: sqlite3.Connection) -> UpdateLastSyncTimeResponse:
+def update_last_sync_time(payload: UpdateLastSyncTimeRequest, account: DBRow, db: DBConnection) -> UpdateLastSyncTimeResponse:
     now = int(time.time())
     if payload.last_sync_time > now + 300:
         raise ApiError(code="INVALID_REQUEST", message="last_sync_time is too far in the future", status_code=400)
@@ -295,7 +296,7 @@ def update_last_sync_time(payload: UpdateLastSyncTimeRequest, account: sqlite3.R
     )
 
 
-def ingest_symbols_v21(payload: IngestSymbolsRequest, account: sqlite3.Row, db: sqlite3.Connection) -> IngestSymbolsResponse:
+def ingest_symbols_v21(payload: IngestSymbolsRequest, account: DBRow, db: DBConnection) -> IngestSymbolsResponse:
     names = [item.name for item in payload.symbols]
     if len(names) != len(set(names)):
         raise ApiError(code="DUPLICATE_SYMBOL_IN_REQUEST", message="name must be unique within a request", status_code=400)
@@ -329,7 +330,7 @@ def ingest_symbols_v21(payload: IngestSymbolsRequest, account: sqlite3.Row, db: 
     return IngestSymbolsResponse(accepted=len(payload.symbols))
 
 
-def ingest_snapshots_v21(payload: IngestSnapshotsRequest, account: sqlite3.Row, db: sqlite3.Connection) -> IngestSnapshotsResponse:
+def ingest_snapshots_v21(payload: IngestSnapshotsRequest, account: DBRow, db: DBConnection) -> IngestSnapshotsResponse:
     try:
         account = begin_account_write(db, account)
         for item in payload.snapshots:
@@ -358,7 +359,7 @@ def ingest_snapshots_v21(payload: IngestSnapshotsRequest, account: sqlite3.Row, 
     return IngestSnapshotsResponse(accepted=len(payload.snapshots))
 
 
-def ingest_settings_v21(payload: IngestSettingsRequest, account: sqlite3.Row, db: sqlite3.Connection) -> IngestSettingsResponse:
+def ingest_settings_v21(payload: IngestSettingsRequest, account: DBRow, db: DBConnection) -> IngestSettingsResponse:
     now = int(time.time())
     if payload.snapshot_time > now + 300:
         raise ApiError(
@@ -439,7 +440,7 @@ def ingest_settings_v21(payload: IngestSettingsRequest, account: sqlite3.Row, db
     return IngestSettingsResponse(data={"received_at": received_at})  # type: ignore[arg-type]
 
 
-def heartbeat_v21(payload: HeartbeatRequest, account: sqlite3.Row, db: sqlite3.Connection) -> HeartbeatResponse:
+def heartbeat_v21(payload: HeartbeatRequest, account: DBRow, db: DBConnection) -> HeartbeatResponse:
     server_time = int(time.time())
     timezone_name = payload.server_timezone_name.strip()[:32] if payload.server_timezone_name else None
     raw = json.dumps(

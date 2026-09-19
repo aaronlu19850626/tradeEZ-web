@@ -1,4 +1,4 @@
-"""Smoke-test the TradeSync API v2.1 contract with a temporary SQLite database.
+"""Smoke-test the TradeSync API v2.1 contract in a scratch PostgreSQL schema.
 
 Run from backend/:
     .\\venv\\Scripts\\python.exe scripts\\v2_smoke_test.py
@@ -12,14 +12,16 @@ import json
 import os
 import secrets
 import socket
-import sqlite3
 import subprocess
 import sys
-import tempfile
 import time
 import urllib.error
 import urllib.request
 from pathlib import Path
+from urllib.parse import parse_qsl, quote, urlencode, urlsplit, urlunsplit
+
+import psycopg
+from dotenv import load_dotenv
 
 os.environ.setdefault("TRADESYNC_AUTH_SECRET", "v2-smoke-auth-secret")
 os.environ.setdefault("TRADESYNC_SYNC_KEY_ENCRYPTION_SECRET", "v2-smoke-key-encryption-secret")
@@ -27,10 +29,36 @@ os.environ.setdefault("TRADESYNC_EMAIL_PROVIDER", "console")
 
 BACKEND_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(BACKEND_ROOT))
+load_dotenv(BACKEND_ROOT / ".env", override=False)
+
+SMOKE_SCHEMA_NAME = "tradesync_smoke"
+
+
+def _replace_schema(url: str, schema: str) -> str:
+    parts = urlsplit(url)
+    query = [(key, value) for key, value in parse_qsl(parts.query, keep_blank_values=True) if key != "options"]
+    query.append(("options", f"-c search_path={schema}"))
+    return urlunsplit((parts.scheme, parts.netloc, parts.path or "/tradeez", urlencode(query, quote_via=quote), parts.fragment))
+
+
+SOURCE_DATABASE_URL = os.getenv("TRADESYNC_SMOKE_DATABASE_URL") or os.getenv("TRADESYNC_DATABASE_URL") or "postgresql://tradeez:tradeez@127.0.0.1:5432/tradeez"
+SMOKE_DATABASE_URL = _replace_schema(SOURCE_DATABASE_URL, SMOKE_SCHEMA_NAME)
+os.environ["TRADESYNC_DATABASE_URL"] = SMOKE_DATABASE_URL
+
+
+def prepare_smoke_database() -> None:
+    # The application database role need not have CREATEDB; a private schema is
+    # enough to isolate this smoke test from the public production schema.
+    with psycopg.connect(SMOKE_DATABASE_URL, autocommit=True, connect_timeout=10) as db:
+        db.execute(f"DROP SCHEMA IF EXISTS {SMOKE_SCHEMA_NAME} CASCADE")
+        db.execute(f"CREATE SCHEMA {SMOKE_SCHEMA_NAME}")
+
+prepare_smoke_database()
 
 from app.config import get_settings  # noqa: E402
 from app.crypto import encrypt_sync_key  # noqa: E402
-from app.db import init_db  # noqa: E402
+from app.db import connect_db  # noqa: E402
+from app.migrations import upgrade_database  # noqa: E402
 from app.security import create_access_token  # noqa: E402
 
 MT5_LOGIN = 88973405
@@ -107,15 +135,18 @@ def assert_ok(label: str, condition: bool, body: object) -> None:
     print(f"OK  {label}")
 
 
-def seed_database(db_path: Path) -> None:
-    init_db(str(db_path))
-    with sqlite3.connect(db_path) as db:
-        db.execute("INSERT INTO users (id, email) VALUES (?, ?)", (1, "v2-smoke@example.com"))
+def seed_database() -> None:
+    upgrade_database()
+    with connect_db(autocommit=False, application_name="v2-smoke-seed") as db:
+        db.execute(
+            "INSERT INTO users (id, email) VALUES (%s, %s)",
+            (1, "v2-smoke@example.com"),
+        )
         db.execute(
             """
             INSERT INTO accounts (
                 id, user_id, mt5_login, key_prefix, key_hash, key_encrypted, key_environment
-            ) VALUES (?, ?, ?, ?, ?, ?, 'live')
+            ) VALUES (%s, %s, %s, %s, %s, %s, 'live')
             """,
             (
                 1,
@@ -130,7 +161,7 @@ def seed_database(db_path: Path) -> None:
             """
             INSERT INTO accounts (
                 id, user_id, mt5_login, key_prefix, key_hash, key_encrypted, key_environment
-            ) VALUES (?, ?, ?, ?, ?, ?, 'live')
+            ) VALUES (%s, %s, %s, %s, %s, %s, 'live')
             """,
             (
                 2,
@@ -173,15 +204,15 @@ def deals_payload(deals: list[dict]) -> dict:
 
 
 def main() -> None:
-    temp_dir = Path(tempfile.mkdtemp(prefix="tradesync-v21-smoke-"))
-    db_path = temp_dir / "smoke.db"
+    temp_dir = BACKEND_ROOT / ".smoke-tmp"
+    temp_dir.mkdir(exist_ok=True)
     log_path = temp_dir / "uvicorn.log"
-    seed_database(db_path)
+    seed_database()
 
     port = free_port()
     base_url = f"http://127.0.0.1:{port}"
     env = os.environ.copy()
-    env["TRADESYNC_DB_PATH"] = str(db_path)
+    env["TRADESYNC_DATABASE_URL"] = SMOKE_DATABASE_URL
     env["PYTHONPYCACHEPREFIX"] = str(temp_dir / "pycache")
 
     with log_path.open("w", encoding="utf-8") as log:
@@ -393,23 +424,26 @@ def main() -> None:
             )
             assert_ok("legacy heartbeat without timezone fields stays unknown", status == 200, body)
 
-            with sqlite3.connect(db_path) as db:
+            db = connect_db(application_name="v2-smoke-verify")
+            try:
                 row = db.execute(
-                    "SELECT open_time, deal_time FROM deals WHERE account_login=? AND ticket=1001",
+                    "SELECT open_time, deal_time FROM deals WHERE account_login=%s AND ticket=1001",
                     (MT5_LOGIN,),
                 ).fetchone()
                 snap = db.execute(
-                    "SELECT timestamp, equity FROM snapshots WHERE account_login=? AND timestamp=?",
+                    "SELECT timestamp, equity FROM snapshots WHERE account_login=%s AND timestamp=%s",
                     (MT5_LOGIN, snapshot_time),
                 ).fetchone()
                 legacy_account_tz = db.execute(
-                    "SELECT server_gmt_off, server_timezone_name FROM accounts WHERE mt5_login=?",
+                    "SELECT server_gmt_off, server_timezone_name FROM accounts WHERE mt5_login=%s",
                     (OTHER_LOGIN,),
                 ).fetchone()
                 legacy_heartbeat_tz = db.execute(
-                    "SELECT server_gmt_offset, server_timezone_name FROM heartbeats WHERE account_login=?",
+                    "SELECT server_gmt_offset, server_timezone_name FROM heartbeats WHERE account_login=%s",
                     (OTHER_LOGIN,),
                 ).fetchone()
+            finally:
+                db.close()
             assert_ok("deal UTC timestamps are stored unchanged", row == (base_open, base_open), row)
             assert_ok("snapshot UTC timestamp is stored unchanged", snap == (snapshot_time, 10125.30), snap)
             assert_ok(
@@ -508,7 +542,7 @@ def main() -> None:
             )
 
             print("SMOKE_TEST_OK")
-            print(f"Temporary database: {db_path}")
+            print(f"Scratch schema: {SMOKE_SCHEMA_NAME}")
         finally:
             server.terminate()
             try:
