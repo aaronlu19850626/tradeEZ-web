@@ -231,6 +231,27 @@ def _sort(items: list[TradeItem], sort: str, order: str) -> list[TradeItem]:
 
 
 def list_trades(db: DBConnection, user: DBRow, flt: TradeFilter, sort: str, order: str, page: int, page_size: int) -> tuple[list[TradeItem], int]:
+    if sort in {"closeTime", "openTime", "symbol", "side", "volume", "swap", "commission", "duration", "accountName"}:
+        logins = _resolve_logins(db, user, flt.account_id_list())
+        if not logins:
+            return [], 0
+        from_epoch, to_epoch = day_bounds(flt.from_day, flt.to_day)
+        rows, total = repository.fetch_closed_trades_page(
+            db,
+            user_id=int(user["id"]),
+            logins=logins,
+            from_epoch=from_epoch,
+            to_epoch=to_epoch,
+            side=flt.side,
+            result=flt.result,
+            currency=flt.currency,
+            symbol=flt.symbol,
+            sort=sort,
+            order=order,
+            page=page,
+            page_size=page_size,
+        )
+        return [_to_item(row) for row in rows], total
     items = _load_items(db, user, flt)
     items = _sort(items, sort, order)
     total = len(items)

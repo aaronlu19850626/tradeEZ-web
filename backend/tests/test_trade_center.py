@@ -102,6 +102,24 @@ def test_list_returns_closed_trades_desc(client, db):
     assert second["side"] == "buy" and second["netPnl"] == 95.0 and second["rMultiple"] == 0.95
 
 
+def test_list_paginates_in_database(client, db):
+    headers = web_headers(db, "trade-page-db@example.com")
+    account = create_account(client, headers, 921100)
+    _add_symbol(db, 921100)
+    deals = _closed_trade(account, 921101, "2026-09-14", "2026-09-15", profit=100.0)
+    deals += _closed_trade(account, 921102, "2026-09-15", "2026-09-16", profit=50.0)
+    deals += _closed_trade(account, 921103, "2026-09-16", "2026-09-17", profit=20.0)
+    _ingest(client, account["sync_key"], 921100, deals)
+
+    first = client.get("/api/v1/trades", headers=headers, params={"page": 1, "page_size": 1}).json()
+    second = client.get("/api/v1/trades", headers=headers, params={"page": 2, "page_size": 1}).json()
+    third = client.get("/api/v1/trades", headers=headers, params={"page": 3, "page_size": 1}).json()
+    assert first["total"] == second["total"] == third["total"] == 3
+    ids = [first["items"][0]["id"], second["items"][0]["id"], third["items"][0]["id"]]
+    assert len(set(ids)) == 3
+    assert first["items"][0]["closeTime"] > second["items"][0]["closeTime"] > third["items"][0]["closeTime"]
+
+
 def test_partial_closes_aggregate_into_one_trade(client, db):
     headers = web_headers(db, "trade-partial@example.com")
     account = create_account(client, headers, 921011)
