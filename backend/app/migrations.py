@@ -12,7 +12,7 @@ BACKEND_ROOT = Path(__file__).resolve().parents[1]
 MIGRATIONS_ROOT = BACKEND_ROOT / "migrations"
 _migration_lock = RLock()
 BASELINE_REVISION = "0022_postgresql_baseline"
-SCHEMA_VERSION = "0037_trade_query_indexes"
+SCHEMA_VERSION = "0038_closed_trades"
 
 _MIGRATION_STEPS = {
     BASELINE_REVISION: (
@@ -72,8 +72,12 @@ _MIGRATION_STEPS = {
         MIGRATIONS_ROOT / "versions" / "0036_timezone_offset_learning.sql",
     ),
     "0036_timezone_offset_learning": (
-        SCHEMA_VERSION,
+        "0037_trade_query_indexes",
         MIGRATIONS_ROOT / "versions" / "0037_trade_query_indexes.sql",
+    ),
+    "0037_trade_query_indexes": (
+        SCHEMA_VERSION,
+        MIGRATIONS_ROOT / "versions" / "0038_closed_trades.sql",
     ),
 }
 

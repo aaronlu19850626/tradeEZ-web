@@ -229,7 +229,7 @@ def reset_sync(account_id: int, payload: AccountResetIn, db: DBConnection, user:
             raise HTTPException(400, "请输入准确的账户名称确认")
 
         mt5_login = int(account["mt5_login"])
-        repository.delete_login_scoped(db, mt5_login, ("sync_batch_refs", "deals"))
+        repository.delete_login_scoped(db, mt5_login, ("sync_batch_refs", "deals", "closed_trades"))
         repository.delete_account_id_scoped(db, account_id, RESET_ID_SCOPED_TABLES)
         repository.reset_connector_state(db, account_id, date_to_epoch(payload.sync_start_date))
         db.execute("DELETE FROM trade_dirty_positions WHERE account_login = %s", (mt5_login,))
@@ -247,6 +247,7 @@ def reset_sync(account_id: int, payload: AccountResetIn, db: DBConnection, user:
             (date_to_epoch(payload.sync_start_date), account_id),
         )
         db.commit()
+        invalidate_user(int(user["id"]))
     except Exception:
         db.rollback()
         raise

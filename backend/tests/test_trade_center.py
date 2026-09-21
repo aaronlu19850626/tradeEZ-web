@@ -4,6 +4,8 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 
 from helpers import signed_post, web_headers
+from app.trade_center.schemas import ScatterPointOut
+from app.trade_center.service import _downsample_points
 
 PLATFORM_TZ = ZoneInfo("Asia/Shanghai")
 
@@ -213,6 +215,14 @@ def test_overview_aggregates_server_side(client, db):
     assert body["drawdown"]["maxDrawdown"] == 25.0
     assert len(body["consistency"]["weeks"]) == 13
     assert len(body["timeEntry"]) == 3 and len(body["timeExit"]) == 3 and len(body["duration"]) == 3
+
+
+def test_overview_scatter_downsampling_caps_points():
+    points = [ScatterPointOut(x=float(index % 97), y=float((index * 37) % 211 - 100)) for index in range(5000)]
+    result = _downsample_points(points, limit=200)
+    assert len(result) <= 202
+    assert min(point.y for point in result) == min(point.y for point in points)
+    assert max(point.y for point in result) == max(point.y for point in points)
 
 
 def test_filters_and_range(client, db):

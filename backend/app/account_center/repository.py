@@ -12,6 +12,7 @@ LOGIN_SCOPED_TABLES = (
     "heartbeat_history",
     "heartbeats",
     "trade_dirty_positions",
+    "closed_trades",
 )
 
 

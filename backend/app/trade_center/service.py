@@ -436,6 +436,20 @@ def _beijing_hour(epoch: int) -> float:
     return seconds / 3600
 
 
+def _downsample_points(points: list[ScatterPointOut], limit: int = 2000) -> list[ScatterPointOut]:
+    """Deterministically cap scatter coordinates while keeping the x-axis spread."""
+    if len(points) <= limit:
+        return points
+    ordered = sorted(range(len(points)), key=lambda index: (points[index].x, points[index].y))
+    selected: set[int] = set()
+    for rank in range(limit):
+        selected.add(ordered[round(rank * (len(ordered) - 1) / (limit - 1))])
+    # Preserve the visual top and bottom extremes even if the x-grid skips them.
+    selected.add(min(range(len(points)), key=lambda index: points[index].y))
+    selected.add(max(range(len(points)), key=lambda index: points[index].y))
+    return [points[index] for index in sorted(selected)]
+
+
 def overview(db: DBConnection, user: DBRow, flt: TradeFilter) -> OverviewOut:
     items = _load_items(db, user, flt)
     days = _overview_days(items)
@@ -451,9 +465,15 @@ def overview(db: DBConnection, user: DBRow, flt: TradeFilter) -> OverviewOut:
         drawdown=_drawdown_points(items),
         recent=recent,
         consistency=_consistency(days, latest_day),
-        timeEntry=[ScatterPointOut(x=_beijing_hour(item.openTime), y=item.netPnl) for item in items],
-        timeExit=[ScatterPointOut(x=_beijing_hour(item.closeTime), y=item.netPnl) for item in items],
-        duration=[ScatterPointOut(x=max(0.1, float(item.durationSec)), y=item.netPnl) for item in items],
+        timeEntry=_downsample_points(
+            [ScatterPointOut(x=_beijing_hour(item.openTime), y=item.netPnl) for item in items]
+        ),
+        timeExit=_downsample_points(
+            [ScatterPointOut(x=_beijing_hour(item.closeTime), y=item.netPnl) for item in items]
+        ),
+        duration=_downsample_points(
+            [ScatterPointOut(x=max(0.1, float(item.durationSec)), y=item.netPnl) for item in items]
+        ),
     )
 
 
