@@ -43,6 +43,7 @@ class Settings(BaseSettings):
     # Unified connector upgrade policy.
     connector_mt5_min_version: str = "2.0.1"
     connector_mt5_download_url: str = "https://www.tradeez.cn/downloads/tradeezsync-v2.mq5"
+    internal_api_token: str = Field(default="", repr=False)
 
     @model_validator(mode="after")
     def fixed_code_is_console_only(self):

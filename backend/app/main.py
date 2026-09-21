@@ -14,6 +14,7 @@ from .config import get_settings
 from .connectors.router import router as connectors_router
 from .db import DBConnection, connect_db, get_db, init_db
 from .preferences.router import router as preferences_router
+from .internal_timezone import router as internal_timezone_router
 from .sync.router import router as sync_router
 from .trade_center.router import router as trade_center_router
 from .v2_models import ApiError
@@ -58,6 +59,7 @@ app.include_router(accounts_router)
 app.include_router(trade_center_router)
 app.include_router(preferences_router)
 app.include_router(web_auth_router)
+app.include_router(internal_timezone_router)
 
 
 @app.exception_handler(ApiError)
