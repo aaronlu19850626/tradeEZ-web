@@ -48,7 +48,7 @@ export function useTradeData(): TradeData {
       let total = 0;
       if (ids.length > 0) {
         do {
-          const response = await tradeCenterApi.list({ accountIds: ids, page, pageSize: 100 });
+          const response = await tradeCenterApi.list({ accountIds: ids, page, pageSize: 1000 });
           collected.push(...response.items.map(toTrade));
           total = response.total;
           page += 1;

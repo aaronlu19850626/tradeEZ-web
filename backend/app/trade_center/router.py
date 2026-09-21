@@ -23,7 +23,7 @@ def list_trades(
     sort: str = Query(default="closeTime"),
     order: str = Query(default="desc", pattern="^(asc|desc)$"),
     page: int = Query(default=1, ge=1),
-    page_size: int = Query(default=100, ge=1, le=100),
+    page_size: int = Query(default=100, ge=1, le=1000),
     db: DBConnection = Depends(get_db),
     user: DBRow = Depends(get_current_user),
 ) -> TradePageOut:
