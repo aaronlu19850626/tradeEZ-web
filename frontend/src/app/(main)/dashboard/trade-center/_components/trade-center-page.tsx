@@ -264,6 +264,7 @@ export default function TradeCenterPage() {
           columns={viewColumns}
           page={page}
           onPage={setPage}
+          loading={serverData.pageLoading}
         />
       );
   } else if (view === "day" && dayGroups.length === 0) {

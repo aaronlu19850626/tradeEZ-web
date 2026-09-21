@@ -33,6 +33,7 @@ export function AllView({
   columns,
   page,
   onPage,
+  loading = false,
 }: {
   t: TradeCenterText;
   locale: Locale;
@@ -43,6 +44,7 @@ export function AllView({
   columns: ColumnKey[];
   page: number;
   onPage: (page: number) => void;
+  loading?: boolean;
 }) {
   const pageSize = 100;
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
@@ -116,7 +118,12 @@ export function AllView({
       </div>
 
       {/* Fills the remaining viewport height so only the table body scrolls. */}
-      <Card className="flex flex-1 flex-col gap-0 overflow-hidden pt-0 pb-0">
+      <Card
+        aria-busy={loading}
+        className={`flex flex-1 flex-col gap-0 overflow-hidden pt-0 pb-0 ${
+          loading ? "pointer-events-none opacity-60 transition-opacity" : "transition-opacity"
+        }`}
+      >
         <CardHeader className="flex h-16 flex-row flex-wrap items-center justify-between gap-2 border-b px-4 py-0 pb-0!">
           <div className="flex flex-wrap items-center gap-3">
             <CardTitle className="text-base font-bold">

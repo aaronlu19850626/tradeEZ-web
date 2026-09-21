@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import type { ResultFilter, SideFilter } from "@/components/filters/trade-filter-controls";
 import { type TradeBounds, type TradeGroupRecord, toTrade, tradeCenterApi } from "@/lib/tradesync/trade-center";
@@ -105,7 +105,9 @@ export function useTradeCenterServerData({
   const [summary, setSummary] = useState<TradeStats | null>(null);
   const [summarySeries, setSummarySeries] = useState<{ index: number; value: number }[]>([]);
   const [loading, setLoading] = useState(false);
+  const [pageLoading, setPageLoading] = useState(false);
   const [error, setError] = useState(false);
+  const lastPageRef = useRef(page);
 
   useEffect(() => {
     if (accountIds.length === 0) return;
@@ -119,44 +121,52 @@ export function useTradeCenterServerData({
       .catch(() => undefined);
   }, [accountIds]);
 
-  const load = useCallback(async () => {
-    if (accountIds.length === 0) return;
-    setLoading(true);
-    setError(false);
-    try {
-      const params = commonParams(accountIds, range, side, result, currency, selectedSymbols);
-      if (view === "day") {
-        const groups = await tradeCenterApi.groups({ ...params, view: "day", limit: dayVisible, offset: 0 });
-        setDayGroups(groups.map(toDayGroup));
-      } else if (view === "week") {
-        const groups = await tradeCenterApi.groups({ ...params, view: "week", limit: weekVisible, offset: 0 });
-        setWeekGroups(groups.map(toWeekGroup));
-      } else {
-        const [pageData, summaryData] = await Promise.all([
-          tradeCenterApi.list({ ...params, page, pageSize: 100 }),
-          tradeCenterApi.summary(params),
-        ]);
-        setPageTrades(pageData.items.map(toTrade));
-        setPageTotal(pageData.total);
-        setSummary(summaryData.stats);
-        setSummarySeries(summaryData.series);
+  const load = useCallback(
+    async (pageOnly = false) => {
+      if (accountIds.length === 0) return;
+      if (pageOnly) setPageLoading(true);
+      else setLoading(true);
+      setError(false);
+      try {
+        const params = commonParams(accountIds, range, side, result, currency, selectedSymbols);
+        if (view === "day") {
+          const groups = await tradeCenterApi.groups({ ...params, view: "day", limit: dayVisible, offset: 0 });
+          setDayGroups(groups.map(toDayGroup));
+        } else if (view === "week") {
+          const groups = await tradeCenterApi.groups({ ...params, view: "week", limit: weekVisible, offset: 0 });
+          setWeekGroups(groups.map(toWeekGroup));
+        } else {
+          const [pageData, summaryData] = await Promise.all([
+            tradeCenterApi.list({ ...params, page, pageSize: 100 }),
+            tradeCenterApi.summary(params),
+          ]);
+          setPageTrades(pageData.items.map(toTrade));
+          setPageTotal(pageData.total);
+          setSummary(summaryData.stats);
+          setSummarySeries(summaryData.series);
+        }
+      } catch {
+        setError(true);
+      } finally {
+        if (pageOnly) setPageLoading(false);
+        else setLoading(false);
       }
-    } catch {
-      setError(true);
-    } finally {
-      setLoading(false);
-    }
-  }, [accountIds, currency, dayVisible, page, range, result, selectedSymbols, side, view, weekVisible]);
+    },
+    [accountIds, currency, dayVisible, page, range, result, selectedSymbols, side, view, weekVisible],
+  );
 
   useEffect(() => {
-    void load();
-  }, [load]);
+    const pageOnly = view === "all" && page !== lastPageRef.current;
+    lastPageRef.current = page;
+    void load(pageOnly);
+  }, [load, page, view]);
 
   return {
     bounds,
     dayGroups,
     error,
     loading,
+    pageLoading,
     pageTotal,
     pageTrades,
     reload: load,
