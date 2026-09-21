@@ -42,7 +42,13 @@ def _acknowledge_resync(db: DBConnection, account: DBRow) -> None:
         db.commit()
 
 
-def handshake(payload: HandshakeRequest, account: DBRow, db: DBConnection) -> HandshakeResponse:
+def handshake(
+    payload: HandshakeRequest,
+    account: DBRow,
+    db: DBConnection,
+    *,
+    download_base_url: str,
+) -> HandshakeResponse:
     connection_id = f"cn_{secrets.token_urlsafe(16).replace('-', '')}"
     row = repository.ensure_connection(
         db,
@@ -64,7 +70,7 @@ def handshake(payload: HandshakeRequest, account: DBRow, db: DBConnection) -> Ha
             upgrade = UpgradeInfo(
                 required=True,
                 required_version=settings.connector_mt5_min_version,
-                download_url=settings.connector_mt5_download_url,
+                download_url=download_base_url,
                 message="当前连接器版本过低，请下载最新版本后重新加载。",
             )
 

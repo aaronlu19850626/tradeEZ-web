@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 from fastapi import APIRouter, Depends, Header, Request
+from fastapi.responses import FileResponse
 
 from app.db import DBConnection, get_db
 
@@ -21,7 +24,27 @@ async def handshake(
     db: DBConnection = Depends(get_db),
 ) -> HandshakeResponse:
     account = await authenticate_connector(request, authorization, x_timestamp, x_signature, db)
-    return service.handshake(payload, account, db)
+    download_base_url = (
+        f"{str(request.base_url).rstrip('/')}/api/v1/connectors/mt5/download/tradeezsync-v2.mq5"
+    )
+    return service.handshake(payload, account, db, download_base_url=download_base_url)
+
+
+@router.get("/connectors/mt5/download/tradeezsync-v2.mq5", include_in_schema=False)
+def download_mt5_connector() -> FileResponse:
+    connector_path = (
+        Path(__file__).resolve().parents[3]
+        / "connectors"
+        / "mt5"
+        / "sync"
+        / "v2"
+        / "tradeEZSyncV2.mq5"
+    )
+    return FileResponse(
+        connector_path,
+        media_type="application/octet-stream",
+        filename="tradeEZSyncV2.mq5",
+    )
 
 
 @router.get("/connections/{connection_id}/cursor", response_model=CursorOut)

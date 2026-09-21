@@ -163,6 +163,13 @@ def test_connector_reports_required_upgrade(client, db):
     assert upgrade["download_url"].endswith(".mq5")
 
 
+def test_connector_download_serves_current_mq5(client):
+    response = client.get("/api/v1/connectors/mt5/download/tradeezsync-v2.mq5")
+    assert response.status_code == 200
+    assert response.headers["content-disposition"].startswith("attachment")
+    assert b"CONNECTOR_VERSION \"2.0.1\"" in response.content
+
+
 def test_connector_heartbeat_overwrites_broker_server(client, db):
     login = 930303
     token = make_account(db, login)
