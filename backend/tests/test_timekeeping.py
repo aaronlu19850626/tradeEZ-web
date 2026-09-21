@@ -1,13 +1,26 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 
-from app.timekeeping import observe_timezone_candidate, resolve_trade_times, schedule_timezone_backfill
+import pytest
+
+from app.timekeeping import (
+    _server_time_to_utc,
+    observe_timezone_candidate,
+    resolve_trade_times,
+    schedule_timezone_backfill,
+)
 from helpers import deal, make_account, signed_post
 
 
 def _server_epoch(year: int, month: int, day: int, hour: int) -> int:
     return int(datetime(year, month, day, hour, tzinfo=timezone.utc).timestamp())
+
+
+def _expected_utc(timezone_name: str, year: int, month: int, day: int, hour: int) -> int:
+    local = datetime(year, month, day, hour).replace(tzinfo=ZoneInfo(timezone_name))
+    return int(local.timestamp())
 
 
 def test_iana_timezone_profile_handles_dst_automatically(client, db):
@@ -205,3 +218,31 @@ def test_offset_samples_automatically_promote_dst_profile(client, db):
     )
     assert deal_time == _server_epoch(2026, 7, 15, 9)
     assert profile_id == int(profile["id"])
+
+
+@pytest.mark.parametrize(
+    ("timezone_name", "summer_before", "summer_after", "winter_before", "winter_after"),
+    [
+        ("Europe/Athens", (2026, 3, 28), (2026, 3, 30), (2026, 10, 24), (2026, 10, 26)),
+        ("Europe/London", (2026, 3, 28), (2026, 3, 30), (2026, 10, 24), (2026, 10, 26)),
+        ("America/New_York", (2026, 3, 7), (2026, 3, 9), (2026, 10, 31), (2026, 11, 2)),
+        ("Australia/Sydney", (2026, 4, 4), (2026, 4, 6), (2026, 10, 3), (2026, 10, 5)),
+    ],
+)
+def test_server_time_to_utc_respects_dst_boundaries(
+    timezone_name,
+    summer_before,
+    summer_after,
+    winter_before,
+    winter_after,
+):
+    for date in (summer_before, summer_after, winter_before, winter_after):
+        year, month, day = date
+        server_time = _server_epoch(year, month, day, 12)
+        assert _server_time_to_utc(server_time, timezone_name) == _expected_utc(
+            timezone_name,
+            year,
+            month,
+            day,
+            12,
+        )
