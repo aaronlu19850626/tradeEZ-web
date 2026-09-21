@@ -1,0 +1,1 @@
+ALTER TABLE snapshots ALTER COLUMN margin_level DROP NOT NULL;

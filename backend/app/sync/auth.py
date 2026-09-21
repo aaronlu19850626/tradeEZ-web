@@ -7,7 +7,7 @@ import time
 from fastapi import Request
 from ..config import get_settings
 from ..crypto import decrypt_sync_key
-from ..accounts.policies import ensure_account_active
+from .policies import ensure_account_active
 from ..common.rate_limit import check_rate_limit
 from ..v2_models import ApiError
 
@@ -15,16 +15,19 @@ settings = get_settings()
 
 RATE_LIMITS = {
     "last_sync_time": 60,
-    "deals": 300,
-    # Current legacy chunked uploads and V2.2 handshakes can represent a first/full
-    # historical sync with many small requests; keep enough burst headroom.
-    "deals_batch": 300,
+    "deals": 3000,
+    # Legacy chunked uploads and V2.2 handshakes can represent a first/full
+    # historical sync (tens of thousands of deals) as many small requests. Give
+    # enough burst headroom so the client never hits 429 mid-sync and retries.
+    "deals_batch": 3000,
     "update_cursor": 60,
     "symbols": 10,
     "snapshots": 120,
     "settings": 30,
-    # EA steady-state heartbeats arrive every 300s (12/hour); leave headroom for
-    # manual and daily full-sync heartbeats so routine operations never return 429.
+    # Heartbeats are cheap now: the history is sampled and pruned, and a
+    # duplicate within the write window is answered without touching the
+    # database. This limit is therefore only a runaway-client guard, set far
+    # above any real client (default EA cadence is 12/hour per chart).
     "heartbeat": 30,
 }
 
@@ -153,5 +156,3 @@ async def get_bound_account(
     effective_limit = rate_limit if rate_limit is not None else RATE_LIMITS[scope]
     check_rate_limit(scope, str(account["id"]), effective_limit, window_seconds)
     return account
-
-

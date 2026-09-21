@@ -17,7 +17,7 @@ class ApiError(Exception):
 
 
 class AccountRequest(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     mt5_login: Mt5Login
     # Optional in v2.2. Old EAs omit these and continue using the legacy path.
@@ -45,7 +45,7 @@ class LastSyncTimeResponse(BaseModel):
 
 
 class DealItem(BaseModel):
-    model_config = ConfigDict(extra="forbid", allow_inf_nan=False)
+    model_config = ConfigDict(extra="ignore", allow_inf_nan=False)
 
     ticket: int = Field(..., gt=0, le=9223372036854775807, strict=True)
     position_id: int = Field(..., gt=0, le=9223372036854775807, strict=True)
@@ -61,13 +61,13 @@ class DealItem(BaseModel):
     swap: float = 0.0
     commission: float = 0.0
     magic: int = Field(default=0, ge=0, le=9223372036854775807, strict=True)
-    comment: str = Field(default="", max_length=500)
+    comment: str = Field(default="", max_length=2000)
     open_time: int = Field(..., gt=0)
     deal_time: int = Field(..., gt=0)
 
 
 class IngestDealsRequest(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     mt5_login: Mt5Login
     server_gmt_off: Literal[0] = 0
@@ -98,7 +98,7 @@ class IngestDealsResponse(BaseModel):
 
 
 class UpdateLastSyncTimeRequest(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     mt5_login: Mt5Login
     last_sync_time: int = Field(..., ge=0)
@@ -123,7 +123,7 @@ class UpdateLastSyncTimeResponse(BaseModel):
 
 
 class SymbolItem(BaseModel):
-    model_config = ConfigDict(extra="forbid", allow_inf_nan=False)
+    model_config = ConfigDict(extra="ignore", allow_inf_nan=False)
 
     name: str = Field(..., min_length=1, max_length=50)
     digits: int = Field(..., ge=0, le=8)
@@ -133,7 +133,7 @@ class SymbolItem(BaseModel):
 
 
 class IngestSymbolsRequest(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     mt5_login: Mt5Login
     symbols: list[SymbolItem] = Field(..., min_length=1, max_length=1000)
@@ -144,7 +144,7 @@ class IngestSymbolsResponse(BaseModel):
 
 
 class SnapshotItem(BaseModel):
-    model_config = ConfigDict(extra="forbid", allow_inf_nan=False)
+    model_config = ConfigDict(extra="ignore", allow_inf_nan=False)
 
     balance: float
     equity: float
@@ -154,7 +154,7 @@ class SnapshotItem(BaseModel):
 
 
 class IngestSnapshotsRequest(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     mt5_login: Mt5Login
     snapshots: list[SnapshotItem] = Field(..., min_length=1, max_length=1000)
@@ -165,7 +165,7 @@ class IngestSnapshotsResponse(BaseModel):
 
 
 class IngestSettingsRequest(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     mt5_login: Mt5Login
     snapshot_time: int = Field(..., gt=0)

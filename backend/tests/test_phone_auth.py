@@ -1,7 +1,6 @@
 import json
-import pytest
 
-from test_sync_handshake import client, db
+import pytest
 
 
 def test_phone_test_mode_registration_and_existing_login(client, db, monkeypatch):

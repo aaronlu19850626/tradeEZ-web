@@ -1,1 +1,0 @@
-"""TradeSync facts module."""

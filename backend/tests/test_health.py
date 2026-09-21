@@ -1,8 +1,5 @@
 from __future__ import annotations
 
-from test_sync_handshake import client, db  # noqa: F401  (shared pytest fixtures)
-
-
 def test_healthz_is_public_and_minimal(client):
     response = client.get("/healthz")
     assert response.status_code == 200

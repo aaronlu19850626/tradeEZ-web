@@ -33,6 +33,13 @@ class Settings(BaseSettings):
     code_max_per_hour: int = Field(default=5, ge=1, le=20)
     dev_fixed_login_code: str = Field(default="", pattern=r"^(|[0-9]{6})$", repr=False)
 
+    # Heartbeat write path. Liveness only needs the latest state, so the
+    # append-only history is sampled and pruned instead of being rate limited.
+    heartbeat_history_interval_seconds: int = Field(default=300, ge=0)
+    heartbeat_write_interval_seconds: int = Field(default=60, ge=0)
+    heartbeat_history_retention_days: int = Field(default=30, ge=1)
+    heartbeat_history_auto_prune: bool = True
+
     @model_validator(mode="after")
     def fixed_code_is_console_only(self):
         if self.dev_fixed_login_code and self.email_provider != "console":

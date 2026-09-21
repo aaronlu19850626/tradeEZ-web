@@ -45,6 +45,10 @@
   --color-sidebar-ring: var(--sidebar-ring);
   --color-profit: var(--profit);
   --color-loss: var(--loss);
+  --color-profit-strong: var(--profit-strong);
+  --color-profit-soft: var(--profit-soft);
+  --color-loss-strong: var(--loss-strong);
+  --color-loss-soft: var(--loss-soft);
   --color-warning: var(--warning);
   --font-heading: var(--app-font-sans);
   --font-sans: var(--app-font-sans);
@@ -75,8 +79,13 @@
   --chart-3: var(--color-amber-600);
   --chart-4: var(--color-violet-600);
   --chart-5: var(--color-cyan-600);
-  --profit: var(--color-emerald-700);
-  --loss: var(--color-rose-700);
+  /* Profit/loss palette taken from the approved tracking reference. */
+  --profit: #29a277;
+  --profit-strong: #4ebf94;
+  --profit-soft: #ebfaf4;
+  --loss: #e74d4c;
+  --loss-strong: #f06363;
+  --loss-soft: #fdf2f2;
   --warning: var(--color-amber-700);
   --sidebar: #1e0b3a;
   --sidebar-foreground: #f7f3ff;
@@ -114,8 +123,12 @@
   --chart-3: var(--color-amber-400);
   --chart-4: var(--color-violet-400);
   --chart-5: var(--color-cyan-400);
-  --profit: var(--color-emerald-400);
-  --loss: var(--color-rose-400);
+  --profit: #4ebf94;
+  --profit-strong: #4ebf94;
+  --profit-soft: #16302a;
+  --loss: #f06363;
+  --loss-strong: #f06363;
+  --loss-soft: #3a2426;
   --warning: var(--color-amber-400);
   --sidebar: var(--color-zinc-900);
   --sidebar-foreground: var(--color-zinc-100);
@@ -239,10 +252,41 @@
   .account-center-card [data-slot="table-container"] {
     overflow: visible;
   }
+
+  .account-center-card [data-slot="card-header"] {
+    align-items: center !important;
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
+  }
 }
 
 html {
   overscroll-behavior: none;
+}
+
+/* Waveform used by the trade-center loading state. Bars share one base size and
+   the peak travels across them because each bar is phase-shifted by one fifth
+   of the cycle (negative delays keep the loop seamless from the first frame). */
+@keyframes tradeez-wave {
+  0%,
+  100% {
+    transform: scale(0.42);
+  }
+  50% {
+    transform: scale(1);
+  }
+}
+
+.tradeez-loading-bar {
+  transform-origin: center;
+  animation: tradeez-wave 1.45s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tradeez-loading-bar {
+    animation: none;
+    transform: scale(0.85);
+  }
 }
 
 .disable-transitions * {

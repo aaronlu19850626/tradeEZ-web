@@ -74,3 +74,13 @@ def pg_db(pg_client):
         yield connection
     finally:
         connection.close()
+
+
+@pytest.fixture(scope="module")
+def client(pg_client):
+    return pg_client
+
+
+@pytest.fixture(scope="module")
+def db(pg_db):
+    return pg_db

@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 import shutil
 import subprocess
+import time
 from typing import Any
 from urllib.parse import parse_qs, unquote, urlsplit
 
@@ -147,6 +148,62 @@ def check_database(url: str | None = None, *, quick: bool = False) -> dict[str, 
             report["foreign_key_violations"] = _foreign_key_violations(db)
             report["ok"] = report["ok"] and not report["foreign_key_violations"]
         return report
+    finally:
+        db.close()
+
+
+def prune_heartbeat_history(
+    *,
+    days: int,
+    url: str | None = None,
+    batch_size: int = 5000,
+    max_batches: int = 400,
+) -> dict[str, Any]:
+    """Delete ``heartbeat_history`` rows older than ``days`` in bounded batches.
+
+    Liveness only reads the latest heartbeat, so the append-only history is kept
+    for auditing and then trimmed. Batching keeps each statement short instead of
+    holding one long transaction on a large table.
+    """
+    if days < 1:
+        raise RuntimeError("Retention must be at least one day")
+    resolved_url = resolve_database_url(url)
+    cutoff = int(time.time()) - days * 86400
+    db = connect_db(application_name="tradesync-heartbeat-prune")
+    deleted = 0
+    batches = 0
+    try:
+        while batches < max_batches:
+            cursor = db.execute(
+                """
+                DELETE FROM heartbeat_history
+                 WHERE id IN (
+                       SELECT id FROM heartbeat_history
+                        WHERE timestamp < %s
+                        ORDER BY timestamp
+                        LIMIT %s
+                 )
+                """,
+                (cutoff, batch_size),
+            )
+            removed = int(cursor.rowcount or 0)
+            db.commit()
+            deleted += removed
+            batches += 1
+            if removed < batch_size:
+                break
+        remaining = db.execute(
+            "SELECT COUNT(*) FROM heartbeat_history WHERE timestamp < %s",
+            (cutoff,),
+        ).fetchone()[0]
+        return {
+            "database": _parse_postgres_url(resolved_url)["dbname"],
+            "retention_days": days,
+            "cutoff": cutoff,
+            "deleted": deleted,
+            "batches": batches,
+            "remaining_before_cutoff": int(remaining),
+        }
     finally:
         db.close()
 

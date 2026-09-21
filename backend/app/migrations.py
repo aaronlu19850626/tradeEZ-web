@@ -12,7 +12,34 @@ BACKEND_ROOT = Path(__file__).resolve().parents[1]
 MIGRATIONS_ROOT = BACKEND_ROOT / "migrations"
 _migration_lock = RLock()
 BASELINE_REVISION = "0022_postgresql_baseline"
-SCHEMA_VERSION = "0023_trade_dirty_triggers"
+SCHEMA_VERSION = "0028_user_preferences"
+
+_MIGRATION_STEPS = {
+    BASELINE_REVISION: (
+        "0023_trade_dirty_triggers",
+        MIGRATIONS_ROOT / "versions" / "0023_trade_dirty_triggers.sql",
+    ),
+    "0023_trade_dirty_triggers": (
+        "0024_account_center",
+        MIGRATIONS_ROOT / "versions" / "0024_account_center.sql",
+    ),
+    "0024_account_center": (
+        "0025_account_imports",
+        MIGRATIONS_ROOT / "versions" / "0025_account_imports.sql",
+    ),
+    "0025_account_imports": (
+        "0026_margin_level_nullable",
+        MIGRATIONS_ROOT / "versions" / "0026_margin_level_nullable.sql",
+    ),
+    "0026_margin_level_nullable": (
+        "0027_heartbeat_history_retention",
+        MIGRATIONS_ROOT / "versions" / "0027_heartbeat_history_retention.sql",
+    ),
+    "0027_heartbeat_history_retention": (
+        SCHEMA_VERSION,
+        MIGRATIONS_ROOT / "versions" / "0028_user_preferences.sql",
+    ),
+}
 
 
 def migration_config() -> Config:
@@ -42,9 +69,7 @@ def upgrade_database(url: str | None = None) -> None:
     """
     with _migration_lock:
         schema_sql = (MIGRATIONS_ROOT / "postgres_schema.sql").read_text(encoding="utf-8")
-        steps = {
-            BASELINE_REVISION: MIGRATIONS_ROOT / "versions" / "0023_trade_dirty_triggers.sql",
-        }
+        steps = _MIGRATION_STEPS
         db = connect_db(autocommit=False, application_name="tradesync-migration")
         try:
             revision = _current_revision(db)
@@ -72,10 +97,13 @@ def upgrade_database(url: str | None = None) -> None:
                 db.execute(schema_sql)
                 revision = BASELINE_REVISION
 
-            while revision in steps:
-                step_sql = steps[revision].read_text(encoding="utf-8")
-                db.execute(step_sql)
-                next_revision = SCHEMA_VERSION if revision == BASELINE_REVISION else None
+            while revision != SCHEMA_VERSION:
+                if revision not in steps:
+                    raise RuntimeError(
+                        f"Unsupported database revision {revision!r}; expected {SCHEMA_VERSION!r}"
+                    )
+                next_revision, step_path = steps[revision]
+                db.execute(step_path.read_text(encoding="utf-8"))
                 db.execute(
                     "UPDATE alembic_version SET version_num = %s WHERE version_num = %s",
                     (next_revision, revision),

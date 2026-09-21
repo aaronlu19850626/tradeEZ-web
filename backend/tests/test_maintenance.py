@@ -15,7 +15,7 @@ def test_check_database_reports_current_revision(pg_db):
 
 
 def test_check_database_requires_url(monkeypatch):
-    monkeypatch.delenv("TRADESYNC_DATABASE_URL", raising=False)
+    monkeypatch.setenv("TRADESYNC_DATABASE_URL", "")
     from app.config import get_settings
 
     get_settings.cache_clear()
@@ -33,4 +33,3 @@ def test_backup_creates_custom_dump(pg_db, tmp_path):
     assert backup.exists()
     assert backup.stat().st_size > 0
     assert result["backup"] == str(backup.resolve())
-

@@ -1,12 +1,19 @@
 "use client";
 
-import { Globe } from "lucide-react";
 import { useEffect, useState } from "react";
 
-import { api, formatDateTime, type Account, getToken } from "@/lib/tradesync/api";
+import { cn } from "cn";
+import { Radio } from "lucide-react";
+
+import { useLocale } from "@/lib/i18n";
+import { shellText } from "@/lib/shell-i18n";
+import { type AccountCenterItem, accountCenterApi } from "@/lib/tradesync/account-center";
+import { getToken } from "@/lib/tradesync/api";
 
 export function GlobalMt5Status() {
-  const [accounts, setAccounts] = useState<Account[]>([]);
+  const locale = useLocale();
+  const t = shellText[locale];
+  const [accounts, setAccounts] = useState<AccountCenterItem[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
 
@@ -19,8 +26,8 @@ export function GlobalMt5Status() {
     const load = (retry = false) => {
       const request = ++sequence;
       if (retryTimer) window.clearTimeout(retryTimer);
-      api
-        .accounts()
+      accountCenterApi
+        .list()
         .then((data) => {
           if (!active || request !== sequence) return;
           setAccounts(data);
@@ -29,8 +36,12 @@ export function GlobalMt5Status() {
         })
         .catch(() => {
           if (!active || request !== sequence) return;
-          if (retry) { setLoaded(true); setFailed(true); }
-          else retryTimer = window.setTimeout(() => load(true), 1200);
+          if (retry) {
+            setLoaded(true);
+            setFailed(true);
+          } else {
+            retryTimer = window.setTimeout(() => load(true), 1200);
+          }
         });
     };
 
@@ -46,31 +57,39 @@ export function GlobalMt5Status() {
     };
   }, []);
 
-  const activeAccounts = accounts.filter((account) => account.status === "active");
-  const timezones = Array.from(
-    new Set(activeAccounts.map((account) => account.server_timezone_name).filter(Boolean),
-  )) as string[];
-  const timezone = timezones.length === 1
-    ? timezones[0]
-    : timezones.length > 1
-      ? `${timezones.length} 个服务器时区`
-      : "未设置";
-  const latestSeen = activeAccounts
-    .map((account) => account.last_seen_at)
-    .filter(Boolean)
-    .sort()
-    .at(-1);
+  const online = accounts.filter((account) => account.ea_status === "online").length;
+  const connected = online > 0;
 
   return (
-    <div
-      className="hidden h-9 min-h-9 items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm text-muted-foreground md:flex"
-      title={timezones.length > 1 ? timezones.join("、") : timezone}
-    >
-      <Globe className="size-3.5" />
-      <span>MT5 时区：{timezone}</span>
-      <span className="text-border">|</span>
-      <span>{failed ? "状态读取失败，显示上次数据" : loaded ? `${activeAccounts.length}/${accounts.length} 启用` : "读取中"}</span>
-      {latestSeen && <span className="hidden xl:inline">最近连接 {formatDateTime(latestSeen)}</span>}
+    <div className="hidden h-9 min-h-9 items-center gap-2 rounded-md border px-3 py-1.5 text-sm text-muted-foreground md:flex">
+      <Radio className="size-3.5" />
+      {failed ? (
+        <span>{t.mt5StatusFailed}</span>
+      ) : !loaded ? (
+        <span>{t.mt5StatusLoading}</span>
+      ) : (
+        <>
+          <span>
+            {t.mt5Accounts}
+            <span className="ml-1.5 text-base font-semibold tabular-nums text-sidebar-foreground">
+              {accounts.length}
+            </span>
+          </span>
+          <span className="text-border">|</span>
+          <span className="inline-flex items-center gap-1.5">
+            <span
+              className={cn(
+                "size-1.5 rounded-full",
+                connected
+                  ? "bg-emerald-500 shadow-[0_0_0_3px_rgba(16,185,129,0.14)]"
+                  : "bg-rose-400 shadow-[0_0_0_3px_rgba(244,63,94,0.12)]",
+              )}
+            />
+            {t.mt5EaOnline}
+            <span className="text-base font-semibold tabular-nums text-sidebar-foreground">{online}</span>
+          </span>
+        </>
+      )}
     </div>
   );
 }

@@ -2,12 +2,14 @@
 from __future__ import annotations
 
 from app.db import DBConnection, DBRow
+from datetime import datetime, timezone
 import hashlib
 import hmac
 import json
 import time
-from ..accounts.policies import ensure_account_active
+from .policies import ensure_account_active
 from ..common.encoding import utc_now_iso, canonical_json, sha256_hex
+from ..config import get_settings
 from .repository import begin_account_write, ensure_unique_tickets, upsert_ea_instance, start_sync_run, get_open_sync_run, validate_batch_envelope, refresh_run_totals, store_deal_batch
 from ..v2_models import (
     AccountRequest,
@@ -27,9 +29,23 @@ from ..v2_models import (
     UpdateLastSyncTimeResponse,
 )
 
+# The EA extends its collection window 30 days before the cursor so a position's
+# opening/reducing deals are included (SOP 4.2), so deals earlier than the
+# configured start date are expected inside that window.
+SYNC_LOOKBACK_GRACE_SECONDS = 30 * 86400
+
+settings = get_settings()
+
+
 def get_last_sync_time(payload: AccountRequest, account: DBRow, db: DBConnection) -> LastSyncTimeResponse:
     try:
         account = begin_account_write(db, account)
+        # The handshake is how a client learns the current window, so it is also
+        # the point where a pending date-based reset counts as acknowledged. A
+        # cycle that uploaded/confirmed without a new handshake is therefore a
+        # stale one and gets rejected below.
+        if int(account["resync_pending"] or 0):
+            db.execute("UPDATE accounts SET resync_pending = 0 WHERE id = %s", (account["id"],))
         run_id = start_sync_run(
             db,
             account,
@@ -42,6 +58,11 @@ def get_last_sync_time(payload: AccountRequest, account: DBRow, db: DBConnection
     except Exception:
         db.rollback()
         raise
+    # sync_start_time is the user-configured "sync start date" (a lower bound for
+    # how far back to collect). Return the effective cursor as the later of the
+    # committed close-deal cursor and that configured start, so a freshly bound or
+    # reset account starts from the requested date instead of the default 7-day
+    # lookback. The SOP "0 triggers lookback" rule only applies when both are 0.
     cursor = max(int(account["last_sync_time"] or 0), int(account["sync_start_time"] or 0))
     return LastSyncTimeResponse(
         last_sync_time=cursor,
@@ -52,16 +73,54 @@ def get_last_sync_time(payload: AccountRequest, account: DBRow, db: DBConnection
     )
 
 
+def ensure_resync_acknowledged(account: DBRow) -> None:
+    """Reject a cycle that started before a date-based reset.
+
+    The EA reads the cursor from the server and trusts it, so a client that was
+    already mid-cycle when the user reset the account still carries the previous
+    window. Rejecting forces the documented full retry, whose first step is a new
+    cursor query that returns the reset lower bound.
+    """
+    if int(account["resync_pending"] or 0):
+        raise ApiError(
+            code="RESYNC_REQUIRED",
+            message="The account was reset after this cycle started; query the cursor again before uploading or confirming",
+            status_code=409,
+        )
+
+
+def ensure_deals_within_sync_window(account: DBRow, payload: IngestDealsRequest) -> None:
+    """Refuse deals older than the account's configured sync start date.
+
+    Without this, a stale cycle could persist records from the previous window,
+    because the client cannot know a reset happened while it was collecting. The
+    30-day grace matches the documented lookback the EA always sends, so only a
+    genuinely stale window is rejected.
+    """
+    start = int(account["sync_start_time"] or 0)
+    if start <= 0:
+        return
+    earliest = min(deal.deal_time for deal in payload.deals)
+    if earliest < start - SYNC_LOOKBACK_GRACE_SECONDS:
+        raise ApiError(
+            code="DEAL_BEFORE_SYNC_START",
+            message="The batch contains deals earlier than this account's sync start date",
+            status_code=409,
+            details={"sync_start_time": start, "earliest_deal_time": earliest},
+        )
+
+
 def ingest_deals_v21(payload: IngestDealsRequest, account: DBRow, db: DBConnection) -> IngestDealsResponse:
     ensure_unique_tickets(payload)
 
     try:
         account = begin_account_write(db, account)
+        ensure_deals_within_sync_window(account, payload)
         if payload.sync_run_id is not None:
             result = store_deal_batch(db, account, payload)
         else:
             result = None
-            inserted = updated = duplicates = 0
+            inserted = updated = duplicates = rejected = 0
             for deal in payload.deals:
                 raw = json.dumps(deal.model_dump(), ensure_ascii=False, separators=(",", ":"), sort_keys=True)
                 current = db.execute(
@@ -88,22 +147,10 @@ def ingest_deals_v21(payload: IngestDealsRequest, account: DBRow, db: DBConnecti
                     )
                     inserted += 1
                 elif current["raw_json"] != raw:
-                    db.execute(
-                        """
-                        UPDATE deals SET
-                            position_id=?, order_id=?, symbol=?, entry=?, type=?, volume=?,
-                            price=?, sl_price=?, tp_price=?, profit=?, swap=?, commission=?,
-                            magic=?, comment=?, open_time=?, deal_time=?, raw_json=?
-                        WHERE id=?
-                        """,
-                        (
-                            deal.position_id, deal.order_id, deal.symbol, deal.entry, deal.type,
-                            deal.volume, deal.price, deal.sl_price, deal.tp_price, deal.profit,
-                            deal.swap, deal.commission, deal.magic, deal.comment, deal.open_time,
-                            deal.deal_time, raw, current["id"],
-                        ),
-                    )
-                    updated += 1
+                    # A ticket is an immutable deal fact. Once persisted, never
+                    # overwrite it with different content; conflicting retries keep
+                    # the first value and count as rejected.
+                    rejected += 1
                 else:
                     duplicates += 1
             result = {
@@ -112,7 +159,7 @@ def ingest_deals_v21(payload: IngestDealsRequest, account: DBRow, db: DBConnecti
                 "updated": updated,
                 "duplicates": duplicates,
                 "duplicated": duplicates,
-                "rejected": 0,
+                "rejected": rejected,
                 "pending_cursor": max((deal.deal_time for deal in payload.deals if deal.entry == 1), default=None),
             }
         # v2.1 contract: persisting deals and advancing the cursor are separate phases.
@@ -132,6 +179,7 @@ def update_last_sync_time(payload: UpdateLastSyncTimeRequest, account: DBRow, db
     if payload.sync_run_id is None:
         try:
             account = begin_account_write(db, account)
+            ensure_resync_acknowledged(account)
             current = max(int(account["last_sync_time"] or 0), int(account["sync_start_time"] or 0))
             final_cursor = max(current, payload.last_sync_time)
             will_advance = payload.last_sync_time > current
@@ -189,6 +237,7 @@ def update_last_sync_time(payload: UpdateLastSyncTimeRequest, account: DBRow, db
 
     try:
         account = begin_account_write(db, account)
+        ensure_resync_acknowledged(account)
         current = max(int(account["last_sync_time"] or 0), int(account["sync_start_time"] or 0))
         run = get_open_sync_run(db, account, payload.sync_run_id)
         batch_rows = db.execute(
@@ -342,6 +391,9 @@ def ingest_snapshots_v21(payload: IngestSnapshotsRequest, account: DBRow, db: DB
             if existing is not None and tuple(existing) != (item.balance, item.equity, item.margin, item.free_margin):
                 raise ApiError(code="SNAPSHOT_CONFLICT", status_code=409,
                                message="Different account snapshots share the same UTC second")
+            # MT5 margin level is equity / margin * 100. When margin is zero the
+            # level is undefined, so store NULL instead of a misleading 0.
+            margin_level = (item.equity / item.margin * 100.0) if item.margin > 0 else None
             db.execute(
                 """
                 INSERT OR IGNORE INTO snapshots (
@@ -350,7 +402,7 @@ def ingest_snapshots_v21(payload: IngestSnapshotsRequest, account: DBRow, db: DB
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (payload.mt5_login, item.snapshot_time, item.balance, item.equity,
-                 item.margin, item.free_margin, 0, raw),
+                 item.margin, item.free_margin, margin_level, raw),
             )
         db.commit()
     except Exception:
@@ -460,10 +512,28 @@ def heartbeat_v21(payload: HeartbeatRequest, account: DBRow, db: DBConnection) -
     )
     try:
         account = begin_account_write(db, account)
-        db.execute(
-            "INSERT INTO heartbeat_history (account_login, timestamp, version) VALUES (?, ?, ?)",
-            (payload.mt5_login, server_time, "2.1"),
-        )
+        previous = db.execute(
+            """
+            SELECT last_seen_at, account_currency, broker_company, broker_server,
+                   ea_version, server_gmt_offset, server_timezone_name
+              FROM heartbeats
+             WHERE account_login = ?
+            """,
+            (payload.mt5_login,),
+        ).fetchone()
+        # Liveness is the latest row, not the history, so a duplicate heartbeat
+        # that changes nothing inside the write window is answered without any
+        # write. This is what keeps multi-instance accounts cheap.
+        if previous is not None and _heartbeat_is_redundant(previous, payload, timezone_name, server_time):
+            db.commit()
+            return HeartbeatResponse(ok=True, server_time=server_time)
+        # The history is an audit trail, so it is sampled instead of appended on
+        # every heartbeat; retention then bounds the table.
+        if _should_sample_heartbeat(db, payload.mt5_login, server_time):
+            db.execute(
+                "INSERT INTO heartbeat_history (account_login, timestamp, version) VALUES (?, ?, ?)",
+                (payload.mt5_login, server_time, "2.1"),
+            )
         instance_id = upsert_ea_instance(
             db,
             account=account,
@@ -514,3 +584,45 @@ def heartbeat_v21(payload: HeartbeatRequest, account: DBRow, db: DBConnection) -
     return HeartbeatResponse(ok=True, server_time=server_time)
 
 
+def _iso_utc(epoch: int) -> str:
+    """Render the same ISO-8601 shape the schema stores for timestamps."""
+    return datetime.fromtimestamp(epoch, tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
+
+
+def _heartbeat_is_redundant(
+    previous: DBRow,
+    payload: HeartbeatRequest,
+    timezone_name: str | None,
+    server_time: int,
+) -> bool:
+    window = settings.heartbeat_write_interval_seconds
+    if window > 0:
+        last_seen = str(previous["last_seen_at"] or "")
+        if not last_seen or last_seen < _iso_utc(server_time - window):
+            return False
+    else:
+        return False
+
+    def unchanged(stored, incoming) -> bool:
+        # The upsert keeps the stored value when the payload omits a field.
+        return incoming in (None, "") or stored == incoming
+
+    return (
+        unchanged(previous["account_currency"], payload.account_currency)
+        and unchanged(previous["broker_server"], payload.broker_server)
+        and unchanged(previous["ea_version"], payload.ea_version)
+        and unchanged(previous["server_gmt_offset"], payload.server_gmt_offset)
+        and unchanged(previous["server_timezone_name"], timezone_name)
+    )
+
+
+def _should_sample_heartbeat(db: DBConnection, mt5_login: int, server_time: int) -> bool:
+    interval = settings.heartbeat_history_interval_seconds
+    if interval <= 0:
+        return True
+    row = db.execute(
+        "SELECT MAX(timestamp) AS last_ts FROM heartbeat_history WHERE account_login = ?",
+        (mt5_login,),
+    ).fetchone()
+    last_ts = int(row["last_ts"] or 0) if row is not None else 0
+    return server_time - last_ts >= interval

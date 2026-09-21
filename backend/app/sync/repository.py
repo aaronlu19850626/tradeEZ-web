@@ -6,7 +6,7 @@ import json
 import hmac
 from ..common.encoding import utc_now_iso, canonical_json, sha256_hex
 from ..v2_models import ApiError, IngestDealsRequest
-from ..accounts.policies import ensure_account_active
+from .policies import ensure_account_active
 
 
 def begin_account_write(db: DBConnection, account: DBRow) -> DBRow:
@@ -241,22 +241,10 @@ def store_deal_batch(
         else:
             deal_row_id = int(current["id"])
             if current["raw_json"] != raw:
-                db.execute(
-                    """
-                    UPDATE deals SET
-                        position_id=?, order_id=?, symbol=?, entry=?, type=?, volume=?,
-                        price=?, sl_price=?, tp_price=?, profit=?, swap=?, commission=?,
-                        magic=?, comment=?, open_time=?, deal_time=?, raw_json=?
-                    WHERE id=?
-                    """,
-                    (
-                        deal.position_id, deal.order_id, deal.symbol, deal.entry, deal.type,
-                        deal.volume, deal.price, deal.sl_price, deal.tp_price, deal.profit,
-                        deal.swap, deal.commission, deal.magic, deal.comment, deal.open_time,
-                        deal.deal_time, raw, deal_row_id,
-                    ),
-                )
-                updated += 1
+                # A ticket is an immutable deal fact. Once persisted, never overwrite
+                # it with different content; conflicting retries keep the first value
+                # and count as rejected rather than silently rewriting history.
+                rejected += 1
             else:
                 duplicated += 1
         db.execute(
@@ -289,5 +277,3 @@ def store_deal_batch(
         "batch_id": payload.batch_id,
         "batch_status": "received",
     }
-
-

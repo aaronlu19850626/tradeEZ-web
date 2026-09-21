@@ -1,8 +1,10 @@
 "use client";
 
-import { EllipsisVertical, LogOut } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+
+import { useRouter } from "next/navigation";
+
+import { EllipsisVertical, LogOut } from "lucide-react";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -14,7 +16,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from "@/components/ui/sidebar";
-import { api, ApiClientError, clearToken, getToken, type User } from "@/lib/tradesync/api";
+import { ApiClientError, api, clearSessionCookie, clearToken, getToken, type User } from "@/lib/tradesync/api";
 
 function emailInitial(email: string) {
   return email.trim().slice(0, 1).toUpperCase() || "U";
@@ -32,19 +34,25 @@ export function TradeezNavUser() {
       return;
     }
     let active = true;
-    api.me()
-      .then((result) => { if (active) setUser(result); })
+    api
+      .me()
+      .then((result) => {
+        if (active) setUser(result);
+      })
       .catch((error) => {
         if (active && getToken() === token && error instanceof ApiClientError && error.status === 401) {
           clearToken();
           router.replace("/auth/v2/login");
         }
       });
-    return () => { active = false; };
+    return () => {
+      active = false;
+    };
   }, [router]);
 
   function logout() {
     clearToken();
+    clearSessionCookie();
     router.replace("/auth/v2/login");
     router.refresh();
   }

@@ -4,7 +4,7 @@ from app.db import DBConnection
 from fastapi import APIRouter, Depends, Header, Request
 from starlette.concurrency import run_in_threadpool
 from ..db import get_db
-from ..accounts.policies import ensure_account_active
+from .policies import ensure_account_active
 from ..common.rate_limit import check_rate_limit
 from .auth import RATE_LIMITS, authenticate_v2, get_bound_account
 from . import service
@@ -134,7 +134,5 @@ async def heartbeat_v21(
     db: DBConnection = Depends(get_db),
 ) -> HeartbeatResponse:
     account = await authenticate_v2(request, payload.mt5_login, authorization, x_timestamp, x_signature, db)
-    check_rate_limit("heartbeat", str(account["id"]), RATE_LIMITS["heartbeat"], 3600)
+    check_rate_limit("heartbeat", str(account["id"]), RATE_LIMITS["heartbeat"])
     return await run_in_threadpool(service.heartbeat_v21, payload, account, db)
-
-

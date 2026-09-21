@@ -1,1 +1,0 @@
-"""TradeSync accounts module."""

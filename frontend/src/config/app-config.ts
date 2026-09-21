@@ -8,7 +8,6 @@ export const APP_CONFIG = {
   copyright: `© ${currentYear}, TradeEZ.`,
   meta: {
     title: "TradeEZ - 交易复盘与执行管理",
-    description:
-      "TradeEZ Web 是 MT5 EA 订单同步、交易复盘、规则评分与每日交易闭环的管理控制台。",
+    description: "TradeEZ Web 是 MT5 EA 订单同步、交易复盘、规则评分与每日交易闭环的管理控制台。",
   },
 };
