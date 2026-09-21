@@ -311,7 +311,7 @@ export default function DashboardOverviewPage() {
     );
   }
 
-  const initialLoading = (loading && !overview) || (!overview && accounts.length > 0 && accountIds.length === 0);
+  const initialLoading = !overview && (loading || accounts.length > 0);
 
   if (initialLoading) {
     return (

@@ -105,6 +105,7 @@ export function useTradeCenterServerData({
   const [summary, setSummary] = useState<TradeStats | null>(null);
   const [summarySeries, setSummarySeries] = useState<{ index: number; value: number }[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loaded, setLoaded] = useState(false);
   const [pageLoading, setPageLoading] = useState(false);
   const [error, setError] = useState(false);
   const lastPageRef = useRef(page);
@@ -145,6 +146,7 @@ export function useTradeCenterServerData({
           setSummary(summaryData.stats);
           setSummarySeries(summaryData.series);
         }
+        setLoaded(true);
       } catch {
         setError(true);
       } finally {
@@ -165,6 +167,7 @@ export function useTradeCenterServerData({
     bounds,
     dayGroups,
     error,
+    loaded,
     loading,
     pageLoading,
     pageTotal,

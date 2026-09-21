@@ -243,7 +243,7 @@ export default function TradeCenterPage() {
   // Avoid flashing the no-accounts or empty panel while the initial account
   // scope is still being resolved.
   const scopePending = accounts.length > 0 && accountIds.length === 0;
-  const loading = serverData.loading || fetching || scopePending;
+  const loading = serverData.loading || fetching || scopePending || (accountIds.length > 0 && !serverData.loaded);
   const hasError = fetchError || serverData.error;
   let body: ReactNode;
   if (hasError) {
