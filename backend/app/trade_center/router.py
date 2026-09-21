@@ -8,6 +8,7 @@ from app.security import get_current_user
 from . import service
 from .schemas import (
     CalendarDayOut,
+    BoundsOut,
     GroupOut,
     SummaryOut,
     TradeFilter,
@@ -76,3 +77,12 @@ def currencies(
     user: DBRow = Depends(get_current_user),
 ) -> list[str]:
     return service.currencies(db, user)
+
+
+@router.get("/api/v1/trades/bounds", response_model=BoundsOut)
+def bounds(
+    flt: TradeFilter = Depends(),
+    db: DBConnection = Depends(get_db),
+    user: DBRow = Depends(get_current_user),
+) -> BoundsOut:
+    return service.bounds(db, user, flt)

@@ -165,3 +165,8 @@ class TradePageOut(BaseModel):
     total: int
     page: int
     page_size: int
+
+
+class BoundsOut(BaseModel):
+    earliestDay: str | None
+    latestDay: str | None

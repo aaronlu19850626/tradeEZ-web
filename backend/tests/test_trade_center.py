@@ -120,6 +120,19 @@ def test_list_paginates_in_database(client, db):
     assert first["items"][0]["closeTime"] > second["items"][0]["closeTime"] > third["items"][0]["closeTime"]
 
 
+def test_bounds_returns_synced_span(client, db):
+    headers = web_headers(db, "trade-bounds@example.com")
+    account = create_account(client, headers, 921110)
+    _add_symbol(db, 921110)
+    deals = _closed_trade(account, 921111, "2026-09-14", "2026-09-15", profit=100.0)
+    deals += _closed_trade(account, 921112, "2026-09-15", "2026-09-17", profit=50.0)
+    _ingest(client, account["sync_key"], 921110, deals)
+
+    body = client.get("/api/v1/trades/bounds", headers=headers).json()
+    assert body["earliestDay"] == "2026-09-15"
+    assert body["latestDay"] == "2026-09-17"
+
+
 def test_partial_closes_aggregate_into_one_trade(client, db):
     headers = web_headers(db, "trade-partial@example.com")
     account = create_account(client, headers, 921011)

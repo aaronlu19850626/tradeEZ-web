@@ -10,6 +10,7 @@ from .schemas import (
     CalendarDayOut,
     GroupOut,
     SeriesPoint,
+    BoundsOut,
     StatsOut,
     SummaryOut,
     TradeFilter,
@@ -307,6 +308,19 @@ def calendar(db: DBConnection, user: DBRow, flt: TradeFilter, month: str) -> lis
         bucket["net"] = _round(bucket["net"] + item.netPnl)
         bucket["count"] += 1
     return [CalendarDayOut(day=day, net=value["net"], count=value["count"]) for day, value in sorted(buckets.items())]
+
+
+def bounds(db: DBConnection, user: DBRow, flt: TradeFilter) -> BoundsOut:
+    logins = _resolve_logins(db, user, flt.account_id_list())
+    if not logins:
+        return BoundsOut(earliestDay=None, latestDay=None)
+    row = repository.fetch_closed_trade_bounds(db, int(user["id"]), logins)
+    if row is None or row["earliest_epoch"] is None:
+        return BoundsOut(earliestDay=None, latestDay=None)
+    return BoundsOut(
+        earliestDay=beijing_day(int(row["earliest_epoch"])),
+        latestDay=beijing_day(int(row["latest_epoch"])),
+    )
 
 
 def symbols(db: DBConnection, user: DBRow) -> list[str]:

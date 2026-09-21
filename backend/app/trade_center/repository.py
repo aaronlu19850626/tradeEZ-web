@@ -252,3 +252,23 @@ def distinct_currencies(db: DBConnection, user_id: int) -> list[str]:
         (user_id,),
     ).fetchall()
     return [str(row["currency"]).upper() for row in rows if row["currency"]]
+
+
+def fetch_closed_trade_bounds(db: DBConnection, user_id: int, logins: list[int] | None) -> dict | None:
+    clauses = ["d.entry = 1", "a.user_id = %s"]
+    params: list = [user_id]
+    if logins is not None:
+        placeholders = ",".join(["%s"] * len(logins))
+        clauses.append(f"d.account_login IN ({placeholders})")
+        params.extend(logins)
+    where = " AND ".join(clauses)
+    return db.execute(
+        f"""
+        SELECT MIN(d.deal_time) AS earliest_epoch,
+               MAX(d.deal_time) AS latest_epoch
+          FROM deals d
+          JOIN accounts a ON a.mt5_login = d.account_login
+         WHERE {where}
+        """,
+        tuple(params),
+    ).fetchone()
