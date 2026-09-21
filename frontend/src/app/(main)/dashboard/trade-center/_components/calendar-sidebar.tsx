@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { DayButton } from "react-day-picker";
@@ -12,14 +12,9 @@ import { Calendar, CalendarDayButton } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type { Locale } from "@/lib/i18n";
+import { type TradeListParams, tradeCenterApi } from "@/lib/tradesync/trade-center";
 import type { TradeCenterText } from "@/lib/tradesync/trade-center-i18n";
-import {
-  calendarCells,
-  dayKeyToEpoch,
-  type MockTrade,
-  shanghaiDayKey,
-  shanghaiWeekStart,
-} from "@/lib/tradesync/trades-mock";
+import { dayKeyToEpoch, shanghaiDayKey, shanghaiWeekStart } from "@/lib/tradesync/trades-mock";
 
 import {
   calendarCellTone,
@@ -37,14 +32,14 @@ export function SideRail({
   t,
   locale,
   range,
-  trades,
+  query,
   view,
   onPickDay,
 }: {
   t: TradeCenterText;
   locale: Locale;
   range: { from: string; to: string };
-  trades: MockTrade[];
+  query: TradeListParams;
   view: ViewMode;
   onPickDay: (dayKey: string) => void;
 }) {
@@ -53,8 +48,22 @@ export function SideRail({
   useEffect(() => {
     setCursor(range.to.slice(0, 7));
   }, [range.to]);
-  // Cells are computed for the month currently on screen, so paging the calendar shows that month's days.
-  const calendar = useMemo(() => calendarCells(trades, cursor), [trades, cursor]);
+  const [calendar, setCalendar] = useState<Map<string, { net: number; count: number }>>(new Map());
+  useEffect(() => {
+    let cancelled = false;
+    void tradeCenterApi
+      .calendar({ ...query, month: cursor })
+      .then((days) => {
+        if (cancelled) return;
+        setCalendar(new Map(days.map((day) => [day.day, { net: day.net, count: day.count }])));
+      })
+      .catch(() => {
+        if (!cancelled) setCalendar(new Map());
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [cursor, query]);
   const calendarLocale = locale === "zh-CN" ? zhCN : enUS;
 
   return (

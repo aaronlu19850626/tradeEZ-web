@@ -4,15 +4,7 @@ import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } fro
 
 import { useLocale } from "@/lib/i18n";
 import { tradeCenterText } from "@/lib/tradesync/trade-center-i18n";
-import {
-  addDays,
-  computeStats,
-  dayKeyToEpoch,
-  groupByDay,
-  groupByWeek,
-  shanghaiDayKey,
-  shanghaiWeekStart,
-} from "@/lib/tradesync/trades-mock";
+import { addDays, computeStats, dayKeyToEpoch, shanghaiWeekStart } from "@/lib/tradesync/trades-mock";
 import { useTradeData } from "@/lib/tradesync/use-trade-data";
 
 import { useTradeCenterServerData } from "../_hooks/use-trade-center-server-data";
@@ -66,7 +58,7 @@ export default function TradeCenterPage() {
     view,
     weekVisible,
   } = useTradeViewState();
-  const { accounts, trades, fetching, fetchError, reload: loadData } = useTradeData({ includeTrades: view !== "all" });
+  const { accounts, fetching, fetchError, reload: loadData } = useTradeData({ includeTrades: false });
   const { applyColumns, columnOpen, optionalColumns, setColumnOpen, viewColumns } = useTradeColumns(view);
 
   const serverData = useTradeCenterServerData({
@@ -81,16 +73,8 @@ export default function TradeCenterPage() {
     view,
     weekVisible,
   });
-  const latestFromTrades = useMemo(
-    () => (trades?.length ? shanghaiDayKey(Math.max(...trades.map((trade) => trade.closeTime))) : ""),
-    [trades],
-  );
-  const earliestFromTrades = useMemo(
-    () => (trades?.length ? shanghaiDayKey(Math.min(...trades.map((trade) => trade.closeTime))) : ""),
-    [trades],
-  );
-  const latestDay = view === "all" ? (serverData.bounds.latestDay ?? "") : latestFromTrades;
-  const earliestDay = view === "all" ? (serverData.bounds.earliestDay ?? "") : earliestFromTrades;
+  const latestDay = serverData.bounds.latestDay ?? "";
+  const earliestDay = serverData.bounds.earliestDay ?? "";
   const defaultAccountIds = useMemo(
     () => accounts.filter((account) => account.isStatistics).map((account) => account.id),
     [accounts],
@@ -213,14 +197,7 @@ export default function TradeCenterPage() {
     }
   }, [earliestDay, latestDay, range.from, setRange]);
 
-  const {
-    applyCurrency,
-    currencies,
-    currencyOptionsLocked,
-    filtered,
-    loading: localLoading,
-    symbols: localSymbols,
-  } = useTradeFilters({
+  const { applyCurrency, currencies, currencyOptionsLocked } = useTradeFilters({
     accounts,
     accountIds,
     currency,
@@ -230,12 +207,11 @@ export default function TradeCenterPage() {
     selectedSymbols,
     setCurrency,
     side,
-    trades,
+    trades: null,
   });
-  const symbols = view === "all" ? serverData.symbols : localSymbols;
-
-  const dayGroups = useMemo(() => groupByDay(filtered), [filtered]);
-  const weekGroups = useMemo(() => groupByWeek(filtered), [filtered]);
+  const symbols = serverData.symbols;
+  const dayGroups = view === "day" ? serverData.dayGroups : [];
+  const weekGroups = view === "week" ? serverData.weekGroups : [];
 
   // The divider only shows once the bar has actually pinned to the top.
   useEffect(() => {
@@ -264,8 +240,8 @@ export default function TradeCenterPage() {
     };
   }, []);
 
-  const loading = view === "all" ? serverData.loading : localLoading;
-  const hasError = fetchError || (view === "all" ? serverData.error : false);
+  const loading = serverData.loading;
+  const hasError = fetchError || serverData.error;
   let body: ReactNode;
   if (hasError) {
     body = <ErrorPanel t={t} onRetry={() => void loadData()} />;
@@ -290,7 +266,9 @@ export default function TradeCenterPage() {
           onPage={setPage}
         />
       );
-  } else if (filtered.length === 0) {
+  } else if (view === "day" && dayGroups.length === 0) {
+    body = <EmptyPanel t={t} />;
+  } else if (view === "week" && weekGroups.length === 0) {
     body = <EmptyPanel t={t} />;
   } else if (view === "day") {
     body = (
@@ -418,7 +396,15 @@ export default function TradeCenterPage() {
             t={t}
             locale={locale}
             range={range}
-            trades={filtered}
+            query={{
+              accountIds,
+              fromDay: range.from || undefined,
+              toDay: range.to || undefined,
+              side,
+              result,
+              currency: currency === "all" ? undefined : currency,
+              symbol: selectedSymbols.length === 1 ? selectedSymbols[0] : undefined,
+            }}
             view={view}
             onPickDay={(dayKey) => {
               if (view === "week") {

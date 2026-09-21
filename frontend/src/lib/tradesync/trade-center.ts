@@ -66,6 +66,12 @@ export interface TradeGroupRecord {
   trades: TradeRecord[];
 }
 
+export interface CalendarDayRecord {
+  day: string;
+  net: number;
+  count: number;
+}
+
 export interface TradeListParams {
   accountIds?: string[];
   fromDay?: string;
@@ -141,6 +147,13 @@ export const tradeCenterApi = {
     return apiFetch<TradeGroupRecord[]>(`/trades/groups?${query.toString()}`);
   },
   bounds: (params: TradeListParams = {}) => apiFetch<TradeBounds>(`/trades/bounds${toQuery(params)}`),
+  calendar: (params: TradeListParams & { month: string }) => {
+    const query = new URLSearchParams();
+    query.set("month", params.month);
+    const base = new URLSearchParams(toQuery(params).replace(/^\?/, ""));
+    for (const [key, value] of base) query.set(key, value);
+    return apiFetch<CalendarDayRecord[]>(`/trades/calendar?${query.toString()}`);
+  },
   symbols: () => apiFetch<string[]>("/trades/symbols"),
   currencies: () => apiFetch<string[]>("/trades/currencies"),
 };
