@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 
 from fastapi import HTTPException, status
@@ -17,6 +18,7 @@ from .schemas import (
     DrawdownOut,
     GroupOut,
     OverviewOut,
+    OverviewRecentOut,
     OverviewStatsOut,
     PLATFORM_TZ,
     ScatterPointOut,
@@ -46,6 +48,24 @@ SORT_FIELDS = {
     "duration",
     "accountName",
 }
+
+
+@dataclass(slots=True)
+class LightTrade:
+    id: str
+    accountId: int
+    symbol: str
+    side: str
+    currency: str | None
+    openTime: int
+    closeTime: int
+    grossPnl: float
+    netPnl: float
+    commission: float
+    swap: float
+    volume: float
+    rMultiple: float | None
+    durationSec: int
 
 
 def _round(value: float, digits: int = 2) -> float:
@@ -111,6 +131,41 @@ def _to_item(row: DBRow) -> TradeItem:
         durationSec=max(0, int(row["deal_time"] or 0) - int(row["open_time"] or 0)),
         strategy=comment or None,
         magic=int(row["magic"] or 0),
+    )
+
+
+def _to_light_item(row: DBRow) -> LightTrade:
+    side = "buy" if int(row["type"]) == 0 else "sell"
+    volume = float(row["volume"] or 0)
+    close_price = float(row["close_price"] or 0)
+    open_price = float(row["open_price"]) if row["open_price"] is not None else None
+    profit = float(row["profit"] or 0)
+    swap = float(row["swap"] or 0)
+    commission = float(row["commission"] or 0)
+    contract_size = float(row["contract_size"]) if row["contract_size"] else None
+    gross_pnl = _round(profit + swap)
+    net_pnl = _round(profit + swap + commission)
+    r_multiple: float | None = None
+    if open_price is not None and row["sl_price"] is not None and contract_size:
+        initial_risk = abs(open_price - float(row["sl_price"])) * contract_size * volume
+        if initial_risk > 0:
+            r_multiple = _round(net_pnl / initial_risk, 4)
+    account_login = str(row["account_login"])
+    return LightTrade(
+        id=f"{account_login}-{row['ticket']}",
+        accountId=int(row["account_id"]),
+        symbol=str(row["symbol"] or ""),
+        side=side,
+        currency=row["currency"],
+        openTime=int(row["open_time"] or 0),
+        closeTime=int(row["deal_time"] or 0),
+        grossPnl=gross_pnl,
+        netPnl=net_pnl,
+        commission=commission,
+        swap=swap,
+        volume=volume,
+        rMultiple=r_multiple,
+        durationSec=max(0, int(row["deal_time"] or 0) - int(row["open_time"] or 0)),
     )
 
 
@@ -213,8 +268,9 @@ def _resolve_logins(db: DBConnection, user: DBRow, account_ids: list[int] | None
     return [int(row["mt5_login"]) for row in selected]
 
 
-def _load_items(db: DBConnection, user: DBRow, flt: TradeFilter) -> list[TradeItem]:
-    cached = get_cached_items(int(user["id"]), flt)
+def _load_items(db: DBConnection, user: DBRow, flt: TradeFilter, *, light: bool = False) -> list:
+    variant = "light" if light else "full"
+    cached = get_cached_items(int(user["id"]), flt, variant)
     if cached is not None:
         return cached
     logins = _resolve_logins(db, user, flt.account_id_list())
@@ -228,9 +284,10 @@ def _load_items(db: DBConnection, user: DBRow, flt: TradeFilter) -> list[TradeIt
         from_epoch=from_epoch,
         to_epoch=to_epoch,
     )
-    items = [_to_item(row) for row in rows]
+    converter = _to_light_item if light else _to_item
+    items = [converter(row) for row in rows]
     items = _apply_filters(items, flt)
-    put_cached_items(int(user["id"]), flt, items)
+    put_cached_items(int(user["id"]), flt, items, variant)
     return items
 
 
@@ -274,7 +331,7 @@ def list_trades(db: DBConnection, user: DBRow, flt: TradeFilter, sort: str, orde
 
 
 def summary(db: DBConnection, user: DBRow, flt: TradeFilter) -> SummaryOut:
-    items = _load_items(db, user, flt)
+    items = _load_items(db, user, flt, light=True)
     return SummaryOut(stats=compute_stats(items), series=_sampled_cumulative_series(items))
 
 
@@ -287,15 +344,28 @@ def groups(
     limit: int | None = None,
     offset: int = 0,
 ) -> list[GroupOut]:
-    items = _load_items(db, user, flt)
+    items = _load_items(db, user, flt, light=True)
     key_of = beijing_day if view == "day" else beijing_week_start
-    buckets: dict[str, list[TradeItem]] = {}
+    keys: set[str] = set()
     for item in items:
-        buckets.setdefault(key_of(item.closeTime), []).append(item)
+        keys.add(key_of(item.closeTime))
+
+    selected_keys = sorted(keys, reverse=True)[offset : (offset + limit) if limit else None]
+    logins = _resolve_logins(db, user, flt.account_id_list())
 
     result: list[GroupOut] = []
-    for key in sorted(buckets, reverse=True)[offset : (offset + limit) if limit else None]:
-        trades = sorted(buckets[key], key=lambda item: (item.closeTime, item.id), reverse=True)
+    for key in selected_keys:
+        end_day = key if view == "day" else _add_days(key, 6)
+        from_epoch, to_epoch = day_bounds(key, end_day)
+        rows = repository.fetch_closed_trades(
+            db,
+            user_id=int(user["id"]),
+            logins=logins,
+            from_epoch=from_epoch,
+            to_epoch=to_epoch,
+        )
+        trades = _apply_filters([_to_item(row) for row in rows], flt)
+        trades = sorted(trades, key=lambda item: (item.closeTime, item.id), reverse=True)
         days = [beijing_day(item.closeTime) for item in trades]
         result.append(
             GroupOut(
@@ -311,16 +381,26 @@ def groups(
 
 
 def calendar(db: DBConnection, user: DBRow, flt: TradeFilter, month: str) -> list[CalendarDayOut]:
-    items = _load_items(db, user, flt)
-    buckets: dict[str, dict] = {}
-    for item in items:
-        day = beijing_day(item.closeTime)
-        if not day.startswith(month):
-            continue
-        bucket = buckets.setdefault(day, {"net": 0.0, "count": 0})
-        bucket["net"] = _round(bucket["net"] + item.netPnl)
-        bucket["count"] += 1
-    return [CalendarDayOut(day=day, net=value["net"], count=value["count"]) for day, value in sorted(buckets.items())]
+    year, month_number = (int(part) for part in month.split("-"))
+    first_day = date(year, month_number, 1)
+    next_month = date(year + (1 if month_number == 12 else 0), 1 if month_number == 12 else month_number + 1, 1)
+    from_epoch = int(datetime.combine(first_day, datetime.min.time(), tzinfo=PLATFORM_TZ).timestamp())
+    to_epoch = int(datetime.combine(next_month, datetime.min.time(), tzinfo=PLATFORM_TZ).timestamp())
+    logins = _resolve_logins(db, user, flt.account_id_list())
+    if not logins:
+        return []
+    rows = repository.fetch_calendar_days(
+        db,
+        user_id=int(user["id"]),
+        logins=logins,
+        from_epoch=from_epoch,
+        to_epoch=to_epoch,
+        side=flt.side,
+        result=flt.result,
+        currency=flt.currency,
+        symbol=flt.symbol,
+    )
+    return [CalendarDayOut(day=str(row["day"]), net=float(row["net"] or 0), count=int(row["count"] or 0)) for row in rows]
 
 
 def bounds(db: DBConnection, user: DBRow, flt: TradeFilter) -> BoundsOut:
@@ -500,12 +580,15 @@ def _sampled_cumulative_series(items: list[TradeItem], limit: int = 1000) -> lis
 
 
 def overview(db: DBConnection, user: DBRow, flt: TradeFilter) -> OverviewOut:
-    items = _load_items(db, user, flt)
+    items = _load_items(db, user, flt, light=True)
     days = _overview_days(items)
     latest_day = beijing_day(max(item.closeTime for item in items)) if items else None
     recent_start = _add_days(latest_day, -29) if latest_day else None
     recent_items = [item for item in items if recent_start and beijing_day(item.closeTime) >= recent_start]
-    recent = sorted(items, key=lambda item: (item.closeTime, item.id), reverse=True)[:8]
+    recent = [
+        OverviewRecentOut(id=item.id, closeTime=item.closeTime, symbol=item.symbol, netPnl=item.netPnl)
+        for item in sorted(items, key=lambda item: (item.closeTime, item.id), reverse=True)[:8]
+    ]
     return OverviewOut(
         stats=_overview_stats(items, days),
         score=composite_score(items),

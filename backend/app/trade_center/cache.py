@@ -12,15 +12,16 @@ _MAX_ENTRIES = 512
 _TTL_SECONDS = 3.0
 
 
-def _key(user_id: int, flt: TradeFilter) -> tuple:
+def _key(user_id: int, flt: TradeFilter, variant: str = "full") -> tuple:
     return (
         user_id,
+        variant,
         json.dumps(flt.model_dump(exclude_none=True), sort_keys=True, default=str),
     )
 
 
-def get_cached_items(user_id: int, flt: TradeFilter) -> list | None:
-    key = _key(user_id, flt)
+def get_cached_items(user_id: int, flt: TradeFilter, variant: str = "full") -> list | None:
+    key = _key(user_id, flt, variant)
     entry = _CACHE.get(key)
     if entry is None:
         return None
@@ -31,10 +32,10 @@ def get_cached_items(user_id: int, flt: TradeFilter) -> list | None:
     return value if isinstance(value, list) else None
 
 
-def put_cached_items(user_id: int, flt: TradeFilter, value: list) -> None:
+def put_cached_items(user_id: int, flt: TradeFilter, value: list, variant: str = "full") -> None:
     if len(_CACHE) >= _MAX_ENTRIES:
         _CACHE.pop(next(iter(_CACHE)))
-    _CACHE[_key(user_id, flt)] = (time.monotonic(), value)
+    _CACHE[_key(user_id, flt, variant)] = (time.monotonic(), value)
 
 
 def invalidate_user(user_id: int) -> None:

@@ -114,6 +114,13 @@ export interface OverviewScatterPointRecord {
   y: number;
 }
 
+export interface OverviewRecentRecord {
+  id: string;
+  closeTime: number;
+  symbol: string;
+  netPnl: number;
+}
+
 export interface TradeOverviewRecord {
   stats: {
     count: number;
@@ -135,7 +142,7 @@ export interface TradeOverviewRecord {
   cumulative: OverviewPointRecord[];
   cumulativeRecent: OverviewPointRecord[];
   drawdown: { points: OverviewPointRecord[]; maxDrawdown: number };
-  recent: TradeRecord[];
+  recent: OverviewRecentRecord[];
   consistency: { cells: OverviewConsistencyCellRecord[]; weeks: string[] };
   timeEntry: OverviewScatterPointRecord[];
   timeExit: OverviewScatterPointRecord[];

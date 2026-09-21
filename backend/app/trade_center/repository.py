@@ -237,3 +237,62 @@ def fetch_closed_trade_bounds(db: DBConnection, user_id: int, logins: list[int] 
         """,
         tuple(params),
     ).fetchone()
+
+
+def fetch_calendar_days(
+    db: DBConnection,
+    *,
+    user_id: int,
+    logins: list[int] | None,
+    from_epoch: int,
+    to_epoch: int,
+    side: str,
+    result: str,
+    currency: str | None,
+    symbol: str | None,
+) -> list[dict]:
+    _refresh_closed_trades(db)
+    clauses = ["a.user_id = %s", "t.deal_time >= %s", "t.deal_time < %s"]
+    params: list = [user_id, from_epoch, to_epoch]
+    if logins is not None:
+        placeholders = ",".join(["%s"] * len(logins))
+        clauses.append(f"t.account_login IN ({placeholders})")
+        params.extend(logins)
+    if side != "all":
+        clauses.append("t.type = %s")
+        params.append(0 if side == "buy" else 1)
+    if result != "all":
+        if result == "win":
+            clauses.append("(t.profit + t.swap + t.commission) > 0")
+        elif result == "loss":
+            clauses.append("(t.profit + t.swap + t.commission) < 0")
+        else:
+            clauses.append("(t.profit + t.swap + t.commission) = 0")
+    if currency:
+        clauses.append("a.account_currency = %s")
+        params.append(currency)
+    if symbol:
+        symbols = [part.strip() for part in symbol.split(",") if part.strip()]
+        if symbols:
+            placeholders = ",".join(["%s"] * len(symbols))
+            clauses.append(f"t.symbol IN ({placeholders})")
+            params.extend(symbols)
+
+    where = " AND ".join(clauses)
+    return db.execute(
+        f"""
+        SELECT
+            to_char(
+                (to_timestamp(t.deal_time) AT TIME ZONE 'UTC') + interval '8 hours',
+                'YYYY-MM-DD'
+            ) AS day,
+            round(sum(t.profit + t.swap + t.commission)::numeric, 2) AS net,
+            count(*) AS count
+          FROM closed_trades t
+          JOIN accounts a ON a.id = t.account_id
+         WHERE {where}
+         GROUP BY day
+         ORDER BY day
+        """,
+        tuple(params),
+    ).fetchall()

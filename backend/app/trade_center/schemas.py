@@ -248,13 +248,20 @@ class ScatterPointOut(BaseModel):
     y: float
 
 
+class OverviewRecentOut(BaseModel):
+    id: str
+    closeTime: int
+    symbol: str
+    netPnl: float
+
+
 class OverviewOut(BaseModel):
     stats: OverviewStatsOut
     score: CompositeScoreOut
     cumulative: list[DatePointOut]
     cumulativeRecent: list[DatePointOut]
     drawdown: DrawdownOut
-    recent: list[TradeItem]
+    recent: list[OverviewRecentOut]
     consistency: ConsistencyOut
     timeEntry: list[ScatterPointOut]
     timeExit: list[ScatterPointOut]

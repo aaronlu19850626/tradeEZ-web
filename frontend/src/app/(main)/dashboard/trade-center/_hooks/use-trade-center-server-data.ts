@@ -129,6 +129,10 @@ export function useTradeCenterServerData({
   const load = useCallback(
     async (pageOnly = false) => {
       if (accountIds.length === 0) return;
+      if (!range.from || !range.to) {
+        setLoading(false);
+        return;
+      }
       if (pageOnly) setPageLoading(true);
       else setLoading(true);
       setError(false);

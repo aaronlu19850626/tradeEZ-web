@@ -176,7 +176,21 @@ def latest_deal_time(db: DBConnection, mt5_login: int) -> int | None:
 
 
 def trade_count(db: DBConnection, mt5_login: int) -> int:
+    db.execute("SELECT refresh_closed_trades()")
     row = db.execute(
+        """
+        SELECT COUNT(*) AS trade_count
+          FROM closed_trades
+         WHERE account_login = %s
+        """,
+        (mt5_login,),
+    ).fetchone()
+    count = int(row["trade_count"] or 0)
+    if count > 0:
+        return count
+    # Preserve the historical count for accounts that only have an opening
+    # deal (or have not produced a closed projection yet).
+    fallback = db.execute(
         """
         SELECT COUNT(DISTINCT CASE
             WHEN position_id > 0
@@ -192,7 +206,7 @@ def trade_count(db: DBConnection, mt5_login: int) -> int:
         """,
         (mt5_login,),
     ).fetchone()
-    return int(row["trade_count"] or 0)
+    return int(fallback["trade_count"] or 0)
 
 
 def delete_login_scoped(db: DBConnection, mt5_login: int, tables: tuple[str, ...]) -> None:

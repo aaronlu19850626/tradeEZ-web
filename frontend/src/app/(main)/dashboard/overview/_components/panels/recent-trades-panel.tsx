@@ -6,11 +6,17 @@ import { DataTable, type DataTableColumn } from "@/components/data-table/data-ta
 import { SymbolBadge } from "@/components/shared/symbol-badge";
 import type { Locale } from "@/lib/i18n";
 import type { DashboardText } from "@/lib/tradesync/dashboard-i18n";
-import type { MockTrade } from "@/lib/tradesync/trades-mock";
 
 import { money, tone } from "../../_lib/overview-data";
 
-export function RecentTrades({ t, trades, locale }: { t: DashboardText; trades: MockTrade[]; locale: Locale }) {
+export interface RecentTradeRow {
+  id: string;
+  closeTime: number;
+  symbol: string;
+  netPnl: number;
+}
+
+export function RecentTrades({ t, trades, locale }: { t: DashboardText; trades: RecentTradeRow[]; locale: Locale }) {
   const dateTime = useCallback(
     (epoch: number) =>
       new Intl.DateTimeFormat(locale, {
@@ -26,7 +32,7 @@ export function RecentTrades({ t, trades, locale }: { t: DashboardText; trades: 
     [locale],
   );
 
-  const columns: DataTableColumn<MockTrade>[] = useMemo(
+  const columns: DataTableColumn<RecentTradeRow>[] = useMemo(
     () => [
       {
         id: "closeTime",

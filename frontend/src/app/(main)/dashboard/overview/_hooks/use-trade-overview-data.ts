@@ -88,13 +88,19 @@ export function useTradeOverviewData({
           return;
         }
         const selected = accountIds;
-        const [boundsData, symbolsData, overviewData] = await Promise.all([
+        const [boundsData, symbolsData] = await Promise.all([
           tradeCenterApi.bounds({ accountIds: selected }),
           tradeCenterApi.symbols(),
-          tradeCenterApi.overview(commonParams(selected, range, side, result, currency, selectedSymbols)),
         ]);
         setBounds(boundsData);
         setSymbols(symbolsData);
+        if (!range.from || !range.to) {
+          setOverview(null);
+          return;
+        }
+        const overviewData = await tradeCenterApi.overview(
+          commonParams(selected, range, side, result, currency, selectedSymbols),
+        );
         setOverview(overviewData);
       } catch {
         if (!background) setError(true);

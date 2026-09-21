@@ -19,7 +19,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useLocale } from "@/lib/i18n";
 import { dashboardText } from "@/lib/tradesync/dashboard-i18n";
-import { toTrade } from "@/lib/tradesync/trade-center";
 import type { CompositeScore } from "@/lib/tradesync/trade-score";
 import type { DayGroup } from "@/lib/tradesync/trades-mock";
 
@@ -160,7 +159,7 @@ export default function DashboardOverviewPage() {
       })),
     [score.dimensions],
   );
-  const recent = useMemo(() => (overview?.recent ?? []).map(toTrade), [overview]);
+  const recent = overview?.recent ?? [];
 
   const monthKey = cursor ?? (latestDay ? latestDay.slice(0, 7) : "");
   const calendar = useMemo(() => buildMonth(monthKey, stats.days), [monthKey, stats.days]);
