@@ -31,6 +31,8 @@ import {
   toneClass,
 } from "../_lib/trade-center-model";
 
+const HEADER_LABEL_CLASS = "text-xs leading-none font-bold";
+
 export function SortIcon({ active, dir }: { active: boolean; dir: "asc" | "desc" | undefined }): ReactNode {
   if (!active) return <ArrowUpDown className="size-3 opacity-40" />;
   return dir === "asc" ? <ArrowUp className="size-3" /> : <ArrowDown className="size-3" />;
@@ -114,7 +116,7 @@ export function TradeTable({
               variant="ghost"
               size="sm"
               onClick={() => toggleSort(key)}
-              className="h-auto px-0 font-bold"
+              className={`h-auto px-0 ${HEADER_LABEL_CLASS}`}
             >
               {columnLabel(key, t)}
               <span
@@ -124,7 +126,7 @@ export function TradeTable({
               </span>
             </Button>
           ) : (
-            columnLabel(key, t)
+            <span className={HEADER_LABEL_CLASS}>{columnLabel(key, t)}</span>
           ),
         cell: ({ row }) => tradeCell(row.original, key, t, locale, Boolean(dateInline)),
         meta: {
