@@ -237,6 +237,12 @@ def test_groups_day_and_week(client, db):
     day_groups = client.get("/api/v1/trades/groups", headers=headers, params={"view": "day"}).json()
     assert [group["key"] for group in day_groups] == ["2026-09-16", "2026-09-15"]
     assert day_groups[0]["stats"]["count"] == 1
+    paged = client.get(
+        "/api/v1/trades/groups",
+        headers=headers,
+        params={"view": "day", "limit": 1, "offset": 1},
+    ).json()
+    assert [group["key"] for group in paged] == ["2026-09-15"]
 
     week_groups = client.get("/api/v1/trades/groups", headers=headers, params={"view": "week"}).json()
     assert len(week_groups) == 1 and week_groups[0]["key"] == "2026-09-14"

@@ -264,7 +264,15 @@ def summary(db: DBConnection, user: DBRow, flt: TradeFilter) -> SummaryOut:
     return SummaryOut(stats=compute_stats(items), series=cumulative_series(items))
 
 
-def groups(db: DBConnection, user: DBRow, flt: TradeFilter, view: str) -> list[GroupOut]:
+def groups(
+    db: DBConnection,
+    user: DBRow,
+    flt: TradeFilter,
+    view: str,
+    *,
+    limit: int | None = None,
+    offset: int = 0,
+) -> list[GroupOut]:
     items = _load_items(db, user, flt)
     key_of = beijing_day if view == "day" else beijing_week_start
     buckets: dict[str, list[TradeItem]] = {}
@@ -272,7 +280,7 @@ def groups(db: DBConnection, user: DBRow, flt: TradeFilter, view: str) -> list[G
         buckets.setdefault(key_of(item.closeTime), []).append(item)
 
     result: list[GroupOut] = []
-    for key in sorted(buckets, reverse=True):
+    for key in sorted(buckets, reverse=True)[offset : (offset + limit) if limit else None]:
         trades = sorted(buckets[key], key=lambda item: (item.closeTime, item.id), reverse=True)
         days = [beijing_day(item.closeTime) for item in trades]
         result.append(

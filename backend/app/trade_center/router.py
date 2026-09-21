@@ -44,10 +44,12 @@ def summary(
 def groups(
     view: str = Query(default="day", pattern="^(day|week)$"),
     flt: TradeFilter = Depends(),
+    limit: int | None = Query(default=None, ge=1, le=500),
+    offset: int = Query(default=0, ge=0),
     db: DBConnection = Depends(get_db),
     user: DBRow = Depends(get_current_user),
 ) -> list[GroupOut]:
-    return service.groups(db, user, flt, view)
+    return service.groups(db, user, flt, view, limit=limit, offset=offset)
 
 
 @router.get("/api/v1/trades/calendar", response_model=list[CalendarDayOut])
