@@ -24,6 +24,7 @@ from .schemas import (
     epoch_to_date,
     iso_to_epoch,
 )
+from ..trade_center.cache import invalidate_user
 
 settings = get_settings()
 
@@ -152,6 +153,7 @@ def create_account(payload: AccountCreateIn, db: DBConnection, user: DBRow) -> A
             is_statistics=1,
         )
         db.commit()
+        invalidate_user(int(user["id"]))
         account_id = cursor.lastrowid
     except Exception:
         db.rollback()
@@ -174,6 +176,7 @@ def update_account(account_id: int, payload: AccountUpdateIn, db: DBConnection, 
         if payload.is_statistics is not None:
             repository.update_statistics(db, account_id, user["id"], payload.is_statistics)
         db.commit()
+        invalidate_user(int(user["id"]))
     except Exception:
         db.rollback()
         raise
@@ -203,6 +206,7 @@ def regenerate_key(account_id: int, db: DBConnection, user: DBRow) -> AccountKey
             (user["id"], account_id, str(account["mt5_login"]), account["key_prefix"], prefix),
         )
         db.commit()
+        invalidate_user(int(user["id"]))
     except Exception:
         db.rollback()
         raise
@@ -263,6 +267,7 @@ def delete_account(account_id: int, payload: AccountDeleteIn, db: DBConnection, 
         repository.delete_api_logs(db, account_id, mt5_login)
         repository.delete_account_row(db, account_id, user["id"])
         db.commit()
+        invalidate_user(int(user["id"]))
     except Exception:
         db.rollback()
         raise

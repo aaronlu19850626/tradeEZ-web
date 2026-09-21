@@ -13,6 +13,7 @@ import openpyxl
 from app.db import DBConnection, DBRow
 
 from . import repository
+from ..trade_center.cache import invalidate_user
 
 
 _HEADER_ALIASES = {
@@ -281,6 +282,7 @@ def import_deals(db: DBConnection, user: DBRow, account: DBRow, file_name: str, 
             (imported, duplicate, batch_id),
         )
         db.commit()
+        invalidate_user(int(user["id"]))
     except Exception:
         db.rollback()
         raise

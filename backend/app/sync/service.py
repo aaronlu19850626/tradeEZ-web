@@ -16,6 +16,7 @@ from ..timekeeping import (
     schedule_timezone_backfill,
     update_deal_time_metadata,
 )
+from ..trade_center.cache import invalidate_user
 from .repository import begin_account_write, ensure_unique_tickets, upsert_ea_instance, start_sync_run, get_open_sync_run, validate_batch_envelope, refresh_run_totals, store_deal_batch
 from ..v2_models import (
     AccountRequest,
@@ -63,6 +64,7 @@ def get_last_sync_time(payload: AccountRequest, account: DBRow, db: DBConnection
             ea_version=payload.ea_version,
         )
         db.commit()
+        invalidate_user(int(account["user_id"]))
     except Exception:
         db.rollback()
         raise
@@ -187,6 +189,7 @@ def ingest_deals_v21(payload: IngestDealsRequest, account: DBRow, db: DBConnecti
             }
         # v2.1 contract: persisting deals and advancing the cursor are separate phases.
         db.commit()
+        invalidate_user(int(account["user_id"]))
     except Exception:
         db.rollback()
         raise

@@ -5,6 +5,7 @@ from fastapi import HTTPException, status
 from app.db import DBConnection, DBRow
 
 from . import repository
+from .cache import get_cached_items, put_cached_items
 from .schemas import (
     CalendarDayOut,
     GroupOut,
@@ -199,6 +200,9 @@ def _resolve_logins(db: DBConnection, user: DBRow, account_ids: list[int] | None
 
 
 def _load_items(db: DBConnection, user: DBRow, flt: TradeFilter) -> list[TradeItem]:
+    cached = get_cached_items(int(user["id"]), flt)
+    if cached is not None:
+        return cached
     logins = _resolve_logins(db, user, flt.account_id_list())
     if not logins:
         return []
@@ -211,7 +215,9 @@ def _load_items(db: DBConnection, user: DBRow, flt: TradeFilter) -> list[TradeIt
         to_epoch=to_epoch,
     )
     items = [_to_item(row) for row in rows]
-    return _apply_filters(items, flt)
+    items = _apply_filters(items, flt)
+    put_cached_items(int(user["id"]), flt, items)
+    return items
 
 
 def _sort(items: list[TradeItem], sort: str, order: str) -> list[TradeItem]:

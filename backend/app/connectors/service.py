@@ -8,6 +8,7 @@ from app.db import DBConnection, DBRow
 from app.v2_models import ApiError
 from app.config import get_settings
 from app.timekeeping import schedule_timezone_backfill
+from app.trade_center.cache import invalidate_user
 
 from . import repository
 from .normalizers import normalize_mt5_event
@@ -168,6 +169,7 @@ def submit_events(
         if payload.batch_index + 1 >= payload.batch_count and latest_trade_at is not None:
             repository.update_cursor(db, int(row["id"]), latest_trade_at, next_state)
         db.commit()
+        invalidate_user(int(account["user_id"]))
     except Exception as exc:
         db.rollback()
         if settings.environment != "production":
