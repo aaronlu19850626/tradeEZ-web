@@ -17,7 +17,7 @@ import { Pagination, PaginationContent, PaginationItem } from "@/components/ui/p
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { fill, type Locale } from "@/lib/i18n";
 import type { TradeCenterText } from "@/lib/tradesync/trade-center-i18n";
-import { cumulativeSeries, type MockTrade, type TradeStats } from "@/lib/tradesync/trades-mock";
+import type { MockTrade, TradeStats } from "@/lib/tradesync/trades-mock";
 
 import { type ColumnKey, formatMoney, formatPercent, toneClass } from "../_lib/trade-center-model";
 import { AvgWinLossBar, DayTrendChart, DonutStat, MetricCard, WinRateStats } from "./trade-metric-cards";
@@ -28,6 +28,8 @@ export function AllView({
   locale,
   trades,
   stats,
+  total,
+  series,
   columns,
   page,
   onPage,
@@ -36,18 +38,19 @@ export function AllView({
   locale: Locale;
   trades: MockTrade[];
   stats: TradeStats;
+  total: number;
+  series: { index: number; value: number }[];
   columns: ColumnKey[];
   page: number;
   onPage: (page: number) => void;
 }) {
   const pageSize = 100;
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
-  const totalPages = Math.max(1, Math.ceil(trades.length / pageSize));
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const current = Math.min(page, totalPages);
   const start = (current - 1) * pageSize;
-  const rows = trades.slice(start, start + pageSize);
+  const rows = trades;
   const ordered = useMemo(() => [...trades].sort((a, b) => a.closeTime - b.closeTime), [trades]);
-  const series = useMemo(() => cumulativeSeries(trades), [trades]);
   const grossTotal = stats.winSum + stats.lossSum;
   const winShare = grossTotal > 0 ? stats.winSum / grossTotal : 0.5;
 
@@ -118,9 +121,9 @@ export function AllView({
           <div className="flex flex-wrap items-center gap-3">
             <CardTitle className="text-base font-bold">
               {fill(t.rowsRange, {
-                from: trades.length === 0 ? "0" : String(start + 1),
-                to: String(Math.min(start + pageSize, trades.length)),
-                total: String(trades.length),
+                from: total === 0 ? "0" : String(start + 1),
+                to: String(Math.min(start + pageSize, total)),
+                total: String(total),
               })}
             </CardTitle>
             <Badge variant="secondary" role="status" aria-live="polite" className="font-normal">

@@ -1,5 +1,5 @@
 import { apiFetch } from "./api";
-import type { MockTrade, TradeSide } from "./trades-mock";
+import type { MockTrade, TradeSide, TradeStats } from "./trades-mock";
 
 /** Account shape the trade-center page uses for the page-level scope selector. */
 export interface TradeAccount {
@@ -45,6 +45,25 @@ export interface TradePage {
   total: number;
   page: number;
   page_size: number;
+}
+
+export interface TradeBounds {
+  earliestDay: string | null;
+  latestDay: string | null;
+}
+
+export interface TradeSummaryRecord {
+  stats: TradeStats;
+  series: { index: number; value: number }[];
+}
+
+export interface TradeGroupRecord {
+  key: string;
+  startDay: string;
+  endDay: string;
+  stats: TradeStats;
+  series: { index: number; value: number }[];
+  trades: TradeRecord[];
 }
 
 export interface TradeListParams {
@@ -111,6 +130,17 @@ export function toTrade(record: TradeRecord): MockTrade {
 
 export const tradeCenterApi = {
   list: (params: TradeListParams = {}) => apiFetch<TradePage>(`/trades${toQuery(params)}`),
+  summary: (params: TradeListParams = {}) => apiFetch<TradeSummaryRecord>(`/trades/summary${toQuery(params)}`),
+  groups: (params: TradeListParams & { view: "day" | "week"; limit?: number; offset?: number }) => {
+    const query = new URLSearchParams();
+    query.set("view", params.view);
+    if (params.limit) query.set("limit", String(params.limit));
+    if (params.offset) query.set("offset", String(params.offset));
+    const base = new URLSearchParams(toQuery(params).replace(/^\?/, ""));
+    for (const [key, value] of base) query.set(key, value);
+    return apiFetch<TradeGroupRecord[]>(`/trades/groups?${query.toString()}`);
+  },
+  bounds: (params: TradeListParams = {}) => apiFetch<TradeBounds>(`/trades/bounds${toQuery(params)}`),
   symbols: () => apiFetch<string[]>("/trades/symbols"),
   currencies: () => apiFetch<string[]>("/trades/currencies"),
 };

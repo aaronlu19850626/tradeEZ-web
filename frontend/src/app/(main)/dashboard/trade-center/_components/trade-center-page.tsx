@@ -15,6 +15,7 @@ import {
 } from "@/lib/tradesync/trades-mock";
 import { useTradeData } from "@/lib/tradesync/use-trade-data";
 
+import { useTradeCenterServerData } from "../_hooks/use-trade-center-server-data";
 import { useTradeColumns } from "../_hooks/use-trade-columns";
 import { useTradeFilters } from "../_hooks/use-trade-filters";
 import { useTradeViewState } from "../_hooks/use-trade-view-state";
@@ -37,7 +38,6 @@ export default function TradeCenterPage() {
   const t = tradeCenterText[locale];
   const toolbarRef = useRef<HTMLDivElement>(null);
   const [toolbarStuck, setToolbarStuck] = useState(false);
-  const { accounts, trades, fetching, fetchError, reload: loadData } = useTradeData();
   const {
     accountIds,
     applyRange,
@@ -66,16 +66,31 @@ export default function TradeCenterPage() {
     view,
     weekVisible,
   } = useTradeViewState();
+  const { accounts, trades, fetching, fetchError, reload: loadData } = useTradeData({ includeTrades: view !== "all" });
   const { applyColumns, columnOpen, optionalColumns, setColumnOpen, viewColumns } = useTradeColumns(view);
 
-  const latestDay = useMemo(
+  const serverData = useTradeCenterServerData({
+    accountIds,
+    currency,
+    dayVisible,
+    page,
+    range,
+    result,
+    selectedSymbols,
+    side,
+    view,
+    weekVisible,
+  });
+  const latestFromTrades = useMemo(
     () => (trades?.length ? shanghaiDayKey(Math.max(...trades.map((trade) => trade.closeTime))) : ""),
     [trades],
   );
-  const earliestDay = useMemo(
+  const earliestFromTrades = useMemo(
     () => (trades?.length ? shanghaiDayKey(Math.min(...trades.map((trade) => trade.closeTime))) : ""),
     [trades],
   );
+  const latestDay = view === "all" ? (serverData.bounds.latestDay ?? "") : latestFromTrades;
+  const earliestDay = view === "all" ? (serverData.bounds.earliestDay ?? "") : earliestFromTrades;
   const defaultAccountIds = useMemo(
     () => accounts.filter((account) => account.isStatistics).map((account) => account.id),
     [accounts],
@@ -193,12 +208,19 @@ export default function TradeCenterPage() {
 
   // Default the range to the full synced span once trades arrive.
   useEffect(() => {
-    if (trades && trades.length > 0 && range.from === "") {
+    if (latestDay && earliestDay && range.from === "") {
       setRange({ from: earliestDay, to: latestDay });
     }
-  }, [trades, earliestDay, latestDay, range.from, setRange]);
+  }, [earliestDay, latestDay, range.from, setRange]);
 
-  const { applyCurrency, currencies, currencyOptionsLocked, filtered, loading, symbols } = useTradeFilters({
+  const {
+    applyCurrency,
+    currencies,
+    currencyOptionsLocked,
+    filtered,
+    loading: localLoading,
+    symbols: localSymbols,
+  } = useTradeFilters({
     accounts,
     accountIds,
     currency,
@@ -210,10 +232,10 @@ export default function TradeCenterPage() {
     side,
     trades,
   });
+  const symbols = view === "all" ? serverData.symbols : localSymbols;
 
   const dayGroups = useMemo(() => groupByDay(filtered), [filtered]);
   const weekGroups = useMemo(() => groupByWeek(filtered), [filtered]);
-  const overall = useMemo(() => computeStats(filtered), [filtered]);
 
   // The divider only shows once the bar has actually pinned to the top.
   useEffect(() => {
@@ -242,13 +264,32 @@ export default function TradeCenterPage() {
     };
   }, []);
 
+  const loading = view === "all" ? serverData.loading : localLoading;
+  const hasError = fetchError || (view === "all" ? serverData.error : false);
   let body: ReactNode;
-  if (fetchError) {
+  if (hasError) {
     body = <ErrorPanel t={t} onRetry={() => void loadData()} />;
   } else if (loading) {
     body = <LoadingWave t={t} />;
   } else if (accountIds.length === 0) {
     body = <NoAccountsPanel t={t} />;
+  } else if (view === "all") {
+    body =
+      serverData.pageTotal === 0 ? (
+        <EmptyPanel t={t} />
+      ) : (
+        <AllView
+          t={t}
+          locale={locale}
+          trades={serverData.pageTrades}
+          stats={serverData.summary ?? computeStats([])}
+          total={serverData.pageTotal}
+          series={serverData.summarySeries}
+          columns={viewColumns}
+          page={page}
+          onPage={setPage}
+        />
+      );
   } else if (filtered.length === 0) {
     body = <EmptyPanel t={t} />;
   } else if (view === "day") {
@@ -274,7 +315,7 @@ export default function TradeCenterPage() {
         )}
       </>
     );
-  } else if (view === "week") {
+  } else {
     body = (
       <>
         {weekGroups.slice(0, weekVisible).map((group, index) => (
@@ -296,18 +337,6 @@ export default function TradeCenterPage() {
           />
         )}
       </>
-    );
-  } else {
-    body = (
-      <AllView
-        t={t}
-        locale={locale}
-        trades={filtered}
-        stats={overall}
-        columns={viewColumns}
-        page={page}
-        onPage={setPage}
-      />
     );
   }
 
