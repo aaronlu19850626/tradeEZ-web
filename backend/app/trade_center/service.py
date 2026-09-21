@@ -275,7 +275,7 @@ def list_trades(db: DBConnection, user: DBRow, flt: TradeFilter, sort: str, orde
 
 def summary(db: DBConnection, user: DBRow, flt: TradeFilter) -> SummaryOut:
     items = _load_items(db, user, flt)
-    return SummaryOut(stats=compute_stats(items), series=cumulative_series(items))
+    return SummaryOut(stats=compute_stats(items), series=_sampled_cumulative_series(items))
 
 
 def groups(
@@ -451,6 +451,54 @@ def _downsample_points(points: list[ScatterPointOut], limit: int = 2000) -> list
     return [points[index] for index in sorted(selected)]
 
 
+def _sample_scatter_values(values: list[tuple[float, float]], limit: int = 2000) -> list[ScatterPointOut]:
+    if len(values) <= limit:
+        return [ScatterPointOut(x=x, y=y) for x, y in values]
+    ordered = sorted(range(len(values)), key=lambda index: (values[index][0], values[index][1]))
+    selected: set[int] = set()
+    for rank in range(limit):
+        selected.add(ordered[round(rank * (len(ordered) - 1) / (limit - 1))])
+    selected.add(min(range(len(values)), key=lambda index: values[index][1]))
+    selected.add(max(range(len(values)), key=lambda index: values[index][1]))
+    return [ScatterPointOut(x=values[index][0], y=values[index][1]) for index in sorted(selected)]
+
+
+def _sample_series(points: list[SeriesPoint], limit: int = 1000) -> list[SeriesPoint]:
+    if len(points) <= limit:
+        return points
+    selected: set[int] = set()
+    for rank in range(limit):
+        selected.add(round(rank * (len(points) - 1) / (limit - 1)))
+    selected.add(0)
+    selected.add(len(points) - 1)
+    return [points[index] for index in sorted(selected)]
+
+
+def _sampled_cumulative_series(items: list[TradeItem], limit: int = 1000) -> list[SeriesPoint]:
+    ordered = sorted((item.closeTime, item.id, item.netPnl) for item in items)
+    point_count = len(ordered) + 1
+    if point_count <= limit:
+        result = [SeriesPoint(index=0, value=0.0)]
+        running = 0.0
+        for index, (_, _, net) in enumerate(ordered, start=1):
+            running = _round(running + net)
+            result.append(SeriesPoint(index=index, value=running))
+        return result
+
+    selected: set[int] = {0, point_count - 1}
+    for rank in range(limit):
+        selected.add(round(rank * (point_count - 1) / (limit - 1)))
+    result: list[SeriesPoint] = [SeriesPoint(index=0, value=0.0)]
+    running = 0.0
+    for index, (_, _, net) in enumerate(ordered, start=1):
+        running = _round(running + net)
+        if index in selected:
+            result.append(SeriesPoint(index=index, value=running))
+    if result[-1].index != point_count - 1:
+        result.append(SeriesPoint(index=point_count - 1, value=running))
+    return result
+
+
 def overview(db: DBConnection, user: DBRow, flt: TradeFilter) -> OverviewOut:
     items = _load_items(db, user, flt)
     days = _overview_days(items)
@@ -466,15 +514,9 @@ def overview(db: DBConnection, user: DBRow, flt: TradeFilter) -> OverviewOut:
         drawdown=_drawdown_points(items),
         recent=recent,
         consistency=_consistency(days, latest_day),
-        timeEntry=_downsample_points(
-            [ScatterPointOut(x=_beijing_hour(item.openTime), y=item.netPnl) for item in items]
-        ),
-        timeExit=_downsample_points(
-            [ScatterPointOut(x=_beijing_hour(item.closeTime), y=item.netPnl) for item in items]
-        ),
-        duration=_downsample_points(
-            [ScatterPointOut(x=max(0.1, float(item.durationSec)), y=item.netPnl) for item in items]
-        ),
+        timeEntry=_sample_scatter_values([(_beijing_hour(item.openTime), item.netPnl) for item in items]),
+        timeExit=_sample_scatter_values([(_beijing_hour(item.closeTime), item.netPnl) for item in items]),
+        duration=_sample_scatter_values([(max(0.1, float(item.durationSec)), item.netPnl) for item in items]),
     )
 
 
