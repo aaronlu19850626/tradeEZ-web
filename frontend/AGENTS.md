@@ -4,6 +4,18 @@
 
 Studio Admin is a responsive admin dashboard built with Next.js 16, React 19, TypeScript, Tailwind CSS v4, and shadcn/ui.
 
+Before any frontend implementation, read, in this order:
+
+1. `../docs/10-规则与规范/前端开发强制规则.md`
+2. `../docs/10-规则与规范/UI规范.md`
+3. The relevant module design document under `../docs/30-模块设计/`
+
+This reading and the resulting control-compliance check are mandatory gates. Do not start implementation until every page element has a standard semantic component mapping.
+
+All design elements must use standardized semantic controls first. Any non-standard semantic control must be submitted to the user with its rationale, states, accessibility, responsive behavior, Light/Dark behavior, and test plan, and may only be implemented after explicit approval.
+
+New frontend work must also match the established design language and interaction patterns of the existing three modules: Trading Overview, Trading Accounts, and Trade Center. Reuse existing shared components before creating module-specific implementations.
+
 This repository uses the shadcn `radix-nova` style. The shadcn CLI reports `base: "radix"`, which refers to Radix UI. Always inspect the local components in `src/components/ui/` because individual wrappers may use different primitives.
 
 <!-- BEGIN:nextjs-agent-rules -->
@@ -83,6 +95,11 @@ Keep a component inside its route until it is reused by another feature. Do not 
 13. Keep screens accessible with semantic HTML, keyboard support, visible focus states, labels, and appropriate ARIA attributes.
 
 ## Code conventions
+
+- Use only `src/components/ui` for base controls. Do not recreate Button, Badge, Input, Select, Dialog, Tooltip, or Table in business code.
+- Use the global Button and Badge variants. Do not add custom hover or color styles when an existing variant covers the state.
+- Native `<button>` is allowed only for framework triggers or specialized calendar/table cells and must preserve the global visual language.
+- Apply the responsive rules in `../docs/10-规则与规范/UI规范.md`; all new screens must be checked at 390px, 768px, 1024px, and 1440px.
 
 - TypeScript strict mode is enabled. Use precise types and avoid `any`.
 - Use the existing `@/` import aliases.

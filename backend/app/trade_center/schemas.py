@@ -117,6 +117,7 @@ class TradeFilter(BaseModel):
     to_day: str | None = Field(default=None, pattern=DAY_RE)
     side: Literal["all", "buy", "sell"] = "all"
     result: Literal["all", "win", "loss", "flat"] = "all"
+    currency: str | None = None
     symbol: str | None = None
 
     @field_validator("account_ids", mode="before")
@@ -136,6 +137,14 @@ class TradeFilter(BaseModel):
         if value is None:
             return None
         value = value.strip()
+        return value or None
+
+    @field_validator("currency", mode="before")
+    @classmethod
+    def normalize_currency(cls, value):
+        if value is None:
+            return None
+        value = value.strip().upper()
         return value or None
 
     def account_id_list(self) -> list[int] | None:

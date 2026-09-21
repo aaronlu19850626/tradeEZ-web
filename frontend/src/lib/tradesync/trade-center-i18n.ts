@@ -7,6 +7,8 @@ const zh = {
   viewAll: "全部",
 
   columns: "列显示",
+  expandAllTables: "展开全部交易记录",
+  collapseAllTables: "收起全部交易记录",
   columnsTitle: "选择列",
   columnsDescription:
     "平仓时间、建仓时间、品种、方向、交易量、净盈亏、开仓价、平仓价为固定列（交易日仅按周视图显示），固定列始终显示并排在最前；这里只配置其余列，三种视图各自保留自己的选择（全部视图默认全开）。其中「盈亏比」列是每笔交易各自的比率（净盈亏 ÷ 初始风险），与卡片上的「平均盈亏比」（按金额平均）口径不同。",
@@ -85,12 +87,14 @@ const zh = {
   loadMore: "加载更多",
   pagination: "第 {page} / {totalPages} 页",
   rowsRange: "显示 {from}-{to} / 共 {total} 笔",
+  rowsSelected: "已选择 {selected} / {total} 笔",
   prevPage: "上一页",
   nextPage: "下一页",
   bulkActions: "批量操作",
   bulkExport: "导出为 CSV",
   bulkReview: "标记为已复盘",
   selectRow: "选择该行",
+  selectAllRows: "选择当前页全部交易",
 
   colDate: "交易日",
   colCloseTime: "平仓时间",
@@ -134,6 +138,8 @@ const en: TradeCenterText = {
   viewAll: "All",
 
   columns: "Columns",
+  expandAllTables: "Expand all trade tables",
+  collapseAllTables: "Collapse all trade tables",
   columnsTitle: "Select columns",
   columnsDescription:
     'Close time, entry time, instrument, side, volume, net P&L, entry price and exit price are fixed columns (the day column only exists in the week view) and always show first; only the remaining columns can be configured here. Each view keeps its own choice (All starts with everything on). The "R multiple" column is each trade\'s own ratio (net P&L / initial risk), which differs from the money-based "Avg win/loss" card.',
@@ -213,12 +219,14 @@ const en: TradeCenterText = {
   loadMore: "Load more",
   pagination: "Page {page} of {totalPages}",
   rowsRange: "Showing {from}-{to} of {total}",
+  rowsSelected: "{selected} of {total} row(s) selected",
   prevPage: "Previous",
   nextPage: "Next",
   bulkActions: "Bulk actions",
   bulkExport: "Export to CSV",
   bulkReview: "Mark as reviewed",
   selectRow: "Select row",
+  selectAllRows: "Select all rows on this page",
 
   colDate: "Day",
   colCloseTime: "Close time",

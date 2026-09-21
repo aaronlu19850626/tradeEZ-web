@@ -12,7 +12,7 @@ BACKEND_ROOT = Path(__file__).resolve().parents[1]
 MIGRATIONS_ROOT = BACKEND_ROOT / "migrations"
 _migration_lock = RLock()
 BASELINE_REVISION = "0022_postgresql_baseline"
-SCHEMA_VERSION = "0028_user_preferences"
+SCHEMA_VERSION = "0031_account_currency"
 
 _MIGRATION_STEPS = {
     BASELINE_REVISION: (
@@ -36,8 +36,20 @@ _MIGRATION_STEPS = {
         MIGRATIONS_ROOT / "versions" / "0027_heartbeat_history_retention.sql",
     ),
     "0027_heartbeat_history_retention": (
-        SCHEMA_VERSION,
+        "0028_user_preferences",
         MIGRATIONS_ROOT / "versions" / "0028_user_preferences.sql",
+    ),
+    "0028_user_preferences": (
+        "0029_account_platform",
+        MIGRATIONS_ROOT / "versions" / "0029_account_platform.sql",
+    ),
+    "0029_account_platform": (
+        "0030_connector_unified",
+        MIGRATIONS_ROOT / "versions" / "0030_connector_unified.sql",
+    ),
+    "0030_connector_unified": (
+        SCHEMA_VERSION,
+        MIGRATIONS_ROOT / "versions" / "0031_account_currency.sql",
     ),
 }
 

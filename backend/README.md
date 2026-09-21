@@ -1,9 +1,9 @@
 # TradeSync-Web 后端（API v2.1 联调版）
 
-当前版本按 [SOP v1.03 新接口说明](<../docs/交易与EA/TradeEZ-SOP数据同步接口说明.md>) 对齐：**UTC 平仓成交时间游标、原始 body HMAC、成交入库与游标推进两阶段提交**。具体约定和验证边界见 [对齐记录](../docs/交易与EA/SOP契约验收.md)。以下旧版接口文档仅作历史参考。
+当前版本按 [SOP v1.03 新接口说明](<../docs/50-连接器与EA/TradeEZ-SOP数据同步接口说明.md>) 对齐：**UTC 平仓成交时间游标、原始 body HMAC、成交入库与游标推进两阶段提交**。具体约定和验证边界见 [对齐记录](../docs/50-连接器与EA/SOP契约验收.md)。以下旧版接口文档仅作历史参考。
 
-> 权威接口文档：[../docs/API与数据/API规范V2-副本2.md](../docs/API与数据/API规范V2-副本2.md)
-> 技术设计：[../docs/模块设计/设计说明-副本1.md](../docs/模块设计/设计说明-副本1.md)
+> 历史 API 文档：[API 规范 V2 副本](../docs/90-历史归档/旧API文档/API规范V2-副本2.md)
+> 历史技术设计：[设计说明副本](../docs/90-历史归档/旧设计说明/设计说明-副本1.md)
 
 ## 已实现
 
@@ -31,7 +31,7 @@ backend/app/              FastAPI 服务、网页控制台、数据模型
 backend/scripts/          HTTPS、防火墙、v2.1 自检等脚本
 backend/data/             旧 SQLite 迁移源和备份（新运行时不再使用）
 backend/certs/            本地开发证书（不提交）
-../ea/                    MT5 EA 源码
+../connectors/mt5/        MT5 同步客户端、探针与安装脚本
 ```
 
 ## 1. 初始化
@@ -140,14 +140,14 @@ MT5 关闭时也可以用脚本备份并修改白名单：
 
 ```powershell
 cd D:\projects\TradeEZ\EA\TradeSync-Web
-powershell -ExecutionPolicy Bypass -File .\ea\enable_mt5_webrequest.ps1
+powershell -ExecutionPolicy Bypass -File .\connectors\mt5\scripts\enable_mt5_webrequest.ps1
 ```
 
 编译 EA：
 
 ```powershell
-$ea='D:\projects\TradeEZ\EA\TradeSync-Web\ea\TradeSyncProbeEA.mq5'
-$log='D:\projects\TradeEZ\EA\TradeSync-Web\ea\compile-probe.log'
+$ea='D:\projects\TradeEZ\EA\TradeSync-Web\connectors\mt5\probe\TradeSyncProbeEA.mq5'
+$log='D:\projects\TradeEZ\EA\TradeSync-Web\connectors\mt5\probe\compile-probe.log'
 Start-Process -FilePath 'C:\Program Files\MetaTrader 5\MetaEditor64.exe' `
   -ArgumentList @('/compile:'+$ea,'/log:'+$log) -Wait -WindowStyle Hidden
 Get-Content $log -Raw -Encoding Unicode
@@ -156,7 +156,7 @@ Get-Content $log -Raw -Encoding Unicode
 关闭 MT5 后可安装到 Navigator：
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\ea\install_to_mt5.ps1
+powershell -ExecutionPolicy Bypass -File .\connectors\mt5\scripts\install_to_mt5.ps1
 ```
 
 不要覆盖已有主策略 `tradeEZ.mq5`。

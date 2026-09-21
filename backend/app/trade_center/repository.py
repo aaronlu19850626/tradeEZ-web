@@ -23,7 +23,16 @@ def fetch_closed_trades(
     from_epoch: int | None,
     to_epoch: int | None,
 ) -> list[dict]:
-    """Load the user's closed trades (MT5 DEAL_ENTRY_OUT deals) with enrichments."""
+    """Load the user's closed trades, one row per MT5 position.
+
+    A position can be closed in several OUT deals (partial closes). They are
+    summed into a single trade so the trade count matches MT5 and the reference
+    product instead of counting each partial close separately.
+
+    Direction and entry price come from the opening deals: MT5 records the
+    closing deal on the opposite side, so using the OUT deal direction would
+    mirror every trade and flip the sign of the point distance.
+    """
     clauses = ["d.entry = 1", "a.user_id = %s"]
     params: list = [user_id]
     if logins is not None:
@@ -41,22 +50,22 @@ def fetch_closed_trades(
     return db.execute(
         f"""
         SELECT
-            d.ticket,
+            min(d.ticket) AS ticket,
             d.account_login,
             d.position_id,
-            d.symbol,
-            d.type,
-            d.volume,
-            d.price AS close_price,
-            d.sl_price,
-            d.tp_price,
-            d.profit,
-            d.swap,
-            d.commission,
-            d.magic,
-            d.comment,
-            d.open_time,
-            d.deal_time,
+            max(d.symbol) AS symbol,
+            COALESCE(in_.type, max(d.type)) AS type,
+            sum(d.volume) AS volume,
+            round((sum(d.volume * d.price) / NULLIF(sum(d.volume), 0))::numeric, 6) AS close_price,
+            max(d.sl_price) AS sl_price,
+            max(d.tp_price) AS tp_price,
+            sum(d.profit) AS profit,
+            sum(d.swap) AS swap,
+            sum(d.commission) AS commission,
+            max(d.magic) AS magic,
+            max(d.comment) AS comment,
+            min(d.open_time) AS open_time,
+            max(d.deal_time) AS deal_time,
             in_.price AS open_price,
             s.point,
             s.contract_size,
@@ -67,16 +76,25 @@ def fetch_closed_trades(
           JOIN accounts a ON a.mt5_login = d.account_login
           LEFT JOIN symbols s ON s.account_login = d.account_login AND s.symbol = d.symbol
           LEFT JOIN LATERAL (
-              SELECT i.price
+              SELECT min(i.type) AS type,
+                     round((sum(i.volume * i.price) / NULLIF(sum(i.volume), 0))::numeric, 6) AS price
                 FROM deals i
                WHERE i.account_login = d.account_login
                  AND i.position_id = d.position_id
                  AND i.entry = 0
-               ORDER BY i.deal_time ASC
-               LIMIT 1
           ) in_ ON TRUE
          WHERE {where}
-         ORDER BY d.deal_time DESC, d.ticket DESC
+         GROUP BY
+            d.account_login,
+            d.position_id,
+            in_.type,
+            in_.price,
+            s.point,
+            s.contract_size,
+            a.id,
+            a.label,
+            a.account_currency
+         ORDER BY max(d.deal_time) DESC, min(d.ticket) DESC
         """,
         tuple(params),
     ).fetchall()
@@ -94,3 +112,18 @@ def distinct_symbols(db: DBConnection, user_id: int) -> list[str]:
         (user_id,),
     ).fetchall()
     return [str(row["symbol"]) for row in rows if row["symbol"]]
+
+
+def distinct_currencies(db: DBConnection, user_id: int) -> list[str]:
+    rows = db.execute(
+        """
+        SELECT DISTINCT a.account_currency AS currency
+          FROM accounts a
+         WHERE a.user_id = %s
+           AND a.account_currency IS NOT NULL
+           AND TRIM(a.account_currency) <> ''
+         ORDER BY a.account_currency
+        """,
+        (user_id,),
+    ).fetchall()
+    return [str(row["currency"]).upper() for row in rows if row["currency"]]

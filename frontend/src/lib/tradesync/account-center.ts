@@ -3,6 +3,7 @@ import { API_BASE_URL, apiFetch, getToken } from "./api";
 export interface AccountCenterItem {
   id: number;
   name: string | null;
+  platform: string;
   mt5_login: number | string;
   broker_server: string | null;
   currency: string | null;
@@ -29,9 +30,11 @@ export interface AccountCenterWithKey extends AccountCenterItem {
 
 export interface AccountCenterCreatePayload {
   name: string;
+  platform: string;
+  currency: string;
   mt5_login: string | number;
   broker_server?: string | null;
-  sync_start_date: string;
+  sync_start_date: string | null;
 }
 
 export interface AccountCenterUpdatePayload {

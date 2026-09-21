@@ -1,7 +1,9 @@
 import type { ReactNode } from "react";
 
+import { GeistSans } from "geist/font/sans";
 import type { Metadata } from "next";
 
+import { LocalizedDocumentMeta } from "@/components/shared/localized-document-meta";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { APP_CONFIG } from "@/config/app-config";
@@ -14,6 +16,9 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: APP_CONFIG.meta.title,
   description: APP_CONFIG.meta.description,
+  icons: {
+    icon: "/icon.png",
+  },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
@@ -22,6 +27,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
   return (
     <html
       lang="zh-CN"
+      className={GeistSans.variable}
       data-theme-mode={theme_mode}
       data-theme-preset={theme_preset}
       data-content-layout={content_layout}
@@ -38,6 +44,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
       <body className="min-h-screen antialiased">
         <TooltipProvider>
           <PreferencesStoreProvider initialValues={PREFERENCE_DEFAULTS}>
+            <LocalizedDocumentMeta />
             {children}
             <Toaster />
           </PreferencesStoreProvider>

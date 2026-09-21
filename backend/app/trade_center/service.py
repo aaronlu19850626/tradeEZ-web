@@ -110,6 +110,8 @@ def _apply_filters(items: list[TradeItem], flt: TradeFilter) -> list[TradeItem]:
             items = [item for item in items if item.netPnl < 0]
         else:
             items = [item for item in items if item.netPnl == 0]
+    if flt.currency:
+        items = [item for item in items if item.currency == flt.currency]
     if flt.symbol:
         items = [item for item in items if item.symbol == flt.symbol]
     return items
@@ -274,3 +276,7 @@ def calendar(db: DBConnection, user: DBRow, flt: TradeFilter, month: str) -> lis
 
 def symbols(db: DBConnection, user: DBRow) -> list[str]:
     return repository.distinct_symbols(db, int(user["id"]))
+
+
+def currencies(db: DBConnection, user: DBRow) -> list[str]:
+    return repository.distinct_currencies(db, int(user["id"]))

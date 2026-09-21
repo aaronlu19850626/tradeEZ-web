@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import date, datetime, timezone
+import re
 from zoneinfo import ZoneInfo
 
 from pydantic import BaseModel, ConfigDict, Field, field_serializer, field_validator
@@ -8,6 +9,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_serializer, field_valid
 PLATFORM_TZ = ZoneInfo("Asia/Shanghai")
 MAX_MT5_LOGIN = 9_223_372_036_854_775_807
 MAX_SAFE_JS_INT = 9_007_199_254_740_991
+SUPPORTED_CURRENCIES = ("USD", "CNY", "EUR", "GBP", "JPY", "HKD")
 
 
 def date_to_epoch(value: date) -> int:
@@ -49,14 +51,36 @@ class AccountCreateIn(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     name: str = Field(min_length=1, max_length=80)
+    platform: str = Field(min_length=1, max_length=32)
+    currency: str = Field(min_length=3, max_length=3)
     mt5_login: int = Field(gt=0, le=MAX_MT5_LOGIN, strict=True)
     broker_server: str | None = Field(default=None, max_length=120)
-    sync_start_date: date
+    sync_start_date: date | None = None
 
     @field_validator("name", "broker_server", mode="before")
     @classmethod
     def normalize_text(cls, value, info):
         return _normalize_name(value, info.field_name)
+
+    @field_validator("platform", mode="before")
+    @classmethod
+    def normalize_platform(cls, value):
+        if not isinstance(value, str):
+            raise ValueError("交易平台必须为文本")
+        normalized = value.strip().lower()
+        if not re.fullmatch(r"[a-z0-9_]{1,32}", normalized):
+            raise ValueError("交易平台格式无效")
+        return normalized
+
+    @field_validator("currency", mode="before")
+    @classmethod
+    def normalize_currency(cls, value):
+        if not isinstance(value, str):
+            raise ValueError("币种必须为文本")
+        normalized = value.strip().upper()
+        if normalized not in SUPPORTED_CURRENCIES:
+            raise ValueError("暂不支持该币种")
+        return normalized
 
     @field_validator("mt5_login", mode="before")
     @classmethod
@@ -71,6 +95,8 @@ class AccountCreateIn(BaseModel):
     @field_validator("sync_start_date")
     @classmethod
     def not_future(cls, value: date) -> date:
+        if value is None:
+            return value
         if value > platform_today():
             raise ValueError("同步开始日期不能晚于平台当前日期")
         return value
@@ -121,6 +147,7 @@ class AccountDeleteIn(BaseModel):
 class AccountOut(BaseModel):
     id: int
     name: str | None
+    platform: str
     mt5_login: int
     broker_server: str | None
     currency: str | None

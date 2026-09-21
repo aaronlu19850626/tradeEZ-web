@@ -13,11 +13,17 @@ def bj_epoch(day: str, hour: int = 0, minute: int = 0) -> int:
     return int(dt.replace(tzinfo=PLATFORM_TZ).timestamp())
 
 
-def create_account(client, headers, login: int, name: str | None = None) -> dict:
+def create_account(client, headers, login: int, name: str | None = None, currency: str = "USD") -> dict:
     response = client.post(
         "/api/v1/accounts",
         headers=headers,
-        json={"name": name or f"MT5 {login}", "mt5_login": login, "sync_start_date": "2026-01-01"},
+        json={
+            "name": name or f"MT5 {login}",
+            "platform": "mt5",
+            "currency": currency,
+            "mt5_login": login,
+            "sync_start_date": "2026-01-01",
+        },
     )
     assert response.status_code == 201, response.text
     return response.json()
@@ -67,9 +73,10 @@ def _add_symbol(db, login: int, symbol: str = "XAUUSD", point: float = 0.01, con
 def _closed_trade(account: dict, position: int, open_day: str, close_day: str, *, side: int = 0, profit: float = 100.0, symbol: str = "XAUUSD", open_price: float = 2000.0, close_price: float = 2010.0, sl_price: float = 1990.0) -> list[dict]:
     open_time = bj_epoch(open_day, 9)
     close_time = bj_epoch(close_day, 15)
+    # MT5 records the closing deal on the opposite side of the position.
     return [
         _deal(position * 2, position=position, entry=0, deal_type=side, open_time=open_time, deal_time=open_time, price=open_price, symbol=symbol, sl_price=sl_price),
-        _deal(position * 2 + 1, position=position, entry=1, deal_type=side, open_time=open_time, deal_time=close_time, price=close_price, symbol=symbol, sl_price=sl_price, profit=profit, commission=-5.0),
+        _deal(position * 2 + 1, position=position, entry=1, deal_type=1 - side, open_time=open_time, deal_time=close_time, price=close_price, symbol=symbol, sl_price=sl_price, profit=profit, commission=-5.0),
     ]
 
 
@@ -93,6 +100,45 @@ def test_list_returns_closed_trades_desc(client, db):
     assert first["rMultiple"] == -0.35
     assert first["points"] == -1000.0
     assert second["side"] == "buy" and second["netPnl"] == 95.0 and second["rMultiple"] == 0.95
+
+
+def test_partial_closes_aggregate_into_one_trade(client, db):
+    headers = web_headers(db, "trade-partial@example.com")
+    account = create_account(client, headers, 921011)
+    _add_symbol(db, 921011)
+    open_time = bj_epoch("2026-09-14", 9)
+    position = 921020
+    deals = [
+        _deal(position * 2, position=position, entry=0, deal_type=0, open_time=open_time, deal_time=open_time, volume=0.5, price=2000.0),
+        _deal(position * 2 + 1, position=position, entry=1, deal_type=1, open_time=open_time, deal_time=bj_epoch("2026-09-15", 10), volume=0.2, price=2010.0, profit=200.0),
+        _deal(position * 2 + 2, position=position, entry=1, deal_type=1, open_time=open_time, deal_time=bj_epoch("2026-09-15", 11), volume=0.2, price=2012.0, profit=240.0),
+        _deal(position * 2 + 3, position=position, entry=1, deal_type=1, open_time=open_time, deal_time=bj_epoch("2026-09-16", 12), volume=0.1, price=2014.0, profit=140.0, swap=-4.0),
+    ]
+    _ingest(client, account["sync_key"], 921011, deals)
+
+    body = client.get("/api/v1/trades", headers=headers).json()
+    assert body["total"] == 1
+    trade = body["items"][0]
+    assert trade["volume"] == 0.5
+    assert trade["netPnl"] == 576.0
+    # Weighted average exit price of the three partial closes.
+    assert trade["closePrice"] == 2011.6
+    assert trade["openPrice"] == 2000.0
+    # Close time is the last partial close, open time is the position open.
+    assert trade["closeTime"] == bj_epoch("2026-09-16", 12) and trade["openTime"] == open_time
+
+
+def test_direction_and_points_use_position_side(client, db):
+    headers = web_headers(db, "trade-side@example.com")
+    account = create_account(client, headers, 921012)
+    _add_symbol(db, 921012)
+    # Profitable short: opened by a sell deal, closed by a buy deal.
+    _ingest(client, account["sync_key"], 921012, _closed_trade(account, 921021, "2026-09-14", "2026-09-15", side=1, profit=100.0, open_price=2010.0, close_price=2000.0, sl_price=2020.0))
+
+    trade = client.get("/api/v1/trades", headers=headers).json()["items"][0]
+    assert trade["side"] == "sell"
+    assert trade["points"] == 1000.0
+    assert trade["netPnl"] == 95.0
 
 
 def test_summary_stats(client, db):
@@ -130,6 +176,21 @@ def test_filters_and_range(client, db):
     assert client.get("/api/v1/trades", headers=headers, params={"symbol": "EURUSD"}).json()["total"] == 1
     assert client.get("/api/v1/trades", headers=headers, params={"from_day": "2026-09-01", "to_day": "2026-09-30"}).json()["total"] == 1
     assert client.get("/api/v1/trades", headers=headers, params={"from_day": "2026-01-01", "to_day": "2026-01-31"}).json()["total"] == 0
+
+
+def test_currency_filter_and_currency_options(client, db):
+    headers = web_headers(db, "trade-currency@example.com")
+    usd = create_account(client, headers, 921020, currency="USD")
+    cny = create_account(client, headers, 921021, currency="CNY")
+    _add_symbol(db, 921020)
+    _add_symbol(db, 921021, symbol="GOLD#", point=0.01, contract_size=100.0)
+    _ingest(client, usd["sync_key"], 921020, _closed_trade(usd, 921022, "2026-09-01", "2026-09-02", profit=10.0))
+    _ingest(client, cny["sync_key"], 921021, _closed_trade(cny, 921023, "2026-09-01", "2026-09-02", profit=20.0, symbol="GOLD#"))
+
+    assert sorted(client.get("/api/v1/trades/currencies", headers=headers).json()) == ["CNY", "USD"]
+    account_ids = f"{usd['id']},{cny['id']}"
+    assert client.get("/api/v1/trades", headers=headers, params={"currency": "CNY", "account_ids": account_ids}).json()["total"] == 1
+    assert client.get("/api/v1/trades/summary", headers=headers, params={"currency": "CNY", "account_ids": account_ids}).json()["stats"]["net"] == 15.0
 
 
 def test_account_scope_default_statistics(client, db):

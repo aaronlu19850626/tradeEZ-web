@@ -26,6 +26,7 @@ CREATE TABLE accounts (
     mt5_login BIGINT NOT NULL UNIQUE,
     label TEXT,
     broker_server TEXT,
+    platform TEXT NOT NULL DEFAULT 'mt5',
     broker_company TEXT,
     account_currency TEXT,
     server_gmt_off BIGINT,

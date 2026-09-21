@@ -11,6 +11,7 @@ from .account_center.router import router as accounts_router
 from .api_logs import ApiLogMiddleware
 from .common.retention import start_retention_worker
 from .config import get_settings
+from .connectors.router import router as connectors_router
 from .db import DBConnection, connect_db, get_db, init_db
 from .preferences.router import router as preferences_router
 from .sync.router import router as sync_router
@@ -52,6 +53,7 @@ app.add_middleware(
 app.add_middleware(ApiLogMiddleware)
 
 app.include_router(sync_router)
+app.include_router(connectors_router)
 app.include_router(accounts_router)
 app.include_router(trade_center_router)
 app.include_router(preferences_router)

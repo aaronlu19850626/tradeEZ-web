@@ -1,4 +1,4 @@
-import { Bot, CandlestickChart, LayoutDashboard, LineChart, Link2, type LucideIcon, Play } from "lucide-react";
+import { Bot, CandlestickChart, LayoutDashboard, LineChart, Link2, type LucideIcon, Play, Shapes } from "lucide-react";
 
 export type NavBadge = "new" | "soon";
 
@@ -49,6 +49,7 @@ export const sidebarItems: NavGroup[] = [
       { id: "ai", title: "AI 中心", url: "/dashboard/ai-settings", icon: Bot },
       { id: "replay", title: "行情回放", url: "/dashboard/replay", icon: Play },
       { id: "chart-lab", title: "图表实验室", url: "/dashboard/chart-lab", icon: LineChart },
+      { id: "design-system", title: "组件样式", url: "/dashboard/design-system", icon: Shapes },
     ],
   },
 ];

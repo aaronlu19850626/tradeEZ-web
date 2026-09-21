@@ -40,6 +40,10 @@ class Settings(BaseSettings):
     heartbeat_history_retention_days: int = Field(default=30, ge=1)
     heartbeat_history_auto_prune: bool = True
 
+    # Unified connector upgrade policy.
+    connector_mt5_min_version: str = "2.0.0"
+    connector_mt5_download_url: str = "https://www.tradeez.cn/downloads/tradeezsync-v2.mq5"
+
     @model_validator(mode="after")
     def fixed_code_is_console_only(self):
         if self.dev_fixed_login_code and self.email_provider != "console":

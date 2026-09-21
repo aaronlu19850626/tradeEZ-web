@@ -19,6 +19,8 @@ IN_WINDOW_EPOCH = 1_772_000_000  # 2026-02-25 UTC
 def create_account(client, headers, login: int, name: str | None = None, **overrides):
     payload = {
         "name": name or f"MT5 {login}",
+        "platform": "mt5",
+        "currency": "USD",
         "mt5_login": login,
         "sync_start_date": "2026-01-01",
     }
@@ -29,12 +31,31 @@ def create_account(client, headers, login: int, name: str | None = None, **overr
 def test_create_requires_name_and_valid_date(client, db):
     headers = web_headers(db, "create-validation@example.com")
     assert client.post("/api/v1/accounts", headers=headers, json={"mt5_login": 910001, "sync_start_date": "2026-01-01"}).status_code == 400
+    assert client.post(
+        "/api/v1/accounts",
+        headers=headers,
+        json={"name": "No platform", "mt5_login": 910001, "sync_start_date": "2026-01-01"},
+    ).status_code == 400
     assert create_account(client, headers, 910001, sync_start_date="2999-01-01").status_code == 400
     created = create_account(client, headers, 910001)
     assert created.status_code == 201, created.text
     body = created.json()
     assert body["name"] == "MT5 910001" and body["sync_key"].startswith("sk_live_")
+    assert body["platform"] == "mt5"
     assert body["is_statistics"] is True and body["sync_start_date"] == "2026-01-01"
+
+
+def test_create_without_sync_date_defaults_to_all_history(client, db):
+    headers = web_headers(db, "create-all-history@example.com")
+    response = client.post(
+        "/api/v1/accounts",
+        headers=headers,
+        json={"name": "All history", "platform": "mt5", "currency": "USD", "mt5_login": 910009},
+    )
+    assert response.status_code == 201, response.text
+    body = response.json()
+    assert body["sync_start_date"] is None
+    assert db.execute("SELECT sync_start_time FROM accounts WHERE id=%s", (body["id"],)).fetchone()[0] == 0
 
 
 def test_ownership_isolation(client, db):

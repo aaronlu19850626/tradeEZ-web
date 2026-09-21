@@ -16,6 +16,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from "@/components/ui/sidebar";
+import { useLocale } from "@/lib/i18n";
+import { shellText } from "@/lib/shell-i18n";
 import { ApiClientError, api, clearSessionCookie, clearToken, getToken, type User } from "@/lib/tradesync/api";
 
 function emailInitial(email: string) {
@@ -25,6 +27,8 @@ function emailInitial(email: string) {
 export function TradeezNavUser() {
   const router = useRouter();
   const { isMobile } = useSidebar();
+  const locale = useLocale();
+  const t = shellText[locale];
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
@@ -57,7 +61,7 @@ export function TradeezNavUser() {
     router.refresh();
   }
 
-  const email = user?.phone ?? user?.email ?? "未登录";
+  const email = user?.phone ?? user?.email ?? t.notLoggedIn;
 
   return (
     <SidebarMenu>
@@ -69,7 +73,7 @@ export function TradeezNavUser() {
                 <AvatarFallback className="rounded-lg">{emailInitial(email)}</AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">TradeEZ 用户</span>
+                <span className="truncate font-medium">{t.tradeezUser}</span>
                 <span className="truncate text-muted-foreground text-xs">{email}</span>
               </div>
               <EllipsisVertical className="ml-auto size-4" />
@@ -87,7 +91,7 @@ export function TradeezNavUser() {
                   <AvatarFallback className="rounded-lg">{emailInitial(email)}</AvatarFallback>
                 </Avatar>
                 <div className="grid min-w-0 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">TradeEZ 用户</span>
+                  <span className="truncate font-medium">{t.tradeezUser}</span>
                   <span className="truncate text-muted-foreground text-xs">{email}</span>
                 </div>
               </div>
@@ -95,7 +99,7 @@ export function TradeezNavUser() {
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={logout}>
               <LogOut />
-              退出登录
+              {t.logout}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

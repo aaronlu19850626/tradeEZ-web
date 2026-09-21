@@ -1,8 +1,8 @@
 # TradeSync-Web / TradeEZ-web
 
-新电脑 / Codex 接手请先阅读 [迁移与接手指南](docs/规则与进度/迁移与接手指南.md) 和 [项目文档索引](docs/规则与进度/项目文档索引.md)。当前状态：交易账户模块与交易记录查询模块的前后端均已落地，下一步是真实数据联调、测试与后续模块开发。
+新电脑 / Codex 接手请先阅读 [文档入口](docs/README.md)、[迁移与接手指南](docs/00-项目总览/迁移与接手指南.md) 和 [项目文档索引](docs/00-项目总览/项目文档索引.md)。当前状态：交易账户模块与交易记录查询模块的前后端均已落地，下一步是真实数据联调、测试与后续模块开发。
 
-TradeSync-Web 是 TradeEZ 的 MT5 交易数据同步 Web 服务。当前以 [SOP v1.03 新接口说明](<docs/交易与EA/TradeEZ-SOP数据同步接口说明.md>) 为准：UTC 平仓成交时间游标、原始 body HMAC、先保存再提交游标。实现与验收边界见 [对齐记录](docs/交易与EA/SOP契约验收.md)。
+TradeSync-Web 是 TradeEZ 的 MT5 交易数据同步 Web 服务。当前以 [SOP v1.03 新接口说明](<docs/50-连接器与EA/TradeEZ-SOP数据同步接口说明.md>) 为准：UTC 平仓成交时间游标、原始 body HMAC、先保存再提交游标。实现与验收边界见 [对齐记录](docs/50-连接器与EA/SOP契约验收.md)。
 
 ## 当前能力
 
@@ -24,7 +24,7 @@ TradeSync-Web 是 TradeEZ 的 MT5 交易数据同步 Web 服务。当前以 [SOP
 - 独立 API 审计日志模块：只记录接口、账号、结果、数量、游标和耗时，不保存订单明细。
 - PostgreSQL 主数据库，本地和局域网联调通过 `TRADESYNC_DATABASE_URL` 指向独立测试库。
 
-MT5 EA v2.1（`ea/`）：
+MT5 EA v2.1（`connectors/mt5/`）：
 
 - 每个请求携带 Bearer Key、`X-Timestamp`、`X-Signature`。
 - HMAC-SHA256 签名原文为 `raw_json_body + timestamp`。
@@ -38,10 +38,10 @@ MT5 EA v2.1（`ea/`）：
 
 ## 最新需求文档
 
-当前接口以 [新说明](<docs/交易与EA/TradeEZ-SOP数据同步接口说明.md>) 为准。以下为旧设计参考，冲突时采用新说明：
+当前接口以 [新说明](<docs/50-连接器与EA/TradeEZ-SOP数据同步接口说明.md>) 为准。以下为旧设计参考，冲突时采用新说明：
 
-- [API 规范 v2.1](<docs/API与数据/API规范V2-副本2.md>)
-- [技术设计 v1.0 / v2.1 同步契约](<docs/模块设计/设计说明-副本1.md>)
+- [API 规范 v2.1（历史归档）](<docs/90-历史归档/旧API文档/API规范V2-副本2.md>)
+- [技术设计 v1.0 / v2.1 同步契约（历史归档）](<docs/90-历史归档/旧设计说明/设计说明-副本1.md>)
 
 旧文档和临时握手设计仅用于历史参考，不再作为 EA 对接契约。
 
@@ -62,8 +62,8 @@ MT5 EA v2.1（`ea/`）：
 ```text
 frontend/  Next.js 控制台（登录、总览、交易账户、交易记录、AI 中心、行情回放、图表实验室）
 backend/   FastAPI 服务、PostgreSQL 数据层、迁移与运维脚本
-ea/        MT5 EA 源码（.ex5 和编译日志不提交）
-docs/      需求、设计、API 规范、规则与进度、部署文档（按类型分目录）
+connectors/ 各平台客户端、探针和协议版本
+docs/       按 00~90 编号组织的文档
 scripts/   本地与局域网联调辅助脚本
 ```
 

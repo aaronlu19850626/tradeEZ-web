@@ -20,6 +20,10 @@
   --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-soft: var(--primary-soft);
+  --color-primary-soft-border: var(--primary-soft-border);
+  --color-primary-soft-hover: var(--primary-soft-hover);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
@@ -49,44 +53,74 @@
   --color-profit-soft: var(--profit-soft);
   --color-loss-strong: var(--loss-strong);
   --color-loss-soft: var(--loss-soft);
+  --color-breakeven: var(--breakeven);
+  --color-breakeven-soft: var(--breakeven-soft);
   --color-warning: var(--warning);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-success-hover: var(--success-hover);
+  --color-danger: var(--danger);
+  --color-danger-foreground: var(--danger-foreground);
+  --color-danger-hover: var(--danger-hover);
+  --color-warning-hover: var(--warning-hover);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+  --color-info-hover: var(--info-hover);
   --font-heading: var(--app-font-sans);
   --font-sans: var(--app-font-sans);
 }
 
 :root {
   --radius: 0.75rem;
-  --background: var(--color-zinc-50);
-  --foreground: var(--color-zinc-900);
-  --card: var(--color-white);
-  --card-foreground: var(--color-zinc-900);
-  --popover: var(--color-white);
-  --popover-foreground: var(--color-zinc-900);
+  --background: #f7f6fb;
+  --foreground: #211d2e;
+  --card: #ffffff;
+  --card-foreground: #211d2e;
+  --popover: #ffffff;
+  --popover-foreground: #211d2e;
   --primary: #6b4fc4;
   --primary-foreground: var(--color-white);
-  --secondary: var(--color-zinc-100);
-  --secondary-foreground: var(--color-zinc-900);
-  --muted: var(--color-zinc-100);
-  --muted-foreground: var(--color-zinc-600);
-  --accent: var(--color-zinc-100);
-  --accent-foreground: var(--color-zinc-900);
-  --destructive: var(--color-rose-700);
-  --border: var(--color-zinc-200);
-  --input: var(--color-zinc-300);
-  --ring: #8065d6;
-  --chart-1: var(--color-blue-600);
-  --chart-2: var(--color-emerald-600);
-  --chart-3: var(--color-amber-600);
-  --chart-4: var(--color-violet-600);
-  --chart-5: var(--color-cyan-600);
+  --primary-hover: #5a3fa6;
+  --primary-soft: #eeeafb;
+  --primary-soft-border: #cfc4f0;
+  --primary-soft-hover: #e4ddf8;
+  --secondary: #f2f0f7;
+  --secondary-foreground: #2c263a;
+  --muted: #f1eff7;
+  --muted-foreground: #6f6a7d;
+  --accent: #f1eff7;
+  --accent-foreground: #2c263a;
+  --destructive: #dc4c4c;
+  --border: #e3dfed;
+  --input: #d8d3e5;
+  --ring: #6b4fc4;
+  --chart-1: #6b4fc4;
+  --chart-2: #2fa77b;
+  --chart-3: #d9901a;
+  --chart-4: #3b6fd4;
+  --chart-5: #d45d8c;
+  --chart-6: #5da7b8;
   /* Profit/loss palette taken from the approved tracking reference. */
-  --profit: #29a277;
+  --profit: #2fa77b;
   --profit-strong: #4ebf94;
   --profit-soft: #ebfaf4;
-  --loss: #e74d4c;
-  --loss-strong: #f06363;
-  --loss-soft: #fdf2f2;
-  --warning: var(--color-amber-700);
+  --loss: #dc4c4c;
+  --loss-strong: #f06a6a;
+  --loss-soft: #fdecec;
+  /* Break-even (flat) accent used by the overview metric pills. */
+  --breakeven: #3b6fd4;
+  --breakeven-soft: #eaf0ff;
+  --warning: #d9901a;
+  --success: var(--profit);
+  --success-foreground: var(--color-white);
+  --success-hover: color-mix(in oklch, var(--success), black 12%);
+  --danger: var(--loss);
+  --danger-foreground: var(--color-white);
+  --danger-hover: color-mix(in oklch, var(--danger), black 12%);
+  --warning-hover: color-mix(in oklch, var(--warning), black 12%);
+  --info: #3b6fd4;
+  --info-foreground: var(--color-white);
+  --info-hover: color-mix(in oklch, var(--info), black 12%);
   --sidebar: #1e0b3a;
   --sidebar-foreground: #f7f3ff;
   --sidebar-primary: #6b4fc4;
@@ -95,49 +129,66 @@
   --sidebar-accent-foreground: #ffffff;
   --sidebar-border: #35204f;
   --sidebar-ring: #8065d6;
-  --app-font-sans: Arial, "Microsoft YaHei", "PingFang SC", system-ui, sans-serif;
+  --app-font-sans: var(--font-geist-sans), "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
   --app-font-mono: "Cascadia Mono", "SFMono-Regular", Consolas, monospace;
 }
 
 .dark {
-  --background: var(--color-zinc-950);
-  --foreground: var(--color-zinc-100);
-  --card: var(--color-zinc-900);
-  --card-foreground: var(--color-zinc-100);
-  --popover: var(--color-zinc-900);
-  --popover-foreground: var(--color-zinc-100);
-  --primary: var(--color-blue-600);
+  --background: #05090d;
+  --foreground: #f4f5f6;
+  --card: #101418;
+  --card-foreground: #f4f5f6;
+  --popover: #12171b;
+  --popover-foreground: #f4f5f6;
+  --primary: #7357e6;
   --primary-foreground: var(--color-white);
-  --secondary: var(--color-zinc-800);
-  --secondary-foreground: var(--color-zinc-100);
-  --muted: var(--color-zinc-800);
-  --muted-foreground: var(--color-zinc-400);
-  --accent: var(--color-zinc-800);
-  --accent-foreground: var(--color-zinc-100);
-  --destructive: var(--color-rose-400);
-  --border: var(--color-zinc-800);
-  --input: var(--color-zinc-700);
-  --ring: var(--color-blue-500);
-  --chart-1: var(--color-blue-500);
-  --chart-2: var(--color-emerald-400);
-  --chart-3: var(--color-amber-400);
-  --chart-4: var(--color-violet-400);
-  --chart-5: var(--color-cyan-400);
-  --profit: #4ebf94;
-  --profit-strong: #4ebf94;
-  --profit-soft: #16302a;
-  --loss: #f06363;
-  --loss-strong: #f06363;
-  --loss-soft: #3a2426;
-  --warning: var(--color-amber-400);
-  --sidebar: var(--color-zinc-900);
-  --sidebar-foreground: var(--color-zinc-100);
-  --sidebar-primary: var(--color-blue-600);
+  --primary-hover: #6248cb;
+  --primary-soft: #25203d;
+  --primary-soft-border: #45396d;
+  --primary-soft-hover: #30294d;
+  --secondary: #171b1f;
+  --secondary-foreground: #e9ebed;
+  --muted: #161a1e;
+  --muted-foreground: #85898f;
+  --accent: #1c2126;
+  --accent-foreground: #ffffff;
+  --destructive: #ff6868;
+  --border: #2a3035;
+  --input: #262c31;
+  --ring: #8b72f0;
+  --chart-1: #7357e6;
+  --chart-2: #38c995;
+  --chart-3: #f3b43f;
+  --chart-4: #3f7cff;
+  --chart-5: #ef6a9b;
+  --chart-6: #4fc7d8;
+  --profit: #3bcb9a;
+  --profit-strong: #4dd6a4;
+  --profit-soft: #122a23;
+  --loss: #ff6868;
+  --loss-strong: #ff7373;
+  --loss-soft: #321b1d;
+  --breakeven: #3f7cff;
+  --breakeven-soft: #17233f;
+  --warning: #f3b43f;
+  --success: #3bcb9a;
+  --success-foreground: #06110d;
+  --success-hover: color-mix(in oklch, var(--success), black 12%);
+  --danger: #ff6868;
+  --danger-foreground: #160708;
+  --danger-hover: color-mix(in oklch, var(--danger), black 12%);
+  --warning-hover: color-mix(in oklch, var(--warning), black 12%);
+  --info: #3f7cff;
+  --info-foreground: #f7f9ff;
+  --info-hover: color-mix(in oklch, var(--info), black 12%);
+  --sidebar: #0d1217;
+  --sidebar-foreground: #f4f5f6;
+  --sidebar-primary: #7357e6;
   --sidebar-primary-foreground: var(--color-white);
-  --sidebar-accent: var(--color-zinc-800);
-  --sidebar-accent-foreground: var(--color-zinc-100);
-  --sidebar-border: var(--color-zinc-800);
-  --sidebar-ring: var(--color-blue-500);
+  --sidebar-accent: #1a2026;
+  --sidebar-accent-foreground: #f4f5f6;
+  --sidebar-border: #283038;
+  --sidebar-ring: #8b72f0;
 }
 
 @layer base {
@@ -158,7 +209,7 @@
   /* Global readability baseline: keep the existing layout, but give text and controls
      enough visual weight for a dense trading workbench. */
   [data-slot="button"] {
-    min-height: 2.25rem;
+    min-height: 2rem;
     font-size: 0.9375rem;
   }
 
@@ -171,8 +222,18 @@
   }
 
   [data-slot="button"][data-size="sm"] {
+    min-height: 1.5rem;
+    font-size: 0.75rem;
+  }
+
+  [data-slot="button"][data-size="form"] {
     min-height: 2.5rem;
-    font-size: 0.875rem;
+    font-size: 0.9375rem;
+  }
+
+  [data-slot="button"][data-size="xs"] {
+    min-height: 1.5rem;
+    font-size: 0.75rem;
   }
 
   [data-slot="card-header"] {
@@ -180,7 +241,7 @@
   }
 
   [data-slot="button"][data-size="lg"] {
-    min-height: 2.5rem;
+    min-height: 2.25rem;
   }
 
   [data-slot="button"][data-size="icon"],
@@ -189,7 +250,7 @@
   }
 
   [data-slot="button"][data-size="icon-xs"] {
-    min-height: 1.75rem;
+    min-height: 1.5rem;
   }
 
   [data-slot="button"][data-size="icon-lg"] {
@@ -242,21 +303,11 @@
   }
 
   [data-slot="table-cell"] {
-    border-color: #e8e5f0;
+    border-color: var(--border);
   }
 
   .text-xs {
     font-size: 0.8125rem;
-  }
-
-  .account-center-card [data-slot="table-container"] {
-    overflow: visible;
-  }
-
-  .account-center-card [data-slot="card-header"] {
-    align-items: center !important;
-    padding-top: 0.5rem !important;
-    padding-bottom: 0.5rem !important;
   }
 }
 

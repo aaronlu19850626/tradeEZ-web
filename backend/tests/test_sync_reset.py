@@ -24,7 +24,7 @@ def create_account(client, headers, login: int, start: str) -> dict:
     response = client.post(
         "/api/v1/accounts",
         headers=headers,
-        json={"name": f"MT5 {login}", "mt5_login": login, "sync_start_date": start},
+        json={"name": f"MT5 {login}", "platform": "mt5", "currency": "USD", "mt5_login": login, "sync_start_date": start},
     )
     assert response.status_code == 201, response.text
     return response.json()

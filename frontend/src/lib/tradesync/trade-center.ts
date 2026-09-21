@@ -8,6 +8,7 @@ export interface TradeAccount {
   login: string;
   currency: string | null;
   isStatistics: boolean;
+  lastUpdatedAt: number | null;
 }
 
 /** Wire shape returned by ``GET /api/v1/trades`` and friends. */
@@ -52,6 +53,7 @@ export interface TradeListParams {
   toDay?: string;
   side?: "all" | "buy" | "sell";
   result?: "all" | "win" | "loss" | "flat";
+  currency?: string;
   symbol?: string;
   sort?: string;
   order?: "asc" | "desc";
@@ -66,6 +68,7 @@ function toQuery(params: TradeListParams): string {
   if (params.toDay) query.set("to_day", params.toDay);
   if (params.side) query.set("side", params.side);
   if (params.result) query.set("result", params.result);
+  if (params.currency) query.set("currency", params.currency);
   if (params.symbol) query.set("symbol", params.symbol);
   if (params.sort) query.set("sort", params.sort);
   if (params.order) query.set("order", params.order);
@@ -109,4 +112,5 @@ export function toTrade(record: TradeRecord): MockTrade {
 export const tradeCenterApi = {
   list: (params: TradeListParams = {}) => apiFetch<TradePage>(`/trades${toQuery(params)}`),
   symbols: () => apiFetch<string[]>("/trades/symbols"),
+  currencies: () => apiFetch<string[]>("/trades/currencies"),
 };

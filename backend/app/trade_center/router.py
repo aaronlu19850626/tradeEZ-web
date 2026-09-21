@@ -66,3 +66,11 @@ def symbols(
     user: DBRow = Depends(get_current_user),
 ) -> list[str]:
     return service.symbols(db, user)
+
+
+@router.get("/api/v1/trades/currencies", response_model=list[str])
+def currencies(
+    db: DBConnection = Depends(get_db),
+    user: DBRow = Depends(get_current_user),
+) -> list[str]:
+    return service.currencies(db, user)

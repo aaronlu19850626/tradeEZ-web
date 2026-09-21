@@ -568,7 +568,7 @@ def heartbeat_v21(payload: HeartbeatRequest, account: DBRow, db: DBConnection) -
                 last_seen_at=strftime('%Y-%m-%dT%H:%M:%fZ', 'now'),
                 server_gmt_off=COALESCE(?, server_gmt_off),
                 server_timezone_name=COALESCE(NULLIF(TRIM(?), ''), server_timezone_name),
-                account_currency=COALESCE(?, account_currency),
+                account_currency=COALESCE(account_currency, ?),
                 broker_company=COALESCE(?, broker_company),
                 broker_server=COALESCE(?, broker_server),
                 updated_at=strftime('%Y-%m-%dT%H:%M:%fZ', 'now')

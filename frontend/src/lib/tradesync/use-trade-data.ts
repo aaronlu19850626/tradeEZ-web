@@ -38,6 +38,7 @@ export function useTradeData(): TradeData {
         login: String(account.mt5_login),
         currency: account.currency,
         isStatistics: account.is_statistics,
+        lastUpdatedAt: account.last_updated_at,
       }));
       setAccounts(mapped);
 

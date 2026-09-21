@@ -1,0 +1,137 @@
+from __future__ import annotations
+
+import json
+
+from app.db import DBConnection, DBRow
+from app.v2_models import ApiError
+
+
+def _require(data: dict, key: str, event_type: str) -> float | int | str | None:
+    if key not in data:
+        raise ApiError(
+            code="INVALID_EVENT_DATA",
+            message=f"{event_type} event is missing required field {key}",
+            status_code=422,
+        )
+    return data.get(key)
+
+
+def normalize_mt5_event(account: DBRow, event_type: str, data: dict, db: DBConnection) -> None:
+    login = int(account["mt5_login"])
+
+    if event_type == "trade":
+        ticket = int(_require(data, "ticket", event_type))
+        position_id = int(_require(data, "position_id", event_type))
+        order_id = int(_require(data, "order_id", event_type))
+        symbol = str(_require(data, "symbol", event_type))
+        entry = int(_require(data, "entry", event_type))
+        deal_type = int(_require(data, "type", event_type))
+        volume = float(_require(data, "volume", event_type))
+        price = float(_require(data, "price", event_type))
+        sl_price = float(data.get("sl_price") or 0)
+        tp_price = float(data.get("tp_price") or 0)
+        profit = float(data.get("profit") or 0)
+        swap = float(data.get("swap") or 0)
+        commission = float(data.get("commission") or 0)
+        magic = int(data.get("magic") or 0)
+        comment = str(data.get("comment") or "")
+        open_time = int(_require(data, "open_time", event_type))
+        deal_time = int(_require(data, "deal_time", event_type))
+        raw = json.dumps(data, ensure_ascii=False, separators=(",", ":"))
+        db.execute(
+            """
+            INSERT INTO deals (
+                account_login, ticket, position_id, order_id, symbol,
+                entry, type, volume, price, sl_price, tp_price,
+                profit, swap, commission, magic, comment,
+                open_time, deal_time, server_gmt_off, raw_json
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 0, %s)
+            ON CONFLICT (account_login, ticket) DO NOTHING
+            """,
+            (
+                login,
+                ticket,
+                position_id,
+                order_id,
+                symbol,
+                entry,
+                deal_type,
+                volume,
+                price,
+                sl_price,
+                tp_price,
+                profit,
+                swap,
+                commission,
+                magic,
+                comment,
+                open_time,
+                deal_time,
+                raw,
+            ),
+        )
+        return
+
+    if event_type == "instrument":
+        symbol = str(_require(data, "symbol", event_type))
+        digits = int(_require(data, "digits", event_type))
+        point = float(_require(data, "point", event_type))
+        tick_value = float(_require(data, "tick_value", event_type))
+        contract_size = float(_require(data, "contract_size", event_type))
+        raw = json.dumps(data, ensure_ascii=False, separators=(",", ":"))
+        db.execute(
+            """
+            INSERT INTO symbols (
+                account_login, symbol, digits, point, contract_size,
+                tick_value, tick_size, currency_base, currency_profit, raw_json
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, '', '', %s)
+            ON CONFLICT (account_login, symbol) DO UPDATE SET
+                digits=excluded.digits,
+                point=excluded.point,
+                contract_size=excluded.contract_size,
+                tick_value=excluded.tick_value,
+                tick_size=excluded.tick_size,
+                raw_json=excluded.raw_json,
+                updated_at=now_iso()
+            """,
+            (login, symbol, digits, point, contract_size, tick_value, point, raw),
+        )
+        return
+
+    if event_type == "account_snapshot":
+        timestamp = int(_require(data, "occurred_at", event_type))
+        balance = float(_require(data, "balance", event_type))
+        equity = float(_require(data, "equity", event_type))
+        margin = float(data.get("margin") or 0)
+        free_margin = float(data.get("free_margin") or 0)
+        margin_level = (equity / margin * 100.0) if margin > 0 else None
+        raw = json.dumps(data, ensure_ascii=False, separators=(",", ":"))
+        db.execute(
+            """
+            INSERT INTO snapshots (
+                account_login, timestamp, balance, equity, margin,
+                free_margin, margin_level, raw_json
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            ON CONFLICT (account_login, timestamp) DO NOTHING
+            """,
+            (login, timestamp, balance, equity, margin, free_margin, margin_level, raw),
+        )
+        return
+
+    if event_type == "heartbeat":
+        raw = json.dumps(data, ensure_ascii=False, separators=(",", ":"))
+        db.execute(
+            """
+            INSERT INTO heartbeats (
+                account_login, server_gmt_off, account_currency, broker_company,
+                broker_server, ea_version, payload, last_seen_at,
+                server_gmt_offset, server_timezone_name
+            ) VALUES (%s, 0, '', '', '', '', %s, now_iso(), 0, '')
+            ON CONFLICT (account_login) DO UPDATE SET
+                payload=excluded.payload,
+                last_seen_at=now_iso()
+            """,
+            (login, raw),
+        )
+        db.execute("UPDATE accounts SET last_seen_at = now_iso() WHERE id = %s", (account["id"],))
+        return
