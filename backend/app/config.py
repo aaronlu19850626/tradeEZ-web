@@ -41,7 +41,7 @@ class Settings(BaseSettings):
     heartbeat_history_auto_prune: bool = True
 
     # Unified connector upgrade policy.
-    connector_mt5_min_version: str = "2.0.0"
+    connector_mt5_min_version: str = "2.0.1"
     connector_mt5_download_url: str = "https://www.tradeez.cn/downloads/tradeezsync-v2.mq5"
 
     @model_validator(mode="after")

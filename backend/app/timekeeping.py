@@ -88,11 +88,27 @@ def schedule_timezone_backfill(
     ).fetchone()
     missing_count = int(missing["missing_count"] or 0) if missing is not None else 0
     if missing_count == 0:
-        if int(account.get("timezone_backfill_required") or 0):
-            db.execute("UPDATE accounts SET timezone_backfill_required=0 WHERE id=%s", (account["id"],))
+        return renormalize_account_times(db, account, profile)
+
+    connections = db.execute(
+        """
+        SELECT connector_version
+          FROM connector_connections
+         WHERE account_id=%s
+        """,
+        (account["id"],),
+    ).fetchall()
+    if not connections:
         return False
-    if int(account.get("timezone_backfill_required") or 0):
-        return False
+    for connection in connections:
+        version = str(connection.get("connector_version") or "")
+        parts = version.split(".")
+        try:
+            numeric = tuple(int(item) for item in parts[:3])
+        except ValueError:
+            return False
+        if numeric < (2, 0, 1):
+            return False
 
     cursor = max(int(account.get("sync_start_time") or 0), 0)
     connection_ids = db.execute(
@@ -125,6 +141,82 @@ def schedule_timezone_backfill(
         (account["id"],),
     )
     return True
+
+
+def renormalize_account_times(
+    db: DBConnection,
+    account: DBRow,
+    profile: DBRow | None = None,
+) -> bool:
+    profile = profile or resolve_timezone_profile(db, account)
+    if profile is None:
+        return False
+    profile_id = int(profile["id"])
+    if (
+        int(account.get("timezone_profile_id") or 0) == profile_id
+        and not int(account.get("timezone_backfill_required") or 0)
+    ):
+        return False
+
+    timezone_name = str(profile["timezone_name"]).strip() if profile.get("timezone_name") else None
+    fixed_offset = _as_int(profile.get("fixed_offset_seconds"))
+    rows = db.execute(
+        """
+        SELECT ticket, server_open_time, server_deal_time, open_time, deal_time
+          FROM deals
+         WHERE account_login = %s
+           AND server_deal_time IS NOT NULL
+        """,
+        (int(account["mt5_login"]),),
+    ).fetchall()
+    changed = 0
+    for row in rows:
+        raw_deal = _as_int(row.get("server_deal_time"))
+        raw_open = _as_int(row.get("server_open_time"))
+        if raw_deal is None:
+            continue
+        resolved_deal = None
+        resolved_open = None
+        if timezone_name:
+            resolved_deal = _server_time_to_utc(raw_deal, timezone_name)
+            resolved_open = _server_time_to_utc(raw_open, timezone_name) if raw_open is not None else None
+        elif fixed_offset is not None:
+            resolved_deal = raw_deal - fixed_offset
+            resolved_open = raw_open - fixed_offset if raw_open is not None else None
+        if resolved_deal is None:
+            continue
+        db.execute(
+            """
+            UPDATE deals
+               SET open_time=COALESCE(%s, open_time),
+                   deal_time=%s,
+                   timezone_profile_id=%s,
+                   time_normalized_at=now_iso()
+             WHERE account_login=%s AND ticket=%s
+            """,
+            (
+                resolved_open,
+                resolved_deal,
+                profile_id,
+                int(account["mt5_login"]),
+                int(row["ticket"]),
+            ),
+        )
+        changed += 1
+
+    db.execute(
+        """
+        UPDATE accounts
+           SET timezone_profile_id=%s,
+               timezone_normalized_at=now_iso(),
+               timezone_normalization_revision=timezone_normalization_revision + 1,
+               timezone_backfill_required=0,
+               updated_at=now_iso()
+         WHERE id=%s
+        """,
+        (profile_id, account["id"]),
+    )
+    return changed > 0 or bool(int(account.get("timezone_backfill_required") or 0))
 
 
 def _server_time_to_utc(server_time: int, timezone_name: str) -> int | None:

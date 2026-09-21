@@ -159,7 +159,7 @@ def test_connector_reports_required_upgrade(client, db):
     assert response.status_code == 200, response.text
     upgrade = response.json()["upgrade"]
     assert upgrade["required"] is True
-    assert upgrade["required_version"] == "2.0.0"
+    assert upgrade["required_version"] == "2.0.1"
     assert upgrade["download_url"].endswith(".mq5")
 
 

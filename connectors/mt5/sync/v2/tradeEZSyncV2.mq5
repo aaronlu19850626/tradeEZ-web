@@ -18,7 +18,7 @@ input int    Inp_SnapshotSeconds  = 30;
 input int    Inp_HeartbeatSeconds = 300;
 input bool   Inp_DebugSync        = true;
 
-#define CONNECTOR_VERSION "2.0.0"
+#define CONNECTOR_VERSION "2.0.1"
 #define PROTOCOL_VERSION "1.0"
 #define SYNC_PREFIX "TEZ.V2."
 

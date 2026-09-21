@@ -12,7 +12,7 @@ BACKEND_ROOT = Path(__file__).resolve().parents[1]
 MIGRATIONS_ROOT = BACKEND_ROOT / "migrations"
 _migration_lock = RLock()
 BASELINE_REVISION = "0022_postgresql_baseline"
-SCHEMA_VERSION = "0034_broker_candidate_key"
+SCHEMA_VERSION = "0035_timezone_normalization_state"
 
 _MIGRATION_STEPS = {
     BASELINE_REVISION: (
@@ -60,8 +60,12 @@ _MIGRATION_STEPS = {
         MIGRATIONS_ROOT / "versions" / "0033_timezone_backfill.sql",
     ),
     "0033_timezone_backfill": (
-        SCHEMA_VERSION,
+        "0034_broker_candidate_key",
         MIGRATIONS_ROOT / "versions" / "0034_broker_candidate_key.sql",
+    ),
+    "0034_broker_candidate_key": (
+        SCHEMA_VERSION,
+        MIGRATIONS_ROOT / "versions" / "0035_timezone_normalization_state.sql",
     ),
 }
 

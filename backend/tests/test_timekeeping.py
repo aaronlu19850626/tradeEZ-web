@@ -101,8 +101,9 @@ def test_known_broker_schedules_automatic_backfill(client, db):
     db.execute(
         """
         INSERT INTO connector_connections (
-            connection_id, account_id, platform, account_ref, instance_id, cursor_value
-        ) VALUES (%s, (SELECT id FROM accounts WHERE mt5_login=%s), 'mt5', %s, 'timezone-test', 12345)
+            connection_id, account_id, platform, account_ref, instance_id,
+            connector_version, cursor_value
+        ) VALUES (%s, (SELECT id FROM accounts WHERE mt5_login=%s), 'mt5', %s, 'timezone-test', '2.0.1', 12345)
         """,
         ("cn_timezone_backfill", login, str(login)),
     )
@@ -121,3 +122,46 @@ def test_known_broker_schedules_automatic_backfill(client, db):
         (login,),
     ).fetchone()
     assert int(connection["cursor_value"]) == 0
+
+
+def test_known_broker_automatically_renormalizes_existing_raw_times(client, db):
+    login = 940004
+    token = make_account(db, login)
+    server_time = _server_epoch(2026, 7, 15, 12)
+    inserted = signed_post(
+        client,
+        "/api/v1/ingest/deals",
+        token,
+        {
+            "mt5_login": login,
+            "deals": [
+                {
+                    **deal(
+                        9400041,
+                        position=940004,
+                        entry=0,
+                        deal_type=0,
+                        open_time=server_time,
+                        deal_time=server_time,
+                    ),
+                    "server_open_time": server_time,
+                    "server_deal_time": server_time,
+                    "server_gmt_offset": 10800,
+                }
+            ],
+        },
+    )
+    assert inserted.status_code == 200, inserted.text
+    db.execute("UPDATE accounts SET broker_server=%s WHERE mt5_login=%s", ("XMGlobal-MT5 10", login))
+    db.commit()
+    account = db.execute("SELECT * FROM accounts WHERE mt5_login=%s", (login,)).fetchone()
+    assert schedule_timezone_backfill(db, account) is True
+    db.commit()
+    row = db.execute(
+        "SELECT open_time, deal_time, timezone_profile_id FROM deals WHERE account_login=%s AND ticket=%s",
+        (login, 9400041),
+    ).fetchone()
+    expected = _server_epoch(2026, 7, 15, 9)
+    assert int(row["open_time"]) == expected
+    assert int(row["deal_time"]) == expected
+    assert row["timezone_profile_id"] is not None
