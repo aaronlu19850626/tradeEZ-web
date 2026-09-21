@@ -15,3 +15,18 @@ def sha256_hex(value: bytes) -> str:
     return hashlib.sha256(value).hexdigest()
 
 
+_DEAL_METADATA_KEYS = {"server_open_time", "server_deal_time", "server_gmt_offset"}
+
+
+def deal_identity(data: dict) -> dict:
+    """Return immutable deal fields used for duplicate-content checks."""
+    return {key: value for key, value in data.items() if key not in _DEAL_METADATA_KEYS}
+
+
+def raw_deal_identity(raw_json: str) -> dict:
+    try:
+        payload = json.loads(raw_json)
+    except (TypeError, ValueError):
+        return {}
+    return deal_identity(payload) if isinstance(payload, dict) else {}
+

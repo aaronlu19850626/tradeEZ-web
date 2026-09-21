@@ -287,7 +287,7 @@ datetime GetServerLastSyncTime()
     if(!Inp_EnableSync || Inp_SecretKey == "") return 0;
 
     long login = AccountInfoInteger(ACCOUNT_LOGIN);
-    string body = StringFormat("{\"mt5_login\":%I64d}", login);
+    string body = StringFormat("{\"mt5_login\":%I64d,\"server_gmt_offset\":%d}", login, ServerGmtOffset());
     long timestamp = TimeGMT();
     string headers = SyncHeaders(body, timestamp);
 
@@ -452,11 +452,14 @@ int CollectDealsAfterCloseTime(datetime cursorUtc, string &dealsJson[],
             "\"volume\":%.2f,\"price\":%.5f,\"sl_price\":%.5f,\"tp_price\":%.5f," +
             "\"profit\":%.2f,\"swap\":%.2f,\"commission\":%.2f," +
             "\"magic\":%I64d,\"comment\":\"%s\"," +
-            "\"open_time\":%I64d,\"deal_time\":%I64d" +
+            "\"open_time\":%I64d,\"deal_time\":%I64d," +
+            "\"server_open_time\":%I64d,\"server_deal_time\":%I64d,\"server_gmt_offset\":%d" +
             "}",
             dealTicket, posId, orderId, symbol, entry, type,
             volume, price, sl, tp, profit, swap, commission, magic, comment,
-            (long)openTimeUtc, (long)dealTimeUtc);
+            (long)openTimeUtc, (long)dealTimeUtc,
+            (long)UtcToServerTime(openTimeUtc), (long)HistoryDealGetInteger(dealTicket, DEAL_TIME),
+            ServerGmtOffset());
 
         int n = ArraySize(dealsJson);
         ArrayResize(dealsJson, n + 1);

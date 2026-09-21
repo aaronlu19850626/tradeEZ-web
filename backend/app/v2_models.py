@@ -64,6 +64,9 @@ class DealItem(BaseModel):
     comment: str = Field(default="", max_length=2000)
     open_time: int = Field(..., gt=0)
     deal_time: int = Field(..., gt=0)
+    server_open_time: int | None = Field(default=None, gt=0)
+    server_deal_time: int | None = Field(default=None, gt=0)
+    server_gmt_offset: int | None = Field(default=None, ge=-43200, le=43200)
 
 
 class IngestDealsRequest(BaseModel):

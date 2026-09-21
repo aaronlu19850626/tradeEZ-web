@@ -12,7 +12,7 @@ BACKEND_ROOT = Path(__file__).resolve().parents[1]
 MIGRATIONS_ROOT = BACKEND_ROOT / "migrations"
 _migration_lock = RLock()
 BASELINE_REVISION = "0022_postgresql_baseline"
-SCHEMA_VERSION = "0031_account_currency"
+SCHEMA_VERSION = "0032_server_timezone_resolution"
 
 _MIGRATION_STEPS = {
     BASELINE_REVISION: (
@@ -48,8 +48,12 @@ _MIGRATION_STEPS = {
         MIGRATIONS_ROOT / "versions" / "0030_connector_unified.sql",
     ),
     "0030_connector_unified": (
-        SCHEMA_VERSION,
+        "0031_account_currency",
         MIGRATIONS_ROOT / "versions" / "0031_account_currency.sql",
+    ),
+    "0031_account_currency": (
+        SCHEMA_VERSION,
+        MIGRATIONS_ROOT / "versions" / "0032_server_timezone_resolution.sql",
     ),
 }
 

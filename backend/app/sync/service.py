@@ -8,8 +8,9 @@ import hmac
 import json
 import time
 from .policies import ensure_account_active
-from ..common.encoding import utc_now_iso, canonical_json, sha256_hex
+from ..common.encoding import utc_now_iso, canonical_json, deal_identity, raw_deal_identity, sha256_hex
 from ..config import get_settings
+from ..timekeeping import observe_timezone_candidate, resolve_trade_times
 from .repository import begin_account_write, ensure_unique_tickets, upsert_ea_instance, start_sync_run, get_open_sync_run, validate_batch_envelope, refresh_run_totals, store_deal_batch
 from ..v2_models import (
     AccountRequest,
@@ -122,7 +123,9 @@ def ingest_deals_v21(payload: IngestDealsRequest, account: DBRow, db: DBConnecti
             result = None
             inserted = updated = duplicates = rejected = 0
             for deal in payload.deals:
-                raw = json.dumps(deal.model_dump(), ensure_ascii=False, separators=(",", ":"), sort_keys=True)
+                deal_data = deal.model_dump()
+                resolved_open, resolved_deal, timezone_profile_id = resolve_trade_times(db, account, deal_data)
+                raw = json.dumps(deal_data, ensure_ascii=False, separators=(",", ":"), sort_keys=True)
                 current = db.execute(
                     "SELECT id, raw_json FROM deals WHERE account_login = ? AND ticket = ?",
                     (payload.mt5_login, deal.ticket),
@@ -134,19 +137,21 @@ def ingest_deals_v21(payload: IngestDealsRequest, account: DBRow, db: DBConnecti
                             account_login, ticket, position_id, order_id, symbol,
                             entry, type, volume, price, sl_price, tp_price,
                             profit, swap, commission, magic, comment,
-                            open_time, deal_time, server_gmt_off, raw_json
-                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                            open_time, deal_time, server_gmt_off, raw_json,
+                            server_open_time, server_deal_time, timezone_profile_id, time_normalized_at
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                         """,
                         (
                             payload.mt5_login, deal.ticket, deal.position_id, deal.order_id,
                             deal.symbol, deal.entry, deal.type, deal.volume, deal.price,
                             deal.sl_price, deal.tp_price, deal.profit, deal.swap,
-                            deal.commission, deal.magic, deal.comment, deal.open_time,
-                            deal.deal_time, 0, raw,
+                            deal.commission, deal.magic, deal.comment, resolved_open,
+                            resolved_deal, deal.server_gmt_offset or 0, raw,
+                            deal.server_open_time, deal.server_deal_time, timezone_profile_id, utc_now_iso(),
                         ),
                     )
                     inserted += 1
-                elif current["raw_json"] != raw:
+                elif raw_deal_identity(current["raw_json"]) != deal_identity(deal_data):
                     # A ticket is an immutable deal fact. Once persisted, never
                     # overwrite it with different content; conflicting retries keep
                     # the first value and count as rejected.
@@ -513,6 +518,13 @@ def heartbeat_v21(payload: HeartbeatRequest, account: DBRow, db: DBConnection) -
     )
     try:
         account = begin_account_write(db, account)
+        observe_timezone_candidate(
+            db,
+            platform=str(account.get("platform") or "mt5"),
+            broker_server=reported_broker_server or account.get("broker_server"),
+            broker_company=payload.broker_company or account.get("broker_company"),
+            observed_offset_seconds=payload.server_gmt_offset,
+        )
         previous = db.execute(
             """
             SELECT last_seen_at, account_currency, broker_company, broker_server,

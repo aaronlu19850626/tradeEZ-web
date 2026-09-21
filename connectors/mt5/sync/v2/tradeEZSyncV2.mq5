@@ -253,6 +253,7 @@ int CollectTradeEvents(datetime cursorUtc, string &events[], datetime &latestClo
    long positionIds[];
    datetime closeTimesUtc[];
    datetime openTimesUtc[];
+   int serverGmtOffset = (int)(TimeTradeServer() - TimeGMT());
 
    for(int i = 0; i < total; i++)
    {
@@ -330,10 +331,13 @@ int CollectTradeEvents(datetime cursorUtc, string &events[], datetime &latestClo
          "\"volume\":%.2f,\"price\":%.5f,\"sl_price\":%.5f,\"tp_price\":%.5f," +
          "\"profit\":%.2f,\"swap\":%.2f,\"commission\":%.2f," +
          "\"magic\":%I64d,\"comment\":\"%s\"," +
-         "\"open_time\":%I64d,\"deal_time\":%I64d}",
+         "\"open_time\":%I64d,\"deal_time\":%I64d," +
+         "\"server_open_time\":%I64d,\"server_deal_time\":%I64d,\"server_gmt_offset\":%d}",
          dealTicket, posId, orderId, symbol, entry, type,
          volume, price, sl, tp, profit, swap, commission, magic, comment,
-         (long)openTimeUtc, (long)dealTimeUtc);
+         (long)openTimeUtc, (long)dealTimeUtc,
+         (long)UtcToServerTime(openTimeUtc), (long)HistoryDealGetInteger(dealTicket, DEAL_TIME),
+         serverGmtOffset);
 
       string event = StringFormat(
          "{\"event_id\":\"trade:%I64d\",\"type\":\"trade\",\"occurred_at\":%I64d,\"data\":%s}",
@@ -452,8 +456,9 @@ bool SyncHeartbeat()
 {
    long now = TimeGMT();
    string data = StringFormat(
-      "{\"occurred_at\":%I64d,\"connector_status\":\"online\",\"version\":\"%s\",\"broker_server\":\"%s\"}",
-      now, CONNECTOR_VERSION, JsonEscape(AccountInfoString(ACCOUNT_SERVER)));
+      "{\"occurred_at\":%I64d,\"connector_status\":\"online\",\"version\":\"%s\",\"broker_server\":\"%s\",\"server_gmt_offset\":%d}",
+      now, CONNECTOR_VERSION, JsonEscape(AccountInfoString(ACCOUNT_SERVER)),
+      (int)(TimeTradeServer() - TimeGMT()));
    string event = StringFormat("{\"event_id\":\"heartbeat:%I64d\",\"type\":\"heartbeat\",\"occurred_at\":%I64d,\"data\":%s}",
                                now, now, data);
    string body = StringFormat("{\"batch_id\":\"%s\",\"batch_index\":0,\"batch_count\":1,\"events\":[%s]}",
