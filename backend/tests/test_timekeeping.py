@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-from app.timekeeping import resolve_trade_times, schedule_timezone_backfill
+from app.timekeeping import observe_timezone_candidate, resolve_trade_times, schedule_timezone_backfill
 from helpers import deal, make_account, signed_post
 
 
@@ -165,3 +165,43 @@ def test_known_broker_automatically_renormalizes_existing_raw_times(client, db):
     assert int(row["open_time"]) == expected
     assert int(row["deal_time"]) == expected
     assert row["timezone_profile_id"] is not None
+
+
+def test_offset_samples_automatically_promote_dst_profile(client, db):
+    login = 940005
+    make_account(db, login)
+    account = db.execute("SELECT * FROM accounts WHERE mt5_login=%s", (login,)).fetchone()
+    observe_timezone_candidate(
+        db,
+        platform="mt5",
+        broker_server="Test-Server",
+        broker_company=None,
+        observed_offset_seconds=7200,
+    )
+    observe_timezone_candidate(
+        db,
+        platform="mt5",
+        broker_server="Test-Server",
+        broker_company=None,
+        observed_offset_seconds=10800,
+    )
+    profile = db.execute(
+        "SELECT * FROM broker_timezone_profiles WHERE match_type='broker_server' AND match_value='Test-Server'"
+    ).fetchone()
+    assert profile is not None
+    assert profile["timezone_name"] == "Europe/Athens"
+
+    summer_server = _server_epoch(2026, 7, 15, 12)
+    _, deal_time, profile_id = resolve_trade_times(
+        db,
+        account,
+        {
+            "open_time": summer_server,
+            "deal_time": summer_server,
+            "server_open_time": summer_server,
+            "server_deal_time": summer_server,
+            "server_gmt_offset": 10800,
+        },
+    )
+    assert deal_time == _server_epoch(2026, 7, 15, 9)
+    assert profile_id == int(profile["id"])

@@ -228,6 +228,54 @@ def _server_time_to_utc(server_time: int, timezone_name: str) -> int | None:
     return int(local.replace(tzinfo=zone).timestamp())
 
 
+_DST_RULES = (
+    ("eu", "Europe/Athens", 7200, 10800),
+    ("uk", "Europe/London", 0, 3600),
+    ("us", "America/New_York", -18000, -14400),
+    ("au", "Australia/Sydney", 36000, 39600),
+)
+
+
+def _promote_timezone_candidate(db: DBConnection, candidate: DBRow) -> bool:
+    if str(candidate.get("status") or "") == "matched":
+        return False
+    min_offset = _as_int(candidate.get("min_observed_offset_seconds"))
+    max_offset = _as_int(candidate.get("max_observed_offset_seconds"))
+    transition_count = int(candidate.get("transition_count") or 0)
+    if min_offset is None or max_offset is None or transition_count <= 0:
+        return False
+
+    for _, timezone_name, winter, summer in _DST_RULES:
+        if min_offset != winter or max_offset != summer:
+            continue
+        match_type = "broker_server" if candidate.get("broker_server") else "broker_company"
+        match_value = candidate.get("broker_server") or candidate.get("broker_company")
+        if not match_value:
+            return False
+        db.execute(
+            """
+            INSERT INTO broker_timezone_profiles (
+                match_type, match_value, timezone_name, dst_profile, confidence
+            ) VALUES (%s, %s, %s, %s, 82)
+            ON CONFLICT(match_type, match_value) DO NOTHING
+            """,
+            (match_type, str(match_value), timezone_name, "observed"),
+        )
+        db.execute(
+            """
+            UPDATE broker_timezone_candidates
+               SET inferred_timezone=%s,
+                   confidence=82,
+                   status='matched',
+                   last_promoted_at=now_iso()
+             WHERE id=%s
+            """,
+            (timezone_name, candidate["id"]),
+        )
+        return True
+    return False
+
+
 def observe_timezone_candidate(
     db: DBConnection,
     *,
@@ -244,12 +292,21 @@ def observe_timezone_candidate(
     db.execute(
         """
         INSERT INTO broker_timezone_candidates (
-            broker_key, broker_server, broker_company, platform, observed_offset_seconds
-        ) VALUES (%s, %s, %s, %s, %s)
+            broker_key, broker_server, broker_company, platform, observed_offset_seconds,
+            min_observed_offset_seconds, max_observed_offset_seconds
+        ) VALUES (%s, %s, %s, %s, %s, %s, %s)
         ON CONFLICT(broker_key) DO UPDATE SET
             broker_server=COALESCE(excluded.broker_server, broker_timezone_candidates.broker_server),
             broker_company=COALESCE(excluded.broker_company, broker_timezone_candidates.broker_company),
             observed_offset_seconds=excluded.observed_offset_seconds,
+            min_observed_offset_seconds=LEAST(
+                COALESCE(broker_timezone_candidates.min_observed_offset_seconds, excluded.observed_offset_seconds),
+                excluded.observed_offset_seconds
+            ),
+            max_observed_offset_seconds=GREATEST(
+                COALESCE(broker_timezone_candidates.max_observed_offset_seconds, excluded.observed_offset_seconds),
+                excluded.observed_offset_seconds
+            ),
             last_seen_at=now_iso(),
             observation_count=broker_timezone_candidates.observation_count + 1,
             transition_count=broker_timezone_candidates.transition_count + CASE
@@ -257,8 +314,22 @@ def observe_timezone_candidate(
                  AND broker_timezone_candidates.observed_offset_seconds <> excluded.observed_offset_seconds
                 THEN 1 ELSE 0 END
         """,
-        (broker_key, server, company, platform, observed_offset_seconds),
+        (
+            broker_key,
+            server,
+            company,
+            platform,
+            observed_offset_seconds,
+            observed_offset_seconds,
+            observed_offset_seconds,
+        ),
     )
+    candidate = db.execute(
+        "SELECT * FROM broker_timezone_candidates WHERE broker_key=%s",
+        (broker_key,),
+    ).fetchone()
+    if candidate is not None:
+        _promote_timezone_candidate(db, candidate)
 
 
 def resolve_trade_times(
