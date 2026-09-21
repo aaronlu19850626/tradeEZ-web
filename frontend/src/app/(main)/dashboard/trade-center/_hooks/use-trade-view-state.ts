@@ -4,7 +4,7 @@ import { useState } from "react";
 
 import type { ResultFilter, SideFilter } from "@/components/filters/trade-filter-controls";
 
-import type { ViewMode } from "../_lib/trade-center-model";
+import { type ColumnKey, type ViewMode } from "../_lib/trade-center-model";
 
 export function useTradeViewState() {
   const [view, setView] = useState<ViewMode>("day");
@@ -18,6 +18,7 @@ export function useTradeViewState() {
   const [weekVisible, setWeekVisible] = useState(6);
   const [tableResetVersion, setTableResetVersion] = useState(0);
   const [page, setPage] = useState(1);
+  const [sort, setSort] = useState<{ key: ColumnKey; dir: "asc" | "desc" } | null>(null);
   const [tableCommand, setTableCommand] = useState({ value: false, version: 0 });
 
   const resetPage = () => {
@@ -62,6 +63,7 @@ export function useTradeViewState() {
     setCurrency,
     setDayVisible,
     setPage,
+    setSort,
     setRange,
     setResult,
     setSelectedSymbols,
@@ -70,6 +72,7 @@ export function useTradeViewState() {
     setView,
     setWeekVisible,
     side,
+    sort,
     tableCommand,
     tableResetVersion,
     toggleAccount,

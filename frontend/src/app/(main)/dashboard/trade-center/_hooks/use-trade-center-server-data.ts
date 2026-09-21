@@ -69,7 +69,7 @@ function commonParams(
     side,
     result,
     currency: currency === "all" ? undefined : currency,
-    symbol: selectedSymbols.length === 1 ? selectedSymbols[0] : undefined,
+    symbol: selectedSymbols.length > 0 ? selectedSymbols.join(",") : undefined,
   };
 }
 
@@ -84,6 +84,8 @@ export function useTradeCenterServerData({
   page,
   dayVisible,
   weekVisible,
+  sort,
+  order,
 }: {
   accountIds: string[];
   view: ViewMode;
@@ -95,6 +97,8 @@ export function useTradeCenterServerData({
   page: number;
   dayVisible: number;
   weekVisible: number;
+  sort?: string;
+  order?: "asc" | "desc";
 }) {
   const [bounds, setBounds] = useState<TradeBounds>({ earliestDay: null, latestDay: null });
   const [symbols, setSymbols] = useState<string[]>([]);
@@ -138,7 +142,7 @@ export function useTradeCenterServerData({
           setWeekGroups(groups.map(toWeekGroup));
         } else {
           const [pageData, summaryData] = await Promise.all([
-            tradeCenterApi.list({ ...params, page, pageSize: 100 }),
+            tradeCenterApi.list({ ...params, page, pageSize: 100, sort, order }),
             tradeCenterApi.summary(params),
           ]);
           setPageTrades(pageData.items.map(toTrade));
@@ -154,7 +158,7 @@ export function useTradeCenterServerData({
         else setLoading(false);
       }
     },
-    [accountIds, currency, dayVisible, page, range, result, selectedSymbols, side, view, weekVisible],
+    [accountIds, currency, dayVisible, order, page, range, result, selectedSymbols, side, sort, view, weekVisible],
   );
 
   useEffect(() => {

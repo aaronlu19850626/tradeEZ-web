@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { Check, ChevronLeft, ChevronRight, Download, MoreHorizontal } from "lucide-react";
 
@@ -13,6 +13,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
 import { Pagination, PaginationContent, PaginationItem } from "@/components/ui/pagination";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { fill, type Locale } from "@/lib/i18n";
@@ -33,6 +34,8 @@ export function AllView({
   columns,
   page,
   onPage,
+  sort,
+  onSortChange,
   loading = false,
 }: {
   t: TradeCenterText;
@@ -44,17 +47,27 @@ export function AllView({
   columns: ColumnKey[];
   page: number;
   onPage: (page: number) => void;
+  sort: { key: ColumnKey; dir: "asc" | "desc" } | null;
+  onSortChange: (sort: { key: ColumnKey; dir: "asc" | "desc" } | null) => void;
   loading?: boolean;
 }) {
   const pageSize = 100;
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
+  const [pageInput, setPageInput] = useState(String(page));
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const current = Math.min(page, totalPages);
+  useEffect(() => setPageInput(String(current)), [current]);
   const start = (current - 1) * pageSize;
   const rows = trades;
   const ordered = useMemo(() => [...trades].sort((a, b) => a.closeTime - b.closeTime), [trades]);
   const grossTotal = stats.winSum + stats.lossSum;
   const winShare = grossTotal > 0 ? stats.winSum / grossTotal : 0.5;
+
+  const jumpToPage = () => {
+    const next = Math.min(totalPages, Math.max(1, Number.parseInt(pageInput, 10) || 1));
+    setPageInput(String(next));
+    onPage(next);
+  };
 
   return (
     <>
@@ -161,6 +174,21 @@ export function AllView({
                   </Badge>
                 </PaginationItem>
                 <PaginationItem>
+                  <Input
+                    type="number"
+                    min={1}
+                    max={totalPages}
+                    value={pageInput}
+                    aria-label={t.goToPage}
+                    className="h-8 w-16 text-center tabular-nums"
+                    onChange={(event) => setPageInput(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") jumpToPage();
+                    }}
+                    onBlur={jumpToPage}
+                  />
+                </PaginationItem>
+                <PaginationItem>
                   <Button
                     variant="outline"
                     size="icon"
@@ -210,6 +238,8 @@ export function AllView({
             selectable
             dateInline
             stickyHeader
+            sort={sort}
+            onSortChange={onSortChange}
             selectionResetKey={`${current}:${rows.map((trade) => trade.id).join(",")}`}
             onSelectionChange={setSelectedRows}
           />

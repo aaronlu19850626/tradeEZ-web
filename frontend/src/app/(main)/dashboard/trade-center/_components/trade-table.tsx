@@ -49,6 +49,8 @@ export function TradeTable({
   stickyHeader,
   selectionResetKey,
   onSelectionChange,
+  sort,
+  onSortChange,
 }: {
   trades: MockTrade[];
   columns: ColumnKey[];
@@ -60,21 +62,36 @@ export function TradeTable({
   stickyHeader?: boolean;
   selectionResetKey?: string | number;
   onSelectionChange?: (rowIds: string[]) => void;
+  sort?: { key: ColumnKey; dir: "asc" | "desc" } | null;
+  onSortChange?: (sort: { key: ColumnKey; dir: "asc" | "desc" }) => void;
 }) {
-  const [sort, setSort] = useState<{ key: ColumnKey; dir: "asc" | "desc" } | null>(null);
+  const [sortState, setSortState] = useState<{ key: ColumnKey; dir: "asc" | "desc" } | null>(null);
+  const effectiveSort = sort ?? sortState;
   const rows = useMemo(() => {
-    if (!sort) return trades;
-    const factor = sort.dir === "asc" ? 1 : -1;
-    return [...trades].sort((a, b) => compareTrade(a, b, sort.key) * factor);
-  }, [trades, sort]);
+    if (sort) return trades;
+    if (!sortState) return trades;
+    const factor = sortState.dir === "asc" ? 1 : -1;
+    return [...trades].sort((a, b) => compareTrade(a, b, sortState.key) * factor);
+  }, [trades, sort, sortState]);
 
-  const toggleSort = useCallback((key: ColumnKey) => {
-    if (!SORTABLE_COLUMNS.includes(key)) return;
-    setSort((prev) => {
-      if (!prev || prev.key !== key) return { key, dir: "desc" };
-      return { key, dir: prev.dir === "desc" ? "asc" : "desc" };
-    });
-  }, []);
+  const toggleSort = useCallback(
+    (key: ColumnKey) => {
+      if (!SORTABLE_COLUMNS.includes(key)) return;
+      if (onSortChange) {
+        const next =
+          !effectiveSort || effectiveSort.key !== key
+            ? { key, dir: "desc" as const }
+            : { key, dir: effectiveSort.dir === "desc" ? ("asc" as const) : ("desc" as const) };
+        onSortChange(next);
+        return;
+      }
+      setSortState((prev) => {
+        if (!prev || prev.key !== key) return { key, dir: "desc" };
+        return { key, dir: prev.dir === "desc" ? "asc" : "desc" };
+      });
+    },
+    [effectiveSort, onSortChange],
+  );
 
   const tableColumns = useMemo<DataTableColumn<MockTrade>[]>(() => {
     const result: DataTableColumn<MockTrade>[] = [];
@@ -105,7 +122,7 @@ export function TradeTable({
     }
     for (const key of columns) {
       const sortable = SORTABLE_COLUMNS.includes(key);
-      const active = sort?.key === key;
+      const active = effectiveSort?.key === key;
       result.push({
         id: key,
         size: columnWidth(key, Boolean(dateInline)),
@@ -122,7 +139,7 @@ export function TradeTable({
               <span
                 className={`transition-opacity ${active ? "opacity-100" : "opacity-0 group-hover/head:opacity-100"}`}
               >
-                <SortIcon active={active} dir={sort?.dir} />
+                <SortIcon active={active} dir={effectiveSort?.dir} />
               </span>
             </Button>
           ) : (
@@ -135,7 +152,7 @@ export function TradeTable({
       });
     }
     return result;
-  }, [columns, dateInline, locale, selectable, sort, t, toggleSort]);
+  }, [columns, dateInline, effectiveSort, locale, selectable, t, toggleSort]);
 
   const scrollable = compact === true || stickyHeader === true;
   const rootClassName = stickyHeader

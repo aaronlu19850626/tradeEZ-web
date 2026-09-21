@@ -126,8 +126,9 @@ def _apply_filters(items: list[TradeItem], flt: TradeFilter) -> list[TradeItem]:
             items = [item for item in items if item.netPnl == 0]
     if flt.currency:
         items = [item for item in items if item.currency == flt.currency]
-    if flt.symbol:
-        items = [item for item in items if item.symbol == flt.symbol]
+    symbols = flt.symbol_list()
+    if symbols:
+        items = [item for item in items if item.symbol in symbols]
     return items
 
 

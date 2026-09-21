@@ -40,7 +40,7 @@ function commonParams(
     side,
     result,
     currency: currency === "all" ? undefined : currency,
-    symbol: selectedSymbols.length === 1 ? selectedSymbols[0] : undefined,
+    symbol: selectedSymbols.length > 0 ? selectedSymbols.join(",") : undefined,
   };
 }
 

@@ -47,10 +47,12 @@ export default function TradeCenterPage() {
     setRange,
     setResult,
     setSelectedSymbols,
+    setSort,
     setSide,
     setView,
     setWeekVisible,
     side,
+    sort,
     tableCommand,
     tableResetVersion,
     toggleAccount,
@@ -70,6 +72,8 @@ export default function TradeCenterPage() {
     result,
     selectedSymbols,
     side,
+    sort: sort?.key,
+    order: sort?.dir,
     view,
     weekVisible,
   });
@@ -267,6 +271,11 @@ export default function TradeCenterPage() {
           columns={viewColumns}
           page={page}
           onPage={setPage}
+          sort={sort}
+          onSortChange={(next) => {
+            setSort(next);
+            setPage(1);
+          }}
           loading={serverData.pageLoading}
         />
       );

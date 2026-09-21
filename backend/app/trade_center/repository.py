@@ -144,8 +144,11 @@ def fetch_closed_trades_page(
         post_where.append("currency = %s")
         params.append(currency)
     if symbol:
-        post_where.append("symbol = %s")
-        params.append(symbol)
+        symbols = [part.strip() for part in symbol.split(",") if part.strip()]
+        if symbols:
+            placeholders = ",".join(["%s"] * len(symbols))
+            post_where.append(f"symbol IN ({placeholders})")
+            params.extend(symbols)
     if result != "all":
         if result == "win":
             post_where.append("(c.profit + c.swap + c.commission) > 0")

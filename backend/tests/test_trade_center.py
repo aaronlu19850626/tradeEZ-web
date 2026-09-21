@@ -241,6 +241,22 @@ def test_filters_and_range(client, db):
     assert client.get("/api/v1/trades", headers=headers, params={"from_day": "2026-01-01", "to_day": "2026-01-31"}).json()["total"] == 0
 
 
+def test_symbol_filter_accepts_multiple_symbols(client, db):
+    headers = web_headers(db, "trade-symbol-multi@example.com")
+    account = create_account(client, headers, 921040)
+    _add_symbol(db, 921040, symbol="XAUUSD", point=0.01, contract_size=100.0)
+    _add_symbol(db, 921040, symbol="EURUSD", point=0.0001, contract_size=100000.0)
+    _add_symbol(db, 921040, symbol="GBPUSD", point=0.0001, contract_size=100000.0)
+    deals = _closed_trade(account, 921041, "2026-09-01", "2026-09-02", profit=10.0, symbol="XAUUSD")
+    deals += _closed_trade(account, 921042, "2026-09-02", "2026-09-03", profit=20.0, symbol="EURUSD", open_price=1.08, close_price=1.07, sl_price=1.09)
+    deals += _closed_trade(account, 921043, "2026-09-03", "2026-09-04", profit=30.0, symbol="GBPUSD", open_price=1.30, close_price=1.29, sl_price=1.31)
+    _ingest(client, account["sync_key"], 921040, deals)
+
+    body = client.get("/api/v1/trades", headers=headers, params={"symbol": "XAUUSD,EURUSD"}).json()
+    assert body["total"] == 2
+    assert {item["symbol"] for item in body["items"]} == {"XAUUSD", "EURUSD"}
+
+
 def test_currency_filter_and_currency_options(client, db):
     headers = web_headers(db, "trade-currency@example.com")
     usd = create_account(client, headers, 921020, currency="USD")

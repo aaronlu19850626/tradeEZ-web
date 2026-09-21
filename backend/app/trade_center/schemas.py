@@ -170,6 +170,12 @@ class TradeFilter(BaseModel):
             return None
         return [int(part) for part in self.account_ids.split(",") if part.strip()]
 
+    def symbol_list(self) -> list[str] | None:
+        if not self.symbol:
+            return None
+        values = [part.strip() for part in self.symbol.split(",") if part.strip()]
+        return values or None
+
 
 class TradeQuery(TradeFilter):
     sort: str = "closeTime"
