@@ -52,7 +52,7 @@ import { type AccountCenterText, accountCenterText, fill } from "@/lib/tradesync
 import { ApiClientError, clearSessionCookie, clearToken } from "@/lib/tradesync/api";
 import { defaultCurrencyForPlatform } from "@/lib/tradesync/currencies";
 
-export type Modal = "add" | "rename" | "key" | "rotate" | "reset" | "delete" | "import" | "help" | null;
+export type Modal = "add" | "rename" | "key" | "rotate" | "reset" | "delete" | "import" | null;
 
 export interface AccountForm {
   name: string;

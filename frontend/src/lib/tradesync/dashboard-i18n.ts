@@ -11,8 +11,9 @@ const zh = {
   errorTitle: "数据加载失败",
   errorDescription: "交易记录读取失败，请稍后重试。",
   errorRetry: "重试",
-  emptyTitle: "还没有可展示的交易",
-  emptyDescription: "先在账户模块配置 EA 同步或导入 MT5 交易记录。",
+  emptyTitle: "这里还没有可分析的数据",
+  emptyDescription: "添加并连接交易账户后，绩效表现、交易分布与复盘数据会在这里自然呈现。",
+  goToAccounts: "去添加账户",
 
   netPnl: "净损益",
   tradeWin: "交易胜率",
@@ -148,8 +149,10 @@ const en: DashboardText = {
   errorTitle: "Failed to load",
   errorDescription: "Could not load trade records. Please try again.",
   errorRetry: "Retry",
-  emptyTitle: "No trades to show yet",
-  emptyDescription: "Configure EA sync or import an MT5 history file first.",
+  emptyTitle: "Nothing to analyze here yet",
+  emptyDescription:
+    "Add and connect a trading account to bring performance, trade patterns and review insights to life.",
+  goToAccounts: "Add an account",
 
   netPnl: "Net P&L",
   tradeWin: "Trade win %",

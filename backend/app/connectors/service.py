@@ -26,12 +26,19 @@ def _version_tuple(value: str) -> tuple[int, ...]:
     return tuple(parts)
 
 
-def _cursor(row: DBRow) -> CursorOut:
+def _cursor(row: DBRow, account: DBRow) -> CursorOut:
+    value = max(int(row["cursor_value"] or 0), int(account["sync_start_time"] or 0))
     return CursorOut(
         basis=str(row["cursor_basis"]),
-        value=int(row["cursor_value"] or 0),
+        value=value,
         state=json.loads(str(row["cursor_state_json"] or "{}")),
     )
+
+
+def _acknowledge_resync(db: DBConnection, account: DBRow) -> None:
+    if int(account["resync_pending"] or 0):
+        db.execute("UPDATE accounts SET resync_pending = 0 WHERE id = %s", (account["id"],))
+        db.commit()
 
 
 def handshake(payload: HandshakeRequest, account: DBRow, db: DBConnection) -> HandshakeResponse:
@@ -47,6 +54,7 @@ def handshake(payload: HandshakeRequest, account: DBRow, db: DBConnection) -> Ha
         capabilities=CAPABILITIES,
     )
     db.commit()
+    _acknowledge_resync(db, account)
     upgrade = None
     if payload.platform == "mt5":
         current = _version_tuple(payload.connector_version or "0")
@@ -65,7 +73,7 @@ def handshake(payload: HandshakeRequest, account: DBRow, db: DBConnection) -> Ha
         protocol_version=str(row["protocol_version"]),
         capabilities=json.loads(str(row["capabilities_json"] or "[]")),
         limits=LIMITS,
-        cursor=_cursor(row),
+        cursor=_cursor(row, account),
         upgrade=upgrade,
     )
 
@@ -74,7 +82,8 @@ def cursor(connection_id: str, account: DBRow, db: DBConnection) -> CursorOut:
     row = repository.find_by_id(db, connection_id, int(account["id"]))
     if row is None:
         raise ApiError(code="CONNECTION_NOT_FOUND", message="Connector connection was not found", status_code=404)
-    return _cursor(row)
+    _acknowledge_resync(db, account)
+    return _cursor(row, account)
 
 
 def submit_events(
@@ -107,7 +116,7 @@ def submit_events(
             accepted=len(events),
             inserted=0,
             duplicates=len(events),
-            cursor=_cursor(row),
+            cursor=_cursor(row, account),
             replay=True,
         )
 
@@ -140,10 +149,13 @@ def submit_events(
         duplicates = len(events) - inserted
         repository.refresh_batch_counts(db, batch_row_id, inserted, duplicates)
 
-        latest_occurred_at = max((event["occurred_at"] for event in events), default=int(row["cursor_value"] or 0))
+        latest_trade_at = max(
+            (event["occurred_at"] for event in events if event["type"] == "trade"),
+            default=None,
+        )
         next_state = {"last_batch_id": payload.batch_id}
-        if payload.batch_index + 1 >= payload.batch_count:
-            repository.update_cursor(db, int(row["id"]), latest_occurred_at, next_state)
+        if payload.batch_index + 1 >= payload.batch_count and latest_trade_at is not None:
+            repository.update_cursor(db, int(row["id"]), latest_trade_at, next_state)
         db.commit()
     except Exception as exc:
         db.rollback()
@@ -160,6 +172,6 @@ def submit_events(
         accepted=len(events),
         inserted=inserted,
         duplicates=duplicates,
-        cursor=_cursor(updated),
+        cursor=_cursor(updated, account),
         replay=False,
     )

@@ -136,17 +136,17 @@ export function accountTableColumns({
     {
       id: "eaStatus",
       size: 150,
-      header: t.tableEa,
+      header: t.tableSyncStatus,
       cell: ({ row }) =>
         row.original.ea_status === "online" ? (
           <Badge variant="success-soft" className="gap-2">
             <span className="size-1.5 rounded-full bg-success ring-2 ring-success/15" />
-            {t.syncing}
+            {t.syncConnected}
           </Badge>
         ) : (
           <Badge variant="danger-soft" className="gap-2">
             <span className="size-1.5 rounded-full bg-danger ring-2 ring-danger/15" />
-            {t.noEa}
+            {t.syncPending}
           </Badge>
         ),
     },

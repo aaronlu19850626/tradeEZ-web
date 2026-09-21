@@ -76,6 +76,34 @@ def test_heartbeat_duplicate_within_write_window_skips_writes(client, db):
     assert db.execute("SELECT COUNT(*) FROM heartbeat_history WHERE account_login=%s", (login,)).fetchone()[0] == 1
 
 
+def test_heartbeat_overwrites_incorrect_broker_server(client, db):
+    login = 910212
+    token = make_account(db, login)
+    assert db.execute("SELECT broker_server FROM accounts WHERE mt5_login=%s", (login,)).fetchone()[0] == "Test-Server"
+
+    assert signed_post(
+        client,
+        "/api/v1/ingest/heartbeat",
+        token,
+        {"mt5_login": login, "broker_server": "IC Markets-Live"},
+    ).status_code == 200
+    assert (
+        db.execute("SELECT broker_server FROM accounts WHERE mt5_login=%s", (login,)).fetchone()[0]
+        == "IC Markets-Live"
+    )
+
+    assert signed_post(
+        client,
+        "/api/v1/ingest/heartbeat",
+        token,
+        {"mt5_login": login, "broker_server": "IC Markets-Live-02"},
+    ).status_code == 200
+    assert (
+        db.execute("SELECT broker_server FROM accounts WHERE mt5_login=%s", (login,)).fetchone()[0]
+        == "IC Markets-Live-02"
+    )
+
+
 def test_heartbeat_history_is_sampled(client, db, monkeypatch):
     from app.sync import service
 

@@ -119,6 +119,7 @@ def normalize_mt5_event(account: DBRow, event_type: str, data: dict, db: DBConne
         return
 
     if event_type == "heartbeat":
+        broker_server = str(data.get("broker_server") or "").strip()[:120] or None
         raw = json.dumps(data, ensure_ascii=False, separators=(",", ":"))
         db.execute(
             """
@@ -126,12 +127,21 @@ def normalize_mt5_event(account: DBRow, event_type: str, data: dict, db: DBConne
                 account_login, server_gmt_off, account_currency, broker_company,
                 broker_server, ea_version, payload, last_seen_at,
                 server_gmt_offset, server_timezone_name
-            ) VALUES (%s, 0, '', '', '', '', %s, now_iso(), 0, '')
+            ) VALUES (%s, 0, '', '', %s, '', %s, now_iso(), 0, '')
             ON CONFLICT (account_login) DO UPDATE SET
+                broker_server=COALESCE(excluded.broker_server, heartbeats.broker_server),
                 payload=excluded.payload,
                 last_seen_at=now_iso()
             """,
-            (login, raw),
+            (login, broker_server, raw),
         )
-        db.execute("UPDATE accounts SET last_seen_at = now_iso() WHERE id = %s", (account["id"],))
+        db.execute(
+            """
+            UPDATE accounts
+               SET last_seen_at=now_iso(),
+                   broker_server=COALESCE(NULLIF(TRIM(%s), ''), broker_server)
+             WHERE id = %s
+            """,
+            (broker_server, account["id"]),
+        )
         return

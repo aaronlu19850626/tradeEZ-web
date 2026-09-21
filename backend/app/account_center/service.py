@@ -68,6 +68,9 @@ def _account_timestamps(row: DBRow, snapshot: DBRow | None, db: DBConnection) ->
     candidates: list[int] = []
     if snapshot is not None and snapshot.get("timestamp") is not None:
         candidates.append(int(snapshot["timestamp"]))
+    latest_deal_time = repository.latest_deal_time(db, int(row["mt5_login"]))
+    if latest_deal_time is not None:
+        candidates.append(latest_deal_time)
     # Config edits (rename / statistics toggle) must not surface as "last updated".
     # Only real synchronization signals count: heartbeat and committed cursor.
     for key in ("last_seen_at", "last_success_sync_at"):
@@ -146,7 +149,7 @@ def create_account(payload: AccountCreateIn, db: DBConnection, user: DBRow) -> A
             key_hash=key_hash,
             key_encrypted=encrypted,
             key_environment=environment,
-            is_statistics=1 if count == 0 else 0,
+            is_statistics=1,
         )
         db.commit()
         account_id = cursor.lastrowid
@@ -224,6 +227,7 @@ def reset_sync(account_id: int, payload: AccountResetIn, db: DBConnection, user:
         mt5_login = int(account["mt5_login"])
         repository.delete_login_scoped(db, mt5_login, ("sync_batch_refs", "deals"))
         repository.delete_account_id_scoped(db, account_id, RESET_ID_SCOPED_TABLES)
+        repository.reset_connector_state(db, account_id, date_to_epoch(payload.sync_start_date))
         db.execute("DELETE FROM trade_dirty_positions WHERE account_login = %s", (mt5_login,))
         db.execute(
             """

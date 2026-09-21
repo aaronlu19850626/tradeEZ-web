@@ -166,6 +166,14 @@ def latest_heartbeat(db: DBConnection, mt5_login: int):
     ).fetchone()
 
 
+def latest_deal_time(db: DBConnection, mt5_login: int) -> int | None:
+    row = db.execute(
+        "SELECT MAX(deal_time) AS latest_deal_time FROM deals WHERE account_login = %s",
+        (mt5_login,),
+    ).fetchone()
+    return int(row["latest_deal_time"]) if row is not None and row["latest_deal_time"] is not None else None
+
+
 def trade_count(db: DBConnection, mt5_login: int) -> int:
     row = db.execute(
         """
@@ -205,3 +213,19 @@ def delete_api_logs(db: DBConnection, account_id: int, mt5_login: int) -> None:
 
 def delete_account_row(db: DBConnection, account_id: int, user_id: int) -> None:
     db.execute("DELETE FROM accounts WHERE id = %s AND user_id = %s", (account_id, user_id))
+
+
+def reset_connector_state(db: DBConnection, account_id: int, cursor_value: int) -> None:
+    connection_filter = "SELECT id FROM connector_connections WHERE account_id = %s"
+    db.execute(f"DELETE FROM connector_events WHERE connection_id IN ({connection_filter})", (account_id,))
+    db.execute(f"DELETE FROM connector_batches WHERE connection_id IN ({connection_filter})", (account_id,))
+    db.execute(
+        """
+        UPDATE connector_connections
+           SET cursor_value = %s,
+               cursor_state_json = '{}',
+               updated_at = now_iso()
+         WHERE account_id = %s
+        """,
+        (cursor_value, account_id),
+    )

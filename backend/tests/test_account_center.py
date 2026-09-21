@@ -81,7 +81,7 @@ def test_statistics_toggle_and_rename(client, db):
     off = client.patch(path, headers=headers, json={"is_statistics": False})
     assert off.status_code == 200 and off.json()["is_statistics"] is False
     second = create_account(client, headers, 910004).json()
-    assert second["is_statistics"] is False
+    assert second["is_statistics"] is True
     on = client.patch(path, headers=headers, json={"is_statistics": True})
     assert on.status_code == 200 and on.json()["is_statistics"] is True
 
@@ -199,6 +199,34 @@ def test_never_synced_account_has_no_last_updated_at(client, db):
     client.patch(f"/api/v1/accounts/{account['id']}", headers=headers, json={"name": "Renamed"})
     body = client.get(f"/api/v1/accounts/{account['id']}", headers=headers).json()
     assert body["last_updated_at"] is None
+
+
+def test_last_updated_falls_back_to_latest_trade(client, db):
+    headers = web_headers(db, "latest-trade@example.com")
+    account = create_account(client, headers, 910301).json()
+    key = account["sync_key"]
+    response = signed_post(
+        client,
+        "/api/v1/ingest/deals",
+        key,
+        {
+            "mt5_login": 910301,
+            "deals": [
+                deal(
+                    9103010,
+                    position=910301,
+                    entry=0,
+                    deal_type=0,
+                    open_time=IN_WINDOW_EPOCH,
+                    deal_time=IN_WINDOW_EPOCH,
+                )
+            ],
+        },
+    )
+    assert response.status_code == 200, response.text
+    body = client.get(f"/api/v1/accounts/{account['id']}", headers=headers).json()
+    assert body["last_updated_at"] == IN_WINDOW_EPOCH
+    assert body["ea_status"] == "offline"
 
 
 def test_reset_rolls_back_on_failure(client, db):

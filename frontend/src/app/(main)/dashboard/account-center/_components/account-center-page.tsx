@@ -23,7 +23,6 @@ import { accountTableColumns, EmptyState, Metric } from "./account-center-ui";
 import { AccountHeader } from "./account-header";
 import { AddAccountDialog } from "./dialogs/add-account-dialog";
 import { DeleteAccountDialog } from "./dialogs/delete-account-dialog";
-import { HelpDialog } from "./dialogs/help-dialog";
 import { ImportDialog } from "./dialogs/import-dialog";
 import { RenameAccountDialog } from "./dialogs/rename-account-dialog";
 import { ResetKeyDialog } from "./dialogs/reset-key-dialog";
@@ -48,26 +47,46 @@ export default function AccountCenterPage() {
   const [importing, setImporting] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      setAccounts(await accountCenterApi.list());
-    } catch (err) {
-      if (err instanceof ApiClientError && err.status === 401) {
-        clearToken();
-        clearSessionCookie();
-        window.location.assign("/auth/v2/login");
-        return;
+  const load = useCallback(
+    async (background = false) => {
+      if (!background) {
+        setLoading(true);
+        setError(null);
       }
-      setError(errorMessage(err, t.genericError));
-    } finally {
-      setLoading(false);
-    }
-  }, [t]);
+      try {
+        setAccounts(await accountCenterApi.list());
+      } catch (err) {
+        if (err instanceof ApiClientError && err.status === 401) {
+          clearToken();
+          clearSessionCookie();
+          window.location.assign("/auth/v2/login");
+          return;
+        }
+        if (!background) setError(errorMessage(err, t.genericError));
+      } finally {
+        if (!background) setLoading(false);
+      }
+    },
+    [t],
+  );
 
   useEffect(() => {
     void load();
+  }, [load]);
+
+  useEffect(() => {
+    const refresh = () => {
+      if (document.visibilityState === "hidden") return;
+      void load(true);
+    };
+    const timer = window.setInterval(refresh, 30_000);
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", refresh);
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", refresh);
+    };
   }, [load]);
 
   const close = () => {
@@ -237,13 +256,7 @@ export default function AccountCenterPage() {
 
   return (
     <div className="mx-auto flex w-full max-w-screen-2xl flex-col gap-6">
-      <AccountHeader
-        t={t}
-        loading={loading}
-        accountCount={accounts?.length ?? 0}
-        onHelp={() => open("help")}
-        onAdd={() => open("add")}
-      />
+      <AccountHeader t={t} loading={loading} accountCount={accounts?.length ?? 0} onAdd={() => open("add")} />
 
       <div className="grid gap-3 md:grid-cols-3">
         <Metric
@@ -253,8 +266,8 @@ export default function AccountCenterPage() {
           suffix={accounts ? t.metricAccountsSuffix : ""}
         />
         <Metric
-          title={t.metricHeartbeat}
-          tip={t.metricHeartbeatTip}
+          title={t.metricSyncConnections}
+          tip={t.metricSyncConnectionsTip}
           value={accounts ? `${healthy} / ${accounts.length}` : "—"}
           suffix=""
         />
@@ -336,7 +349,6 @@ export default function AccountCenterPage() {
         onConfirmName={setConfirmName}
         onConfirm={remove}
       />
-      <HelpDialog open={modal === "help"} onOpenChange={closeOnOpenChange} t={t} />
       <ImportDialog
         open={modal === "import"}
         onOpenChange={closeOnOpenChange}

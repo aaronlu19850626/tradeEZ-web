@@ -25,15 +25,15 @@ const zh = {
   navSettings: "工作区设置",
   navWeekly: "周复盘与行动",
   navHabits: "习惯与提醒",
-  mt5Accounts: "账户",
-  mt5EaOnline: "EA 同步",
+  syncAccounts: "账户",
+  syncConnected: "同步连接",
   mt5StatusLoading: "读取中",
   mt5StatusFailed: "状态读取失败，显示上次数据",
   tradeezUser: "TradeEZ 用户",
   notLoggedIn: "未登录",
   logout: "退出登录",
   metaTitle: "TradeEZ - 交易复盘与执行管理",
-  metaDescription: "TradeEZ Web 是 MT5 EA 订单同步、交易复盘、规则评分与每日交易闭环的管理控制台。",
+  metaDescription: "TradeEZ Web 是多平台交易数据同步、交易复盘、规则评分与每日交易闭环的管理控制台。",
 } as const;
 
 export type ShellText = Record<keyof typeof zh, string>;
@@ -63,8 +63,8 @@ const en: ShellText = {
   navSettings: "Workspace settings",
   navWeekly: "Weekly review",
   navHabits: "Habits & reminders",
-  mt5Accounts: "Accounts",
-  mt5EaOnline: "EA online",
+  syncAccounts: "Accounts",
+  syncConnected: "Sync connected",
   mt5StatusLoading: "Loading",
   mt5StatusFailed: "Status unavailable, showing last data",
   tradeezUser: "TradeEZ User",
@@ -72,7 +72,7 @@ const en: ShellText = {
   logout: "Sign out",
   metaTitle: "TradeEZ - Trading Review & Execution",
   metaDescription:
-    "TradeEZ Web is the control center for MT5 EA order sync, trade review, rule scoring and daily execution.",
+    "TradeEZ Web is the control center for multi-platform trade sync, trade review, rule scoring and daily execution.",
 };
 
 export const shellText: Record<Locale, ShellText> = {

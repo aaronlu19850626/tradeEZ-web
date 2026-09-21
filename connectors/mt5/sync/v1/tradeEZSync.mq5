@@ -345,7 +345,7 @@ int CollectDealsAfterCloseTime(datetime cursorUtc, string &dealsJson[],
     latestCloseTimeUtc = 0;
     collectionOK = false;
 
-    datetime fromServer = UtcToServerTime(cursorUtc);
+    datetime fromServer = cursorUtc <= 0 ? 0 : UtcToServerTime(cursorUtc);
     datetime toServer = TimeCurrent() + 1;
     if(fromServer > toServer)
     {
@@ -374,7 +374,7 @@ int CollectDealsAfterCloseTime(datetime cursorUtc, string &dealsJson[],
         if(posId == 0) continue;
 
         datetime closeUtc = ServerTimeToUtc((datetime)HistoryDealGetInteger(ticket, DEAL_TIME));
-        if(closeUtc < cursorUtc) continue;  // 平仓时间在游标之前 → 已同步过,跳过
+        if(cursorUtc > 0 && closeUtc <= cursorUtc) continue;  // 游标秒之前的成交均已提交,临界秒不重复回传
 
         // 计算开仓时间(用于传给服务器)
         datetime openUtc = closeUtc;  // 兜底
@@ -413,7 +413,7 @@ int CollectDealsAfterCloseTime(datetime cursorUtc, string &dealsJson[],
     // HistorySelect范围就是游标到现在,所以在范围内的成交都能找到;
     // 但开仓成交可能早于游标(跨游标区间的订单),需要扩大范围才能拿到开仓成交。
     // 稳妥做法:扩大 HistorySelect 到 30 天前,确保开仓成交也在范围内。
-    datetime wideFrom = fromServer - 30 * 86400;
+    datetime wideFrom = cursorUtc <= 0 ? 0 : fromServer - 30 * 86400;
     if(HistorySelect(wideFrom, toServer)) total = HistoryDealsTotal();
 
     for(int i = 0; i < total; i++)
@@ -538,13 +538,6 @@ bool SyncDeals()
 
     datetime cursorUtc = GetServerLastSyncTime();
     bool cursorQueryOK = g_LastSyncQueryOK;
-    if(!cursorQueryOK || cursorUtc == 0)
-    {
-        cursorUtc = TimeGMT() - 7 * 86400;
-        if(Inp_DebugSync)
-            Print("[Sync Deals] ", cursorQueryOK ? "首次同步" : "游标获取失败",
-                  ",按近7日回溯,起点UTC=", (long)cursorUtc);
-    }
 
     string deals[];
     datetime latestCloseTimeUtc = 0;
@@ -562,7 +555,7 @@ bool SyncDeals()
         g_SyncInProgress = false;
         if(!cursorQueryOK)
         {
-            if(Inp_DebugSync) Print("[Sync Deals] 失败:游标查询失败且近7日无可提交订单");
+            if(Inp_DebugSync) Print("[Sync Deals] 失败:游标查询失败且全部可用历史中没有可提交订单");
             return false;
         }
         g_LastSyncTime = TimeCurrent();

@@ -2,12 +2,13 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 
-import { Maximize2, Settings } from "lucide-react";
+import { Maximize2, Plus, Settings } from "lucide-react";
 import { toast } from "sonner";
 
 import { CumulativeHistoryDialog } from "@/components/dialogs/cumulative-history-dialog";
 import type { ResultFilter, SideFilter } from "@/components/filters/trade-filter-controls";
 import { PanelAction, PanelIconAction, PanelMenuTrigger } from "@/components/shared/dashboard-actions";
+import { SyncEmptyState } from "@/components/shared/sync-empty-state";
 import { Button } from "@/components/ui/button";
 import { Card, CardTitle } from "@/components/ui/card";
 import {
@@ -346,10 +347,13 @@ export default function DashboardOverviewPage() {
       {header}
       {toolbar}
       {filtered.length === 0 ? (
-        <Card className="items-center gap-3 py-16 text-center">
-          <CardTitle className="text-base">{t.emptyTitle}</CardTitle>
-          <p className="text-sm text-muted-foreground">{t.emptyDescription}</p>
-        </Card>
+        <SyncEmptyState
+          title={t.emptyTitle}
+          description={t.emptyDescription}
+          actionLabel={t.goToAccounts}
+          href="/dashboard/account-center"
+          actionIcon={<Plus className="size-4" />}
+        />
       ) : (
         <>
           <OverviewMetrics t={t} locale={locale} stats={stats} />

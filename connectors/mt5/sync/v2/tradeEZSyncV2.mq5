@@ -36,9 +36,16 @@ datetime g_ServerCursor = 0;
 int      g_DealsCounter = 0;
 int      g_SnapshotCounter = 0;
 int      g_HeartbeatCounter = 0;
+int      g_BatchSequence = 0;
 bool     g_UpgradeRequired = false;
 string   g_UpgradeUrl = "";
 string   g_UpgradeMessage = "";
+
+string NextBatchId(string kind)
+{
+   g_BatchSequence++;
+   return StringFormat("%s-%d-%d-%d", kind, AccountInfoInteger(ACCOUNT_LOGIN), (long)TimeGMT(), g_BatchSequence);
+}
 
 string JsonEscape(string value)
 {
@@ -236,8 +243,8 @@ int CollectTradeEvents(datetime cursorUtc, string &events[], datetime &latestClo
    latestCloseUtc = 0;
    ok = false;
 
-   datetime fromServer = UtcToServerTime(cursorUtc);
-   datetime wideFrom = fromServer - 30 * 86400;
+   datetime fromServer = cursorUtc <= 0 ? 0 : UtcToServerTime(cursorUtc);
+   datetime wideFrom = cursorUtc <= 0 ? 0 : fromServer - 30 * 86400;
    datetime toServer = TimeCurrent() + 1;
    if(wideFrom > toServer) return 0;
    if(!HistorySelect(wideFrom, toServer)) return 0;
@@ -256,7 +263,7 @@ int CollectTradeEvents(datetime cursorUtc, string &events[], datetime &latestClo
       if(posId == 0) continue;
 
       datetime closeUtc = ServerTimeToUtc((datetime)HistoryDealGetInteger(ticket, DEAL_TIME));
-      if(closeUtc < cursorUtc) continue;
+      if(cursorUtc > 0 && closeUtc <= cursorUtc) continue;
 
       datetime openUtc = closeUtc;
       for(int j = 0; j < total; j++)
@@ -383,11 +390,16 @@ bool SyncTrades()
 
    int limit = MathMax(1, MathMin(Inp_MaxBatchSize, 1000));
    int batchCount = (count + limit - 1) / limit;
-   string batchId = StringFormat("mt5-%d-%d", AccountInfoInteger(ACCOUNT_LOGIN), TimeGMT());
    int batchIndex = 0;
    for(int start = 0; start < count; start += limit)
    {
       int part = MathMin(limit, count - start);
+      string batchId = StringFormat(
+         "trade-%d-%I64d-%d-%d",
+         AccountInfoInteger(ACCOUNT_LOGIN),
+         (long)g_ServerCursor,
+         batchIndex,
+         batchCount);
       if(!SubmitEvents(events, start, part, batchIndex, batchCount, batchId))
       {
          g_ServiceDetail = "事件批次提交失败";
@@ -412,8 +424,8 @@ bool SyncInstrument()
       JsonEscape(_Symbol), digits, point, tickValue, contractSize);
    string event = StringFormat("{\"event_id\":\"instrument:%s\",\"type\":\"instrument\",\"occurred_at\":%I64d,\"data\":%s}",
                                JsonEscape(_Symbol), now, data);
-   string body = StringFormat("{\"batch_id\":\"instrument-%d-%d\",\"batch_index\":0,\"batch_count\":1,\"events\":[%s]}",
-                              AccountInfoInteger(ACCOUNT_LOGIN), now, event);
+   string body = StringFormat("{\"batch_id\":\"%s\",\"batch_index\":0,\"batch_count\":1,\"events\":[%s]}",
+                              NextBatchId("instrument"), event);
    string response = "";
    return PostJson("/api/v1/connections/" + g_ConnectionId + "/events", body, response) >= 200;
 }
@@ -430,8 +442,8 @@ bool SyncSnapshot()
       balance, equity, margin, freeMargin, now);
    string event = StringFormat("{\"event_id\":\"snapshot:%I64d\",\"type\":\"account_snapshot\",\"occurred_at\":%I64d,\"data\":%s}",
                                now, now, data);
-   string body = StringFormat("{\"batch_id\":\"snapshot-%d-%d\",\"batch_index\":0,\"batch_count\":1,\"events\":[%s]}",
-                              AccountInfoInteger(ACCOUNT_LOGIN), now, event);
+   string body = StringFormat("{\"batch_id\":\"%s\",\"batch_index\":0,\"batch_count\":1,\"events\":[%s]}",
+                              NextBatchId("snapshot"), event);
    string response = "";
    return PostJson("/api/v1/connections/" + g_ConnectionId + "/events", body, response) >= 200;
 }
@@ -439,12 +451,13 @@ bool SyncSnapshot()
 bool SyncHeartbeat()
 {
    long now = TimeGMT();
-   string data = StringFormat("{\"occurred_at\":%I64d,\"connector_status\":\"online\",\"version\":\"%s\"}",
-                              now, CONNECTOR_VERSION);
+   string data = StringFormat(
+      "{\"occurred_at\":%I64d,\"connector_status\":\"online\",\"version\":\"%s\",\"broker_server\":\"%s\"}",
+      now, CONNECTOR_VERSION, JsonEscape(AccountInfoString(ACCOUNT_SERVER)));
    string event = StringFormat("{\"event_id\":\"heartbeat:%I64d\",\"type\":\"heartbeat\",\"occurred_at\":%I64d,\"data\":%s}",
                                now, now, data);
-   string body = StringFormat("{\"batch_id\":\"heartbeat-%d-%d\",\"batch_index\":0,\"batch_count\":1,\"events\":[%s]}",
-                              AccountInfoInteger(ACCOUNT_LOGIN), now, event);
+   string body = StringFormat("{\"batch_id\":\"%s\",\"batch_index\":0,\"batch_count\":1,\"events\":[%s]}",
+                              NextBatchId("heartbeat"), event);
    string response = "";
    return PostJson("/api/v1/connections/" + g_ConnectionId + "/events", body, response) >= 200;
 }

@@ -248,7 +248,7 @@ export default function TradeCenterPage() {
   } else if (loading) {
     body = <LoadingWave t={t} />;
   } else if (accountIds.length === 0) {
-    body = <NoAccountsPanel t={t} onSelectAll={() => setAccountIds([...scopeDefaults])} />;
+    body = <NoAccountsPanel t={t} />;
   } else if (filtered.length === 0) {
     body = <EmptyPanel t={t} />;
   } else if (view === "day") {

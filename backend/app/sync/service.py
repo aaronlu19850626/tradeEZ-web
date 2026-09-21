@@ -495,6 +495,7 @@ def ingest_settings_v21(payload: IngestSettingsRequest, account: DBRow, db: DBCo
 def heartbeat_v21(payload: HeartbeatRequest, account: DBRow, db: DBConnection) -> HeartbeatResponse:
     server_time = int(time.time())
     timezone_name = payload.server_timezone_name.strip()[:32] if payload.server_timezone_name else None
+    reported_broker_server = payload.broker_server.strip()[:120] if payload.broker_server else None
     raw = json.dumps(
         {
             "mt5_login": payload.mt5_login,
@@ -505,7 +506,7 @@ def heartbeat_v21(payload: HeartbeatRequest, account: DBRow, db: DBConnection) -
             "instance_id": payload.instance_id or "default",
             "protocol_version": payload.protocol_version or "sop-1.03",
             "ea_version": payload.ea_version,
-            "broker_server": payload.broker_server,
+            "broker_server": reported_broker_server,
         },
         ensure_ascii=False,
         separators=(",", ":"),
@@ -559,7 +560,7 @@ def heartbeat_v21(payload: HeartbeatRequest, account: DBRow, db: DBConnection) -
                 last_seen_at=strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
             """,
             (payload.mt5_login, 0, payload.account_currency, payload.broker_company,
-             payload.broker_server, payload.ea_version,
+             reported_broker_server, payload.ea_version,
              payload.server_gmt_offset, timezone_name, raw),
         )
         db.execute(
@@ -570,12 +571,12 @@ def heartbeat_v21(payload: HeartbeatRequest, account: DBRow, db: DBConnection) -
                 server_timezone_name=COALESCE(NULLIF(TRIM(?), ''), server_timezone_name),
                 account_currency=COALESCE(account_currency, ?),
                 broker_company=COALESCE(?, broker_company),
-                broker_server=COALESCE(?, broker_server),
+                broker_server=COALESCE(NULLIF(TRIM(?), ''), broker_server),
                 updated_at=strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
             WHERE id = ?
             """,
             (payload.server_gmt_offset, timezone_name or None, payload.account_currency,
-             payload.broker_company, payload.broker_server, account["id"]),
+             payload.broker_company, reported_broker_server, account["id"]),
         )
         db.commit()
     except Exception:

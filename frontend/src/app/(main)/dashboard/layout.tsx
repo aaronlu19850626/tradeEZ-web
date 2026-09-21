@@ -10,7 +10,7 @@ import { SESSION_COOKIE } from "@/lib/tradesync/api";
 import { LanguageSwitcher } from "./_components/header/language-switcher";
 import { ThemeSwitcher } from "./_components/header/theme-switcher";
 import { TopbarBrand } from "./_components/header/topbar-brand";
-import { GlobalMt5Status } from "./_components/tradesync/global-mt5-status";
+import { GlobalSyncStatus } from "./_components/tradesync/global-sync-status";
 
 export default async function Layout({ children }: Readonly<{ children: ReactNode }>) {
   const cookieStore = await cookies();
@@ -27,7 +27,7 @@ export default async function Layout({ children }: Readonly<{ children: ReactNod
         <TopbarBrand />
         <div className="tradeez-topbar-controls flex shrink-0 items-center gap-2">
           <div className="hidden md:block">
-            <GlobalMt5Status />
+            <GlobalSyncStatus />
           </div>
           <ThemeSwitcher />
           <LanguageSwitcher />

@@ -2,24 +2,22 @@
 
 import type { ReactNode } from "react";
 
-import { Info, TrendingDown } from "lucide-react";
+import { Plus, TrendingDown } from "lucide-react";
 
+import { SyncEmptyState } from "@/components/shared/sync-empty-state";
 import { Button } from "@/components/ui/button";
 import { Card, CardTitle } from "@/components/ui/card";
 import type { TradeCenterText } from "@/lib/tradesync/trade-center-i18n";
 
-export function NoAccountsPanel({ t, onSelectAll }: { t: TradeCenterText; onSelectAll: () => void }) {
+export function NoAccountsPanel({ t }: { t: TradeCenterText }) {
   return (
-    <Card className="items-center gap-3 py-16 text-center">
-      <span className="flex size-10 items-center justify-center rounded-full bg-warning/15 text-warning">
-        <Info className="size-5" />
-      </span>
-      <CardTitle className="text-base">{t.noAccountsTitle}</CardTitle>
-      <p className="text-sm text-muted-foreground">{t.noAccountsDescription}</p>
-      <Button variant="outline" size="sm" onClick={onSelectAll}>
-        {t.accountScopeAll}
-      </Button>
-    </Card>
+    <SyncEmptyState
+      title={t.noAccountsTitle}
+      description={t.noAccountsDescription}
+      actionLabel={t.goToAccounts}
+      href="/dashboard/account-center"
+      actionIcon={<Plus className="size-4" />}
+    />
   );
 }
 
@@ -79,9 +77,12 @@ export function LoadMore({ label, remaining, onClick }: { label: string; remaini
 
 export function EmptyPanel({ t }: { t: TradeCenterText }) {
   return (
-    <Card className="items-center gap-2 py-16 text-center">
-      <CardTitle className="text-base">{t.emptyTitle}</CardTitle>
-      <p className="text-sm text-muted-foreground">{t.emptyDescription}</p>
-    </Card>
+    <SyncEmptyState
+      title={t.emptyTitle}
+      description={t.emptyDescription}
+      actionLabel={t.goToAccounts}
+      href="/dashboard/account-center"
+      actionIcon={<Plus className="size-4" />}
+    />
   );
 }

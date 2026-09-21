@@ -10,7 +10,7 @@ import { shellText } from "@/lib/shell-i18n";
 import { type AccountCenterItem, accountCenterApi } from "@/lib/tradesync/account-center";
 import { getToken } from "@/lib/tradesync/api";
 
-export function GlobalMt5Status() {
+export function GlobalSyncStatus() {
   const locale = useLocale();
   const t = shellText[locale];
   const [accounts, setAccounts] = useState<AccountCenterItem[]>([]);
@@ -70,7 +70,7 @@ export function GlobalMt5Status() {
       ) : (
         <>
           <span>
-            {t.mt5Accounts}
+            {t.syncAccounts}
             <span className="ml-1.5 text-base font-semibold tabular-nums text-sidebar-foreground">
               {accounts.length}
             </span>
@@ -85,7 +85,7 @@ export function GlobalMt5Status() {
                   : "bg-rose-400 shadow-[0_0_0_3px_rgba(244,63,94,0.12)]",
               )}
             />
-            {t.mt5EaOnline}
+            {t.syncConnected}
             <span className="text-base font-semibold tabular-nums text-sidebar-foreground">{online}</span>
           </span>
         </>

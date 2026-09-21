@@ -396,8 +396,7 @@ export function AccountScopeChips({
 }) {
   const locale = useLocale();
   const t = tradeFilterText[locale];
-  const statisticsAccounts = accounts.filter((account) => account.isStatistics);
-  const scoped = statisticsAccounts.length > 0 ? statisticsAccounts : accounts;
+  const scoped = [...accounts].sort((left, right) => Number(right.isStatistics) - Number(left.isStatistics));
 
   return (
     <div className="flex flex-wrap items-center gap-2 xl:flex-nowrap">
