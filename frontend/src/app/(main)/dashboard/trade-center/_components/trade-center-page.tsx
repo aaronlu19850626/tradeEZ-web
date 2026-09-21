@@ -240,7 +240,10 @@ export default function TradeCenterPage() {
     };
   }, []);
 
-  const loading = serverData.loading;
+  // Avoid flashing the no-accounts or empty panel while the initial account
+  // scope is still being resolved.
+  const scopePending = accounts.length > 0 && accountIds.length === 0;
+  const loading = serverData.loading || fetching || scopePending;
   const hasError = fetchError || serverData.error;
   let body: ReactNode;
   if (hasError) {

@@ -311,7 +311,9 @@ export default function DashboardOverviewPage() {
     );
   }
 
-  if (loading && !overview) {
+  const initialLoading = (loading && !overview) || (!overview && accounts.length > 0 && accountIds.length === 0);
+
+  if (initialLoading) {
     return (
       <div className="mx-auto flex w-full max-w-screen-2xl flex-col gap-5">
         {header}
