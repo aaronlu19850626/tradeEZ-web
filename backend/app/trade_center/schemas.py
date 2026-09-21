@@ -9,6 +9,24 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 PLATFORM_TZ = ZoneInfo("Asia/Shanghai")
 DAY_RE = r"\d{4}-\d{2}-\d{2}"
 
+ScoreDimensionKey = Literal["expectancy", "risk", "payoff", "recovery", "consistency", "winRate"]
+
+
+class ScoreDimensionOut(BaseModel):
+    key: ScoreDimensionKey
+    weight: float
+    raw: float | None
+    score: float
+
+
+class CompositeScoreOut(BaseModel):
+    insufficient: bool
+    sampleTrades: int
+    validR: int
+    total: float | None
+    dimensions: list[ScoreDimensionOut]
+    weakest: list[ScoreDimensionKey]
+
 
 def beijing_day(epoch_seconds: int) -> str:
     """Return the Beijing (UTC+8) calendar day for a UTC epoch."""
@@ -170,3 +188,68 @@ class TradePageOut(BaseModel):
 class BoundsOut(BaseModel):
     earliestDay: str | None
     latestDay: str | None
+
+
+class DayStatOut(BaseModel):
+    day: str
+    net: float
+    count: int
+    wins: int
+
+
+class OverviewStatsOut(BaseModel):
+    count: int
+    net: float
+    winners: int
+    losers: int
+    breakEven: int
+    winRate: float
+    profitFactor: float | None
+    avgWin: float | None
+    avgLoss: float | None
+    winDays: int
+    flatDays: int
+    lossDays: int
+    dayWinRate: float
+    days: list[DayStatOut]
+
+
+class DatePointOut(BaseModel):
+    date: str
+    label: str
+    value: float
+
+
+class DrawdownOut(BaseModel):
+    points: list[DatePointOut]
+    maxDrawdown: float
+
+
+class ConsistencyCellOut(BaseModel):
+    day: str
+    net: float
+    count: int
+    intensity: float
+
+
+class ConsistencyOut(BaseModel):
+    cells: list[ConsistencyCellOut]
+    weeks: list[str]
+
+
+class ScatterPointOut(BaseModel):
+    x: float
+    y: float
+
+
+class OverviewOut(BaseModel):
+    stats: OverviewStatsOut
+    score: CompositeScoreOut
+    cumulative: list[DatePointOut]
+    cumulativeRecent: list[DatePointOut]
+    drawdown: DrawdownOut
+    recent: list[TradeItem]
+    consistency: ConsistencyOut
+    timeEntry: list[ScatterPointOut]
+    timeExit: list[ScatterPointOut]
+    duration: list[ScatterPointOut]

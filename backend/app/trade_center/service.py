@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from datetime import date, datetime, timedelta
+
 from fastapi import HTTPException, status
 
 from app.db import DBConnection, DBRow
@@ -8,7 +10,16 @@ from . import repository
 from .cache import get_cached_items, put_cached_items
 from .schemas import (
     CalendarDayOut,
+    ConsistencyCellOut,
+    ConsistencyOut,
+    DatePointOut,
+    DayStatOut,
+    DrawdownOut,
     GroupOut,
+    OverviewOut,
+    OverviewStatsOut,
+    PLATFORM_TZ,
+    ScatterPointOut,
     SeriesPoint,
     BoundsOut,
     StatsOut,
@@ -19,6 +30,7 @@ from .schemas import (
     beijing_week_start,
     day_bounds,
 )
+from .score import composite_score
 
 SORT_FIELDS = {
     "closeTime",
@@ -320,6 +332,128 @@ def bounds(db: DBConnection, user: DBRow, flt: TradeFilter) -> BoundsOut:
     return BoundsOut(
         earliestDay=beijing_day(int(row["earliest_epoch"])),
         latestDay=beijing_day(int(row["latest_epoch"])),
+    )
+
+
+def _day_epoch(day: str) -> int:
+    return int(datetime.combine(date.fromisoformat(day), datetime.min.time(), tzinfo=PLATFORM_TZ).timestamp())
+
+
+def _add_days(day: str, offset: int) -> str:
+    return (date.fromisoformat(day) + timedelta(days=offset)).isoformat()
+
+
+def _overview_days(items: list[TradeItem]) -> list[DayStatOut]:
+    buckets: dict[str, dict] = {}
+    for item in items:
+        day = beijing_day(item.closeTime)
+        bucket = buckets.setdefault(day, {"net": 0.0, "count": 0, "wins": 0})
+        bucket["net"] = _round(bucket["net"] + item.netPnl)
+        bucket["count"] += 1
+        if item.netPnl > 0:
+            bucket["wins"] += 1
+    return [
+        DayStatOut(day=day, net=value["net"], count=value["count"], wins=value["wins"])
+        for day, value in sorted(buckets.items(), reverse=True)
+    ]
+
+
+def _overview_stats(items: list[TradeItem], days: list[DayStatOut]) -> OverviewStatsOut:
+    stats = compute_stats(items)
+    return OverviewStatsOut(
+        count=stats.count,
+        net=stats.net,
+        winners=stats.winners,
+        losers=stats.losers,
+        breakEven=stats.breakeven,
+        winRate=stats.winRate,
+        profitFactor=stats.profitFactor,
+        avgWin=stats.avgWin,
+        avgLoss=stats.avgLoss,
+        winDays=sum(1 for day in days if day.net > 0),
+        flatDays=sum(1 for day in days if day.net == 0),
+        lossDays=sum(1 for day in days if day.net < 0),
+        dayWinRate=(sum(1 for day in days if day.net > 0) / len(days)) if days else 0.0,
+        days=days,
+    )
+
+
+def _cumulative_points(items: list[TradeItem]) -> list[DatePointOut]:
+    daily: dict[str, float] = {}
+    for item in items:
+        day = beijing_day(item.closeTime)
+        daily[day] = daily.get(day, 0.0) + item.netPnl
+
+    running = 0.0
+    points: list[DatePointOut] = []
+    for day in sorted(daily):
+        running = _round(running + daily[day])
+        year, month, date_part = day.split("-")
+        points.append(DatePointOut(date=day, label=f"{month}/{date_part}/{year[2:]}", value=running))
+    return points
+
+
+def _drawdown_points(items: list[TradeItem]) -> DrawdownOut:
+    peak = 0.0
+    worst = 0.0
+    points = []
+    for point in _cumulative_points(items):
+        peak = max(peak, point.value)
+        value = _round(point.value - peak)
+        worst = min(worst, value)
+        points.append(DatePointOut(date=point.date, label=point.label, value=value))
+    return DrawdownOut(points=points, maxDrawdown=abs(worst))
+
+
+def _consistency(days: list[DayStatOut], latest_day: str | None) -> ConsistencyOut:
+    if not latest_day:
+        return ConsistencyOut(cells=[], weeks=[])
+    by_day = {day.day: day for day in days}
+    end_week = beijing_week_start(_day_epoch(latest_day))
+    weeks = [_add_days(end_week, -7 * index) for index in range(12, -1, -1)]
+    max_abs = max(1.0, max((abs(day.net) for day in days), default=1.0))
+    cells: list[ConsistencyCellOut] = []
+    for week in weeks:
+        for offset in range(7):
+            day = _add_days(week, offset)
+            if day > latest_day:
+                continue
+            entry = by_day.get(day)
+            cells.append(
+                ConsistencyCellOut(
+                    day=day,
+                    net=entry.net if entry else 0.0,
+                    count=entry.count if entry else 0,
+                    intensity=(min(1.0, abs(entry.net) / max_abs) * 0.6) if entry else 0.0,
+                )
+            )
+    return ConsistencyOut(cells=cells, weeks=weeks)
+
+
+def _beijing_hour(epoch: int) -> float:
+    day_seconds = 86_400
+    seconds = ((epoch + 8 * 3600) % day_seconds + day_seconds) % day_seconds
+    return seconds / 3600
+
+
+def overview(db: DBConnection, user: DBRow, flt: TradeFilter) -> OverviewOut:
+    items = _load_items(db, user, flt)
+    days = _overview_days(items)
+    latest_day = beijing_day(max(item.closeTime for item in items)) if items else None
+    recent_start = _add_days(latest_day, -29) if latest_day else None
+    recent_items = [item for item in items if recent_start and beijing_day(item.closeTime) >= recent_start]
+    recent = sorted(items, key=lambda item: (item.closeTime, item.id), reverse=True)[:8]
+    return OverviewOut(
+        stats=_overview_stats(items, days),
+        score=composite_score(items),
+        cumulative=_cumulative_points(items),
+        cumulativeRecent=_cumulative_points(recent_items),
+        drawdown=_drawdown_points(items),
+        recent=recent,
+        consistency=_consistency(days, latest_day),
+        timeEntry=[ScatterPointOut(x=_beijing_hour(item.openTime), y=item.netPnl) for item in items],
+        timeExit=[ScatterPointOut(x=_beijing_hour(item.closeTime), y=item.netPnl) for item in items],
+        duration=[ScatterPointOut(x=max(0.1, float(item.durationSec)), y=item.netPnl) for item in items],
     )
 
 

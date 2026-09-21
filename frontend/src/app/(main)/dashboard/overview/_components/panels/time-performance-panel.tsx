@@ -1,28 +1,23 @@
 "use client";
 
 import type { Locale } from "@/lib/i18n";
-import type { MockTrade } from "@/lib/tradesync/trades-mock";
 
-import { beijingHour, PerformanceScatterChart } from "./performance-scatter";
+import { PerformanceScatterChart } from "./performance-scatter";
+
+function formatHourLabel(hour: number): string {
+  return `${String(Math.floor(hour)).padStart(2, "0")}:${String(Math.floor((hour % 1) * 60)).padStart(2, "0")}`;
+}
 
 export function TimePerformanceChart({
-  trades,
+  points,
   basis,
   locale,
 }: {
-  trades: MockTrade[];
+  points: { x: number; y: number }[];
   basis: "entry" | "exit";
   locale: Locale;
 }) {
-  const data = trades.map((trade) => {
-    const epoch = basis === "entry" ? trade.openTime : trade.closeTime;
-    const hour = beijingHour(epoch);
-    return {
-      x: hour,
-      y: trade.netPnl,
-      label: `${String(Math.floor(hour)).padStart(2, "0")}:${String(Math.floor((hour % 1) * 60)).padStart(2, "0")}`,
-    };
-  });
+  const data = points.map((point) => ({ ...point, label: formatHourLabel(point.x) }));
   const timeTicks = Array.from({ length: 13 }, (_, index) => index * 2);
   const timeTickLabel = (value: number) => (value === 24 ? "0:00" : `${Math.round(value)}:00`);
 

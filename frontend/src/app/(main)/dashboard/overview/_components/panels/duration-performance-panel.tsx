@@ -1,19 +1,11 @@
 "use client";
 
 import type { Locale } from "@/lib/i18n";
-import type { MockTrade } from "@/lib/tradesync/trades-mock";
 
 import { durationTicks, formatDurationAxis, PerformanceScatterChart } from "./performance-scatter";
 
-export function DurationPerformanceChart({ trades, locale }: { trades: MockTrade[]; locale: Locale }) {
-  const data = trades.map((trade) => {
-    const duration = Math.max(0.1, trade.durationSec);
-    return {
-      x: duration,
-      y: trade.netPnl,
-      label: formatDurationAxis(duration),
-    };
-  });
+export function DurationPerformanceChart({ points, locale }: { points: { x: number; y: number }[]; locale: Locale }) {
+  const data = points.map((point) => ({ ...point, label: formatDurationAxis(point.x) }));
   const minimum = Math.min(...data.map((point) => point.x), 0.1);
   const maximum = Math.max(...data.map((point) => point.x), 1);
   const ticks = durationTicks(minimum, maximum);

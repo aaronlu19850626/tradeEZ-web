@@ -1,4 +1,5 @@
 import { apiFetch } from "./api";
+import type { ScoreDimensionKey } from "./trade-score";
 import type { MockTrade, TradeSide, TradeStats } from "./trades-mock";
 
 /** Account shape the trade-center page uses for the page-level scope selector. */
@@ -72,6 +73,75 @@ export interface CalendarDayRecord {
   count: number;
 }
 
+export interface OverviewDayRecord {
+  day: string;
+  net: number;
+  count: number;
+  wins: number;
+}
+
+export interface OverviewPointRecord {
+  date: string;
+  label: string;
+  value: number;
+}
+
+export interface OverviewScoreDimensionRecord {
+  key: ScoreDimensionKey;
+  weight: number;
+  raw: number | null;
+  score: number;
+}
+
+export interface OverviewScoreRecord {
+  insufficient: boolean;
+  sampleTrades: number;
+  validR: number;
+  total: number | null;
+  dimensions: OverviewScoreDimensionRecord[];
+  weakest: ScoreDimensionKey[];
+}
+
+export interface OverviewConsistencyCellRecord {
+  day: string;
+  net: number;
+  count: number;
+  intensity: number;
+}
+
+export interface OverviewScatterPointRecord {
+  x: number;
+  y: number;
+}
+
+export interface TradeOverviewRecord {
+  stats: {
+    count: number;
+    net: number;
+    winners: number;
+    losers: number;
+    breakEven: number;
+    winRate: number;
+    profitFactor: number | null;
+    avgWin: number | null;
+    avgLoss: number | null;
+    winDays: number;
+    flatDays: number;
+    lossDays: number;
+    dayWinRate: number;
+    days: OverviewDayRecord[];
+  };
+  score: OverviewScoreRecord;
+  cumulative: OverviewPointRecord[];
+  cumulativeRecent: OverviewPointRecord[];
+  drawdown: { points: OverviewPointRecord[]; maxDrawdown: number };
+  recent: TradeRecord[];
+  consistency: { cells: OverviewConsistencyCellRecord[]; weeks: string[] };
+  timeEntry: OverviewScatterPointRecord[];
+  timeExit: OverviewScatterPointRecord[];
+  duration: OverviewScatterPointRecord[];
+}
+
 export interface TradeListParams {
   accountIds?: string[];
   fromDay?: string;
@@ -137,6 +207,7 @@ export function toTrade(record: TradeRecord): MockTrade {
 export const tradeCenterApi = {
   list: (params: TradeListParams = {}) => apiFetch<TradePage>(`/trades${toQuery(params)}`),
   summary: (params: TradeListParams = {}) => apiFetch<TradeSummaryRecord>(`/trades/summary${toQuery(params)}`),
+  overview: (params: TradeListParams = {}) => apiFetch<TradeOverviewRecord>(`/trades/overview${toQuery(params)}`),
   groups: (params: TradeListParams & { view: "day" | "week"; limit?: number; offset?: number }) => {
     const query = new URLSearchParams();
     query.set("view", params.view);

@@ -19,49 +19,61 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useLocale } from "@/lib/i18n";
 import { dashboardText } from "@/lib/tradesync/dashboard-i18n";
-import { type CompositeScore, compositeScore } from "@/lib/tradesync/trade-score";
-import { addDays, shanghaiDayKey } from "@/lib/tradesync/trades-mock";
-import { useTradeData } from "@/lib/tradesync/use-trade-data";
+import { toTrade } from "@/lib/tradesync/trade-center";
+import type { CompositeScore } from "@/lib/tradesync/trade-score";
+import type { DayGroup } from "@/lib/tradesync/trades-mock";
 
-import {
-  buildOverviewStats,
-  cumulativePoints,
-  drawdownPoints,
-  groupByDay,
-  money,
-  percent,
-  tone,
-} from "../_lib/overview-data";
+import { useTradeOverviewData } from "../_hooks/use-trade-overview-data";
+import type { OverviewStats } from "../_lib/overview-data";
 import { OverviewHeader } from "./overview-header";
 import { OverviewMetrics } from "./overview-metrics";
 import { OverviewToolbar } from "./overview-toolbar";
 import {
-  AvgWinLossBar,
-  buildConsistency,
   buildMonth,
   ConsistencyHeatmap,
-  CountPills,
   CumulativeChart,
   DailyChart,
   DayTradesDialog,
   DrawdownChart,
   DurationPerformanceChart,
-  MetricTile,
   MonthCalendar,
   Panel,
   RecentTrades,
   ScoreDialog,
   ScoreRadar,
-  SemiGauge,
-  ShareRing,
   shiftMonth,
   TimePerformanceChart,
 } from "./panels";
 
+const EMPTY_STATS: OverviewStats = {
+  count: 0,
+  net: 0,
+  winners: 0,
+  losers: 0,
+  breakEven: 0,
+  winRate: 0,
+  profitFactor: null,
+  avgWin: null,
+  avgLoss: null,
+  winDays: 0,
+  flatDays: 0,
+  lossDays: 0,
+  dayWinRate: 0,
+  days: [],
+};
+
+const EMPTY_SCORE: CompositeScore = {
+  insufficient: true,
+  sampleTrades: 0,
+  validR: 0,
+  total: null,
+  dimensions: [],
+  weakest: [],
+};
+
 export default function DashboardOverviewPage() {
   const locale = useLocale();
   const t = dashboardText[locale];
-  const { accounts, trades, fetching, fetchError, reload } = useTradeData();
 
   const [accountIds, setAccountIds] = useState<string[]>([]);
   const [range, setRange] = useState({ from: "", to: "" });
@@ -73,12 +85,22 @@ export default function DashboardOverviewPage() {
   const [scoreOpen, setScoreOpen] = useState(false);
   const [cumulativeOpen, setCumulativeOpen] = useState(false);
   const [calendarDay, setCalendarDay] = useState<string | null>(null);
+  const [dayGroup, setDayGroup] = useState<DayGroup | null>(null);
   const [cursor, setCursor] = useState<string | null>(null);
   const [filterRefreshing, setFilterRefreshing] = useState(false);
   const toolbarRef = useRef<HTMLDivElement>(null);
   const [toolbarStuck, setToolbarStuck] = useState(false);
   const firstFilterRender = useRef(true);
   const currencyUserTouched = useRef(false);
+
+  const { accounts, bounds, error, loading, overview, reload, symbols, loadDayGroup } = useTradeOverviewData({
+    accountIds,
+    range,
+    side,
+    result,
+    currency,
+    selectedSymbols,
+  });
 
   const statisticsAccounts = useMemo(() => accounts.filter((account) => account.isStatistics), [accounts]);
   const scopeDefaults = useMemo(
@@ -98,33 +120,12 @@ export default function DashboardOverviewPage() {
     setAccountIds([...scopeDefaults]);
   }, [accounts, scopeDefaults]);
 
-  const latestDay = useMemo(
-    () => (trades?.length ? shanghaiDayKey(Math.max(...trades.map((trade) => trade.closeTime))) : ""),
-    [trades],
-  );
-  const earliestDay = useMemo(
-    () => (trades?.length ? shanghaiDayKey(Math.min(...trades.map((trade) => trade.closeTime))) : ""),
-    [trades],
-  );
+  const latestDay = bounds.latestDay ?? "";
+  const earliestDay = bounds.earliestDay ?? "";
 
   useEffect(() => {
-    if (trades?.length && range.from === "") setRange({ from: earliestDay, to: latestDay });
-  }, [trades, earliestDay, latestDay, range.from]);
-
-  const filtered = useMemo(() => {
-    const list = trades ?? [];
-    return list.filter((trade) => {
-      if (!accountIds.includes(trade.accountId)) return false;
-      const day = shanghaiDayKey(trade.closeTime);
-      if (range.from && (day < range.from || day > range.to)) return false;
-      if (side !== "all" && trade.side !== side) return false;
-      if (result === "win" && trade.netPnl <= 0) return false;
-      if (result === "loss" && trade.netPnl >= 0) return false;
-      if (currency !== "all" && trade.currency !== currency) return false;
-      if (selectedSymbols.length > 0 && !selectedSymbols.includes(trade.symbol)) return false;
-      return true;
-    });
-  }, [trades, accountIds, range, side, result, currency, selectedSymbols]);
+    if (latestDay && range.from === "") setRange({ from: earliestDay, to: latestDay });
+  }, [earliestDay, latestDay, range.from]);
 
   const filterKey = [
     accountIds.join(","),
@@ -146,20 +147,11 @@ export default function DashboardOverviewPage() {
     return () => window.clearTimeout(timer);
   }, [filterKey]);
 
-  const stats = useMemo(() => buildOverviewStats(filtered), [filtered]);
-
-  const score = useMemo<CompositeScore>(() => compositeScore(filtered), [filtered]);
-  const cumulativeFull = useMemo(() => cumulativePoints(filtered), [filtered]);
-  const cumulativeLatestDay = useMemo(
-    () => (filtered.length > 0 ? shanghaiDayKey(Math.max(...filtered.map((trade) => trade.closeTime))) : ""),
-    [filtered],
-  );
-  const cumulativeRecent = useMemo(() => {
-    if (!cumulativeLatestDay) return [];
-    const fromDay = addDays(cumulativeLatestDay, -29);
-    return cumulativePoints(filtered.filter((trade) => shanghaiDayKey(trade.closeTime) >= fromDay));
-  }, [filtered, cumulativeLatestDay]);
-  const drawdown = useMemo(() => drawdownPoints(filtered), [filtered]);
+  const stats: OverviewStats = overview?.stats ?? EMPTY_STATS;
+  const score: CompositeScore = overview?.score ?? EMPTY_SCORE;
+  const cumulativeFull = overview?.cumulative ?? [];
+  const cumulativeRecent = overview?.cumulativeRecent ?? [];
+  const drawdown = overview?.drawdown ?? { points: [], maxDrawdown: 0 };
   const scoreRadar = useMemo(
     () =>
       score.dimensions.map((dimension) => ({
@@ -168,15 +160,13 @@ export default function DashboardOverviewPage() {
       })),
     [score.dimensions],
   );
-  const recent = useMemo(() => [...filtered].sort((a, b) => b.closeTime - a.closeTime).slice(0, 8), [filtered]);
+  const recent = useMemo(() => (overview?.recent ?? []).map(toTrade), [overview]);
 
   const monthKey = cursor ?? (latestDay ? latestDay.slice(0, 7) : "");
   const calendar = useMemo(() => buildMonth(monthKey, stats.days), [monthKey, stats.days]);
-  const consistency = useMemo(() => buildConsistency(stats.days, latestDay), [stats.days, latestDay]);
+  const consistency = overview?.consistency ?? { cells: [], weeks: [] };
 
-  const loading = fetching || trades === null;
   const toolbarBusy = loading || filterRefreshing;
-  const symbols = useMemo(() => [...new Set((trades ?? []).map((trade) => trade.symbol))].sort(), [trades]);
   const currencies = useMemo(
     () =>
       [
@@ -190,18 +180,6 @@ export default function DashboardOverviewPage() {
     [accounts, accountIds],
   );
   const currencyOptionsLocked = currencies.length > 1;
-  const tradedCurrencies = useMemo(
-    () =>
-      [
-        ...new Set(
-          (trades ?? [])
-            .filter((trade) => accountIds.includes(trade.accountId))
-            .map((trade) => trade.currency)
-            .filter(Boolean) as string[],
-        ),
-      ].sort(),
-    [trades, accountIds],
-  );
 
   useEffect(() => {
     if (currencies.length === 0) {
@@ -213,9 +191,9 @@ export default function DashboardOverviewPage() {
       return;
     }
     if (currency === "all" || !currencies.includes(currency)) {
-      setCurrency(tradedCurrencies.includes("USD") ? "USD" : (tradedCurrencies[0] ?? currencies[0]));
+      setCurrency(currencies.includes("USD") ? "USD" : currencies[0]);
     }
-  }, [currencies, tradedCurrencies, currency]);
+  }, [currencies, currency]);
 
   const applyCurrency = (value: string) => {
     currencyUserTouched.current = true;
@@ -230,9 +208,24 @@ export default function DashboardOverviewPage() {
   }, [accounts, accountIds]);
 
   const refreshData = () => {
-    if (fetching) return;
-    // Manual refresh reloads accounts and all trades; filters stay as they are.
+    if (loading) return;
     void reload();
+  };
+
+  const openCalendarDay = async (day: string) => {
+    setCalendarDay(day);
+    setDayGroup(null);
+    try {
+      const group = await loadDayGroup(day);
+      setDayGroup(group);
+    } catch {
+      setDayGroup(null);
+    }
+  };
+
+  const closeCalendarDay = () => {
+    setCalendarDay(null);
+    setDayGroup(null);
   };
 
   useEffect(() => {
@@ -269,7 +262,7 @@ export default function DashboardOverviewPage() {
       toolbarRef={toolbarRef}
       toolbarStuck={toolbarStuck}
       busy={toolbarBusy}
-      fetching={fetching}
+      fetching={loading}
       lastUpdatedAt={lastUpdatedAt}
       onRefresh={refreshData}
       side={side}
@@ -302,7 +295,7 @@ export default function DashboardOverviewPage() {
     />
   );
 
-  if (fetchError) {
+  if (error) {
     return (
       <div className="mx-auto flex w-full max-w-screen-2xl flex-col gap-5">
         {header}
@@ -318,7 +311,7 @@ export default function DashboardOverviewPage() {
     );
   }
 
-  if (loading) {
+  if (loading && !overview) {
     return (
       <div className="mx-auto flex w-full max-w-screen-2xl flex-col gap-5">
         {header}
@@ -342,11 +335,13 @@ export default function DashboardOverviewPage() {
     );
   }
 
+  const empty = stats.count === 0;
+
   return (
     <div className="relative mx-auto flex w-full max-w-screen-2xl flex-col gap-5">
       {header}
       {toolbar}
-      {filtered.length === 0 ? (
+      {empty ? (
         <SyncEmptyState
           title={t.emptyTitle}
           description={t.emptyDescription}
@@ -427,7 +422,7 @@ export default function DashboardOverviewPage() {
                 calendar={calendar}
                 onShiftMonth={(delta) => setCursor(shiftMonth(monthKey, delta))}
                 onThisMonth={() => setCursor(latestDay.slice(0, 7))}
-                onOpenDay={setCalendarDay}
+                onOpenDay={openCalendarDay}
               />
             </Panel>
             <Panel
@@ -459,10 +454,14 @@ export default function DashboardOverviewPage() {
                 </DropdownMenu>
               }
             >
-              <TimePerformanceChart trades={filtered} basis={timeBasis} locale={locale} />
+              <TimePerformanceChart
+                points={(timeBasis === "entry" ? overview?.timeEntry : overview?.timeExit) ?? []}
+                basis={timeBasis}
+                locale={locale}
+              />
             </Panel>
             <Panel t={t} titleKey="durationTitle" tipKey="durationTip" bodyClassName="justify-center">
-              <DurationPerformanceChart trades={filtered} locale={locale} />
+              <DurationPerformanceChart points={overview?.duration ?? []} locale={locale} />
             </Panel>
           </div>
         </>
@@ -478,7 +477,7 @@ export default function DashboardOverviewPage() {
         loadingText={t.cumulativeHistoryLoading}
         locale={locale}
       />
-      <DayTradesDialog locale={locale} day={calendarDay} trades={filtered} onClose={() => setCalendarDay(null)} />
+      <DayTradesDialog locale={locale} day={calendarDay ? dayGroup : null} onClose={closeCalendarDay} />
     </div>
   );
 }

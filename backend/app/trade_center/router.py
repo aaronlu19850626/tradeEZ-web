@@ -10,6 +10,7 @@ from .schemas import (
     CalendarDayOut,
     BoundsOut,
     GroupOut,
+    OverviewOut,
     SummaryOut,
     TradeFilter,
     TradePageOut,
@@ -39,6 +40,15 @@ def summary(
     user: DBRow = Depends(get_current_user),
 ) -> SummaryOut:
     return service.summary(db, user, flt)
+
+
+@router.get("/api/v1/trades/overview", response_model=OverviewOut)
+def overview(
+    flt: TradeFilter = Depends(),
+    db: DBConnection = Depends(get_db),
+    user: DBRow = Depends(get_current_user),
+) -> OverviewOut:
+    return service.overview(db, user, flt)
 
 
 @router.get("/api/v1/trades/groups", response_model=list[GroupOut])

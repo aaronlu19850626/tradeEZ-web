@@ -193,6 +193,28 @@ def test_summary_stats(client, db):
     assert body["series"][-1]["value"] == 115.0
 
 
+def test_overview_aggregates_server_side(client, db):
+    headers = web_headers(db, "trade-overview@example.com")
+    account = create_account(client, headers, 921030)
+    _add_symbol(db, 921030)
+    deals = _closed_trade(account, 921031, "2026-09-14", "2026-09-15", profit=100.0)
+    deals += _closed_trade(account, 921032, "2026-09-15", "2026-09-16", profit=50.0)
+    deals += _closed_trade(account, 921033, "2026-09-16", "2026-09-17", side=1, profit=-20.0)
+    _ingest(client, account["sync_key"], 921030, deals)
+
+    body = client.get("/api/v1/trades/overview", headers=headers).json()
+    assert body["stats"]["count"] == 3
+    assert body["stats"]["net"] == 115.0
+    assert body["stats"]["days"][0]["day"] == "2026-09-17"
+    assert len(body["recent"]) == 3
+    assert body["recent"][0]["closeTime"] > body["recent"][1]["closeTime"]
+    assert body["cumulative"][-1]["value"] == 115.0
+    assert body["cumulativeRecent"][-1]["value"] == 115.0
+    assert body["drawdown"]["maxDrawdown"] == 25.0
+    assert len(body["consistency"]["weeks"]) == 13
+    assert len(body["timeEntry"]) == 3 and len(body["timeExit"]) == 3 and len(body["duration"]) == 3
+
+
 def test_filters_and_range(client, db):
     headers = web_headers(db, "trade-filters@example.com")
     account = create_account(client, headers, 921003)
