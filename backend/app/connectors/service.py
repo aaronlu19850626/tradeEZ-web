@@ -7,6 +7,7 @@ import secrets
 from app.db import DBConnection, DBRow
 from app.v2_models import ApiError
 from app.config import get_settings
+from app.timekeeping import schedule_timezone_backfill
 
 from . import repository
 from .normalizers import normalize_mt5_event
@@ -82,6 +83,10 @@ def cursor(connection_id: str, account: DBRow, db: DBConnection) -> CursorOut:
     row = repository.find_by_id(db, connection_id, int(account["id"]))
     if row is None:
         raise ApiError(code="CONNECTION_NOT_FOUND", message="Connector connection was not found", status_code=404)
+    if schedule_timezone_backfill(db, account):
+        db.commit()
+        row = repository.find_by_id(db, connection_id, int(account["id"]))
+        account = db.execute("SELECT * FROM accounts WHERE id = %s", (account["id"],)).fetchone()
     _acknowledge_resync(db, account)
     return _cursor(row, account)
 

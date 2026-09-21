@@ -5,7 +5,7 @@ from app.db import DBConnection, DBRow
 import json
 import hmac
 from ..common.encoding import utc_now_iso, canonical_json, deal_identity, raw_deal_identity, sha256_hex
-from ..timekeeping import resolve_trade_times
+from ..timekeeping import resolve_trade_times, update_deal_time_metadata
 from ..v2_models import ApiError, IngestDealsRequest
 from .policies import ensure_account_active
 
@@ -251,6 +251,17 @@ def store_deal_batch(
                 # and count as rejected rather than silently rewriting history.
                 rejected += 1
             else:
+                update_deal_time_metadata(
+                    db,
+                    account_login=payload.mt5_login,
+                    ticket=deal.ticket,
+                    resolved_open=resolved_open,
+                    resolved_deal=resolved_deal,
+                    timezone_profile_id=timezone_profile_id,
+                    server_open_time=deal.server_open_time,
+                    server_deal_time=deal.server_deal_time,
+                    server_gmt_offset=deal.server_gmt_offset,
+                )
                 duplicated += 1
         db.execute(
             """

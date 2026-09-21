@@ -10,7 +10,12 @@ import time
 from .policies import ensure_account_active
 from ..common.encoding import utc_now_iso, canonical_json, deal_identity, raw_deal_identity, sha256_hex
 from ..config import get_settings
-from ..timekeeping import observe_timezone_candidate, resolve_trade_times
+from ..timekeeping import (
+    observe_timezone_candidate,
+    resolve_trade_times,
+    schedule_timezone_backfill,
+    update_deal_time_metadata,
+)
 from .repository import begin_account_write, ensure_unique_tickets, upsert_ea_instance, start_sync_run, get_open_sync_run, validate_batch_envelope, refresh_run_totals, store_deal_batch
 from ..v2_models import (
     AccountRequest,
@@ -41,6 +46,8 @@ settings = get_settings()
 def get_last_sync_time(payload: AccountRequest, account: DBRow, db: DBConnection) -> LastSyncTimeResponse:
     try:
         account = begin_account_write(db, account)
+        if schedule_timezone_backfill(db, account):
+            account = db.execute("SELECT * FROM accounts WHERE id = %s", (account["id"],)).fetchone()
         # The handshake is how a client learns the current window, so it is also
         # the point where a pending date-based reset counts as acknowledged. A
         # cycle that uploaded/confirmed without a new handshake is therefore a
@@ -157,6 +164,17 @@ def ingest_deals_v21(payload: IngestDealsRequest, account: DBRow, db: DBConnecti
                     # the first value and count as rejected.
                     rejected += 1
                 else:
+                    update_deal_time_metadata(
+                        db,
+                        account_login=payload.mt5_login,
+                        ticket=deal.ticket,
+                        resolved_open=resolved_open,
+                        resolved_deal=resolved_deal,
+                        timezone_profile_id=timezone_profile_id,
+                        server_open_time=deal.server_open_time,
+                        server_deal_time=deal.server_deal_time,
+                        server_gmt_offset=deal.server_gmt_offset,
+                    )
                     duplicates += 1
             result = {
                 "accepted": len(payload.deals),

@@ -47,7 +47,20 @@ def normalize_mt5_event(account: DBRow, event_type: str, data: dict, db: DBConne
                 open_time, deal_time, server_gmt_off, raw_json,
                 server_open_time, server_deal_time, timezone_profile_id, time_normalized_at
             ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, now_iso())
-            ON CONFLICT (account_login, ticket) DO NOTHING
+            ON CONFLICT (account_login, ticket) DO UPDATE SET
+                server_open_time=COALESCE(deals.server_open_time, excluded.server_open_time),
+                server_deal_time=COALESCE(deals.server_deal_time, excluded.server_deal_time),
+                timezone_profile_id=COALESCE(excluded.timezone_profile_id, deals.timezone_profile_id),
+                open_time=CASE
+                    WHEN excluded.timezone_profile_id IS NOT NULL OR deals.server_deal_time IS NULL
+                    THEN excluded.open_time ELSE deals.open_time END,
+                deal_time=CASE
+                    WHEN excluded.timezone_profile_id IS NOT NULL OR deals.server_deal_time IS NULL
+                    THEN excluded.deal_time ELSE deals.deal_time END,
+                server_gmt_off=CASE
+                    WHEN excluded.server_gmt_off <> 0 THEN excluded.server_gmt_off
+                    ELSE deals.server_gmt_off END,
+                time_normalized_at=now_iso()
             """,
             (
                 login,
