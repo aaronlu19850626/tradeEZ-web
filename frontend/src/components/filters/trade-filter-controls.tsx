@@ -462,31 +462,20 @@ export function AccountScopeMenu({
 
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
-      <InputGroup className="h-8 max-w-64">
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            className={`h-full min-w-0 flex-1 justify-start rounded-none border-0 px-2.5 shadow-none hover:bg-transparent aria-expanded:bg-transparent ${
-              isDefaultScope ? "font-semibold text-muted-foreground" : "font-semibold text-foreground"
-            }`}
-          >
-            <span className="min-w-0 flex-1 truncate text-left">
-              {t.accountScopeTitle} · {accountLabel}
-            </span>
-          </Button>
-        </DropdownMenuTrigger>
-        <InputGroupAddon align="inline-end" className="pl-0 pr-1">
-          <InputGroupButton
-            variant="ghost"
-            size="icon-xs"
-            aria-label={t.accountScopeTitle}
-            aria-expanded={open}
-            onClick={() => setOpen((current) => !current)}
-          >
-            {open ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
-          </InputGroupButton>
-        </InputGroupAddon>
-      </InputGroup>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="outline"
+          size="sm"
+          className={`h-8 w-auto gap-2 px-2.5 text-sm leading-none ${
+            isDefaultScope ? "font-semibold text-muted-foreground" : "font-semibold text-foreground"
+          }`}
+        >
+          <span className="min-w-0 whitespace-nowrap">
+            {t.accountScopeTitle} · {accountLabel}
+          </span>
+          {open ? <ChevronUp className="size-3.5 opacity-50" /> : <ChevronDown className="size-3.5 opacity-50" />}
+        </Button>
+      </DropdownMenuTrigger>
       <DropdownMenuContent align="end" sideOffset={6} className="w-64 rounded-lg p-1">
         <MultiOption
           label={t.accountScopeAll}
