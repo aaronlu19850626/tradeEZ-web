@@ -110,7 +110,7 @@ export function WeekGroupCard({
         {tableOpen && (
           <div className="overflow-hidden rounded-lg border">
             {tradesLoading && group.trades.length === 0 ? (
-              <LoadingWave t={t} />
+              <LoadingWave title={t.loadingTitle} description={t.loadingDescription} />
             ) : (
               <TradeTable trades={group.trades} columns={columns} t={t} locale={locale} compact />
             )}

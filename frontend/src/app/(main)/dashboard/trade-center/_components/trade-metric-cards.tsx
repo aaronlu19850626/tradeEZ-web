@@ -410,7 +410,7 @@ export function DayTrendChart({
             stroke={LINE_COLOR}
             strokeWidth={1.6}
             dot={false}
-            activeDot={{ r: 4.5, fill: LINE_COLOR, stroke: "#fff", strokeWidth: 2 }}
+            activeDot={{ r: 4.5, fill: LINE_COLOR, stroke: "var(--card)", strokeWidth: 2 }}
             isAnimationActive={false}
           />
         </ComposedChart>

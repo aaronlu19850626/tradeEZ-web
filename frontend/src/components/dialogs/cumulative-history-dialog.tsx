@@ -14,18 +14,12 @@ import {
 
 import { DialogBody, DialogContent } from "@/components/dialogs/dialog-content";
 import { useDisplayCurrency } from "@/components/shared/display-currency-provider";
+import { LoadingWave } from "@/components/shared/loading-wave";
 import { useMarketColorProfile } from "@/components/shared/market-color-provider";
 import { Dialog, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { formatMoney } from "@/lib/format-numbers";
 import type { Locale } from "@/lib/i18n";
-import { MARKET_COLOR_FALLBACKS, readMarketColor } from "@/lib/market-colors";
-
-const LINE_LIGHT = "#6b4fc4";
-const LINE_DARK = "#8b6de8";
-const GRID_LIGHT = "#e3dfed";
-const GRID_DARK = "#352e46";
-const TEXT_LIGHT = "#6f6a7d";
-const TEXT_DARK = "#aaa4ba";
+import { MARKET_COLOR_FALLBACKS, readMarketColor, UI_COLOR_FALLBACKS } from "@/lib/market-colors";
 
 function withAlpha(hex: string, alpha: number): string {
   const normalized = hex.replace("#", "");
@@ -81,13 +75,12 @@ export function CumulativeHistoryDialog({
     setReady(false);
     let chart: IChartApi | null = null;
     const frame = requestAnimationFrame(() => {
-      const dark = document.documentElement.classList.contains("dark");
       const fallback = marketProfile === "cn" ? MARKET_COLOR_FALLBACKS.cn : MARKET_COLOR_FALLBACKS.fx;
       const profit = readMarketColor("--profit-strong", fallback.profitStrong);
       const loss = readMarketColor("--loss-strong", fallback.lossStrong);
-      const line = dark ? LINE_DARK : LINE_LIGHT;
-      const grid = dark ? GRID_DARK : GRID_LIGHT;
-      const text = dark ? TEXT_DARK : TEXT_LIGHT;
+      const line = readMarketColor("--primary", UI_COLOR_FALLBACKS.primary);
+      const grid = readMarketColor("--border", UI_COLOR_FALLBACKS.border);
+      const text = readMarketColor("--muted-foreground", UI_COLOR_FALLBACKS.mutedForeground);
       chart = createChart(host, {
         autoSize: true,
         layout: {
@@ -171,18 +164,7 @@ export function CumulativeHistoryDialog({
             <div ref={hostRef} className="h-full w-full" />
             {!ready && (
               <div className="absolute inset-0 grid place-items-center bg-popover">
-                <div className="flex flex-col items-center gap-3 text-sm text-muted-foreground">
-                  <div className="flex h-10 items-center gap-1.5" aria-hidden>
-                    {[0, 1, 2, 3].map((index) => (
-                      <span
-                        key={index}
-                        className="tradeez-loading-bar h-10 w-2 rounded-full bg-primary"
-                        style={{ animationDelay: `${(-index * 1.45) / 4}s` }}
-                      />
-                    ))}
-                  </div>
-                  <span>{loadingText}</span>
-                </div>
+                <LoadingWave title={loadingText} compact />
               </div>
             )}
           </div>

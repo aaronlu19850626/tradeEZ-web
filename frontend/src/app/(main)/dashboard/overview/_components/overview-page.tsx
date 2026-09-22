@@ -9,6 +9,7 @@ import { CumulativeHistoryDialog } from "@/components/dialogs/cumulative-history
 import type { ResultFilter, SideFilter } from "@/components/filters/trade-filter-controls";
 import { PanelAction, PanelIconAction, PanelMenuTrigger } from "@/components/shared/dashboard-actions";
 import { DisplayCurrencyProvider } from "@/components/shared/display-currency-provider";
+import { LoadingWave } from "@/components/shared/loading-wave";
 import { MarketColorProvider } from "@/components/shared/market-color-provider";
 import { SyncEmptyState } from "@/components/shared/sync-empty-state";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -370,21 +371,7 @@ export default function DashboardOverviewPage() {
           <div className="mx-auto flex w-full max-w-screen-2xl flex-col gap-5">
             {header}
             {toolbar}
-            <div className="flex flex-col items-center justify-center gap-6 py-24">
-              <div className="flex h-16 items-center gap-2" aria-hidden>
-                {[0, 1, 2, 3, 4].map((index) => (
-                  <span
-                    key={index}
-                    className="tradeez-loading-bar h-16 w-3 rounded-full bg-primary"
-                    style={{ animationDelay: `${(-index * 1.45) / 5}s` }}
-                  />
-                ))}
-              </div>
-              <div className="text-center">
-                <p className="font-semibold text-xl">{t.loadingTitle}</p>
-                <p className="mt-1.5 text-sm text-muted-foreground">{t.loadingDescription}</p>
-              </div>
-            </div>
+            <LoadingWave title={t.loadingTitle} description={t.loadingDescription} />
           </div>
         </MarketColorProvider>
       </DisplayCurrencyProvider>

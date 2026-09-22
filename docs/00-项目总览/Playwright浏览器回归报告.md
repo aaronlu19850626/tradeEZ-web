@@ -65,7 +65,7 @@ npx playwright test --project=mobile
 - 失败：0
 - 跳过：0
 - 不稳定：0
-- 总耗时：约 174 秒
+- 总耗时：约 180 秒
 
 分层结果：
 

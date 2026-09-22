@@ -290,7 +290,7 @@ export default function TradeCenterPage() {
   if (hasError) {
     body = <ErrorPanel t={t} onRetry={() => void loadData()} />;
   } else if (loading) {
-    body = <LoadingWave t={t} />;
+    body = <LoadingWave title={t.loadingTitle} description={t.loadingDescription} />;
   } else if (accountIds.length === 0) {
     body = <NoAccountsPanel t={t} />;
   } else if (view === "all") {
