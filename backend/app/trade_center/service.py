@@ -8,7 +8,13 @@ from fastapi import HTTPException, status
 from app.db import DBConnection, DBRow
 
 from . import repository
-from .cache import get_cached_items, get_cached_object, put_cached_items, put_cached_object
+from .cache import (
+    get_cached_items,
+    get_cached_object,
+    get_or_set_object,
+    put_cached_items,
+    put_cached_object,
+)
 from .schemas import (
     CalendarDayOut,
     ConsistencyCellOut,
@@ -753,14 +759,11 @@ def _downsample_points(points: list[ScatterPointOut], limit: int = 2000) -> list
     return [points[index] for index in sorted(selected)]
 
 
-def overview(db: DBConnection, user: DBRow, flt: TradeFilter) -> OverviewOut:
+def _compute_overview(db: DBConnection, user: DBRow, flt: TradeFilter) -> OverviewOut:
     user_id = int(user["id"])
-    cached = get_cached_object(user_id, flt, "overview")
-    if isinstance(cached, OverviewOut):
-        return cached
     logins = _resolve_logins(db, user, flt.account_id_list())
     if not logins:
-        result = OverviewOut(
+        return OverviewOut(
             stats=_overview_stats_from_sql({}, []),
             score=composite_score([]),
             recent=[],
@@ -769,8 +772,6 @@ def overview(db: DBConnection, user: DBRow, flt: TradeFilter) -> OverviewOut:
             timeExit=[],
             duration=[],
         )
-        put_cached_object(user_id, flt, result, "overview")
-        return result
 
     from_epoch, to_epoch = day_bounds(flt.from_day, flt.to_day)
     row, day_rows, recent_rows = repository.fetch_trade_overview_sql(
@@ -851,8 +852,17 @@ def overview(db: DBConnection, user: DBRow, flt: TradeFilter) -> OverviewOut:
         timeExit=scatter["timeExit"],
         duration=scatter["duration"],
     )
-    put_cached_object(user_id, flt, result, "overview")
     return result
+
+
+def overview(db: DBConnection, user: DBRow, flt: TradeFilter) -> OverviewOut:
+    user_id = int(user["id"])
+    return get_or_set_object(
+        user_id,
+        flt,
+        "overview",
+        lambda: _compute_overview(db, user, flt),
+    )
 
 
 def symbols(db: DBConnection, user: DBRow, flt: TradeFilter) -> list[str]:
