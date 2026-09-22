@@ -4,7 +4,7 @@ import { useState } from "react";
 
 import { ChevronsDown, ChevronsUp, Columns3 } from "lucide-react";
 
-import { type SelectOption, SelectSingleControl } from "@/components/filters/filter-select-controls";
+import { type SelectOption, SelectSingleControl } from "@/components/filters";
 import {
   AccountScopeMenu,
   RangeControl,
