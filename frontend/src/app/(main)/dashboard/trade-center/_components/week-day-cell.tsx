@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import type { Locale } from "@/lib/i18n";
 import type { TradeCenterText } from "@/lib/tradesync/trade-center-i18n";
 
-import { formatMoney, formatWeekdayDate, toneClass, weekDayCellTone } from "../_lib/trade-center-model";
+import { formatStatMoney, formatWeekdayDate, toneClass, weekDayCellTone } from "../_lib/trade-center-model";
 
 export function WeekDayCell({
   day,
@@ -41,7 +41,7 @@ export function WeekDayCell({
       {!empty && (
         <>
           <span className={`text-lg font-semibold tabular-nums ${toneClass(day.net)}`}>
-            {formatMoney(day.net, locale)}
+            {formatStatMoney(day.net, locale)}
           </span>
           <span className="text-xs text-muted-foreground">
             {day.count} {t.tradesUnit}

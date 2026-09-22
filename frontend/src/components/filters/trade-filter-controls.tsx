@@ -215,14 +215,18 @@ export function RangeControl({
   }
 
   const prevMonthDay = addDays(monthStart(latestDay), -1);
-  const presets: { label: string; range: { from: string; to: string } }[] = [
+  const quickPresets: { label: string; range: { from: string; to: string } }[] = [
     { label: t.presetAllDates, range: { from: earliestDay, to: latestDay } },
     { label: t.presetToday, range: { from: latestDay, to: latestDay } },
     { label: t.presetThisWeek, range: { from: shanghaiWeekStart(dayKeyToEpoch(latestDay)), to: latestDay } },
-    { label: t.presetThisMonth, range: { from: monthStart(latestDay), to: latestDay } },
+    {
+      label: t.presetLastWeek,
+      range: {
+        from: addDays(shanghaiWeekStart(dayKeyToEpoch(latestDay)), -7),
+        to: addDays(shanghaiWeekStart(dayKeyToEpoch(latestDay)), -1),
+      },
+    },
     { label: t.presetLast30, range: { from: addDays(latestDay, -29), to: latestDay } },
-    { label: t.presetLastMonth, range: { from: monthStart(prevMonthDay), to: monthEnd(prevMonthDay) } },
-    { label: t.presetThisQuarter, range: { from: quarterStart(latestDay), to: latestDay } },
     { label: t.presetYtd, range: { from: `${latestDay.slice(0, 4)}-01-01`, to: latestDay } },
   ];
   const recentMonths: { label: string; range: { from: string; to: string } }[] = Array.from(
@@ -232,6 +236,21 @@ export function RangeControl({
       return {
         label: formatMonthLabel(key, locale),
         range: { from: `${key}-01`, to: monthEnd(key) },
+      };
+    },
+  );
+  const recentQuarters: { label: string; range: { from: string; to: string } }[] = Array.from(
+    { length: 6 },
+    (_, index) => {
+      const startMonth = monthKeyShift(
+        `${latestDay.slice(0, 4)}-${String(Math.floor((Number(latestDay.slice(5, 7)) - 1) / 3) * 3 + 1).padStart(2, "0")}`,
+        -3 * index,
+      );
+      const quarterYear = Number(startMonth.slice(0, 4));
+      const quarter = Math.floor((Number(startMonth.slice(5, 7)) - 1) / 3) + 1;
+      return {
+        label: `${quarterYear} Q${quarter}`,
+        range: { from: `${startMonth}-01`, to: monthEnd(monthKeyShift(startMonth, 2)) },
       };
     },
   );
@@ -300,38 +319,67 @@ export function RangeControl({
               }}
             />
           </div>
-          <div className="border-t pt-3">
-            <p className="text-sm font-semibold text-foreground">{t.filterQuickRanges}</p>
-            <div className="mt-2 grid grid-cols-2 gap-1">
-              {presets.map((preset) => (
-                <Button
-                  key={preset.label}
-                  type="button"
-                  variant={draft.from === preset.range.from && draft.to === preset.range.to ? "secondary" : "ghost"}
-                  size="sm"
-                  className="h-8 justify-start px-2 text-sm font-normal"
-                  onClick={() => setDraft(preset.range)}
-                >
-                  {preset.label}
-                </Button>
-              ))}
+          <div className="grid gap-4 lg:grid-cols-2">
+            <div className="lg:border-r lg:pr-4">
+              <p className="text-sm font-semibold text-foreground">{t.filterQuickRanges}</p>
+              <div className="mt-2 flex flex-col gap-1">
+                {quickPresets.map((preset) => (
+                  <Button
+                    key={preset.label}
+                    type="button"
+                    variant={draft.from === preset.range.from && draft.to === preset.range.to ? "secondary" : "ghost"}
+                    size="sm"
+                    className="h-8 justify-start px-2 text-sm font-normal"
+                    onClick={() => setDraft(preset.range)}
+                  >
+                    {preset.label}
+                  </Button>
+                ))}
+              </div>
             </div>
-          </div>
-          <div className="border-t pt-3">
-            <p className="text-sm font-semibold text-foreground">{t.filterRecentMonths}</p>
-            <div className="mt-2 grid grid-cols-3 gap-1">
-              {recentMonths.map((month) => (
-                <Button
-                  key={month.label}
-                  type="button"
-                  variant={draft.from === month.range.from && draft.to === month.range.to ? "secondary" : "ghost"}
-                  size="sm"
-                  className="h-8 justify-start px-2 text-sm font-normal"
-                  onClick={() => setDraft(month.range)}
-                >
-                  {month.label}
-                </Button>
-              ))}
+            <div className="flex flex-col gap-4">
+              <div>
+                <p className="text-sm font-semibold text-foreground">{t.filterRecentMonths}</p>
+                <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1">
+                  {[recentMonths.slice(0, 6), recentMonths.slice(6)].map((column, columnIndex) => (
+                    <div key={columnIndex} className="flex flex-col gap-1">
+                      {column.map((month) => (
+                        <Button
+                          key={month.label}
+                          type="button"
+                          variant={
+                            draft.from === month.range.from && draft.to === month.range.to ? "secondary" : "ghost"
+                          }
+                          size="sm"
+                          className="h-8 justify-start px-2 text-sm font-normal"
+                          onClick={() => setDraft(month.range)}
+                        >
+                          {month.label}
+                        </Button>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-foreground">{t.filterRecentQuarters}</p>
+                <div className="mt-2 grid grid-cols-2 gap-1">
+                  {recentQuarters.map((quarter) => (
+                    <Button
+                      key={quarter.label}
+                      type="button"
+                      variant={
+                        draft.from === quarter.range.from && draft.to === quarter.range.to ? "secondary" : "ghost"
+                      }
+                      size="sm"
+                      className="h-8 justify-start px-2 text-sm font-normal"
+                      onClick={() => setDraft(quarter.range)}
+                    >
+                      {quarter.label}
+                    </Button>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
           <div className="flex justify-end gap-2 border-t pt-3">
