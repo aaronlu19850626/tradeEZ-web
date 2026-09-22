@@ -2,7 +2,7 @@
 
 import { type ReactNode, useState } from "react";
 
-import { Check, ChevronDown } from "lucide-react";
+import { Check, ChevronDown, ChevronUp } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -48,7 +48,7 @@ export function SelectSingleControl({
         >
           {selected?.icon}
           <span className="min-w-0 whitespace-nowrap">{selected ? selected.label : placeholder}</span>
-          <ChevronDown className="size-3.5 opacity-50" />
+          {open ? <ChevronUp className="size-3.5 opacity-50" /> : <ChevronDown className="size-3.5 opacity-50" />}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align={align} sideOffset={6} className="min-w-44 space-y-0.5 rounded-lg p-1">
