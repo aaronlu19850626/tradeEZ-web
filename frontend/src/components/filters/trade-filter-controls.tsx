@@ -319,7 +319,7 @@ export function RangeControl({
               }}
             />
           </div>
-          <div className="flex flex-col gap-4">
+          <div className="grid gap-4 lg:grid-cols-3">
             <div>
               <p className="text-sm font-semibold text-foreground">{t.filterQuickRanges}</p>
               <div className="mt-2 flex flex-col gap-1">
