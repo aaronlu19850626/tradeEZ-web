@@ -376,10 +376,9 @@ export function RangeControl({
               </div>
             </div>
           </div>
-          <div className="flex justify-end gap-2 border-t pt-3">
+          <div className="-mx-3 flex justify-end gap-2 border-t px-3 pt-3">
             <Button
               variant="outline"
-              size="sm"
               onClick={() => {
                 setDraft(range);
                 setOpen(false);
@@ -388,7 +387,6 @@ export function RangeControl({
               {t.filterCancel}
             </Button>
             <Button
-              size="sm"
               disabled={!draft.from || !draft.to}
               onClick={() => {
                 onRange(draft.from, draft.to);
