@@ -16,6 +16,11 @@ test.describe("核心页面加载", () => {
     await gotoDashboard(page, "/dashboard/overview", "交易总览");
     await expect(page.getByText("最近交易")).toBeVisible();
 
+    await gotoDashboard(page, "/dashboard/design-system", "设计系统");
+    await expect(page.getByRole("radio", { name: /MetaTrader 5/ })).toBeVisible();
+    await expect(page.getByRole("radio", { name: /USD/ })).toBeVisible();
+    await expect(page.locator('[data-slot="loading-wave"]')).toBeVisible();
+
     expect(monitor.errors.filter((message) => !message.includes("width(-1) and height(-1)"))).toEqual([]);
   });
 });

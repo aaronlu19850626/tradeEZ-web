@@ -5,6 +5,8 @@ import { type ReactNode, useState } from "react";
 import { Bell, Check, ChevronDown, ChevronLeft, ChevronRight, MoreHorizontal, Settings } from "lucide-react";
 
 import { DataTable, type DataTableColumn } from "@/components/data-table/data-table";
+import { CurrencySelect } from "@/components/domain/currency-select";
+import { PlatformSelect } from "@/components/domain/platform-select";
 import {
   AccountScopeMenu,
   DatePickerField,
@@ -14,6 +16,7 @@ import {
   SelectSingleControl,
 } from "@/components/filters";
 import { InfoTip } from "@/components/shared/info-tip";
+import { LoadingWave } from "@/components/shared/loading-wave";
 import { MarketColorProvider } from "@/components/shared/market-color-provider";
 import { TradeSideBadge } from "@/components/shared/trade-side-badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -192,6 +195,7 @@ export default function DesignSystemPage() {
   const locale = useLocale();
   const [switchOn, setSwitchOn] = useState(true);
   const [dateValue, setDateValue] = useState("2026-09-18");
+  const [platform, setPlatform] = useState("mt5");
   const [currency, setCurrency] = useState("USD");
   const [selectedAccounts, setSelectedAccounts] = useState<string[]>(["gold", "fx"]);
   const [conditions, setConditions] = useState<Record<string, string[]>>({
@@ -323,6 +327,10 @@ export default function DesignSystemPage() {
               开关
             </div>
             <Slider defaultValue={[35]} className="w-48" />
+            <div className="grid w-full max-w-3xl gap-4">
+              <PlatformSelect label="交易平台" value={platform} onChange={setPlatform} />
+              <CurrencySelect label="账户币种" value={currency} onChange={setCurrency} disabled={platform === "ctp"} />
+            </div>
           </Section>
 
           <Section
@@ -510,6 +518,9 @@ export default function DesignSystemPage() {
               <CardContent>卡片内容</CardContent>
             </Card>
             <InfoTip label="提示" text="提示内容" />
+            <div className="w-full rounded-lg border bg-card p-4">
+              <LoadingWave compact title="正在加载" description="标准加载反馈" />
+            </div>
           </Section>
 
           <Section id="overlays" title="弹窗与提示" description="Dialog、Popover 和标准底部操作。">
