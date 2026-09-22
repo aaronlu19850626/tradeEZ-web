@@ -11,13 +11,20 @@ test.describe("全局多条件筛选器", () => {
     await expect(menu).toBeVisible();
 
     const groupButtons = [
-      menu.getByRole("button", { name: "方向", exact: true }),
-      menu.getByRole("button", { name: "结果", exact: true }),
-      menu.getByRole("button", { name: "市场", exact: true }),
-      menu.getByRole("button", { name: "币种", exact: true }),
-      menu.getByRole("button", { name: "品种", exact: true }),
+      menu.getByRole("radio", { name: "方向", exact: true }),
+      menu.getByRole("radio", { name: "结果", exact: true }),
+      menu.getByRole("radio", { name: "市场", exact: true }),
+      menu.getByRole("radio", { name: "币种", exact: true }),
+      menu.getByRole("radio", { name: "品种", exact: true }),
     ];
     for (const button of groupButtons) await expect(button).toBeVisible();
+
+    await expect(page.locator("main [inert]")).toHaveCount(0);
+    await groupButtons[0].focus();
+    await page.keyboard.press("ArrowDown");
+    await expect(groupButtons[1]).toBeFocused();
+    await page.keyboard.press("Space");
+    await expect(groupButtons[1]).toHaveAttribute("data-state", "on");
 
     const marketBox = await groupButtons[2].boundingBox();
     const currencyBox = await groupButtons[3].boundingBox();
@@ -39,6 +46,21 @@ test.describe("全局多条件筛选器", () => {
     expect((await usd.boundingBox())?.y).toBeLessThan((await cny.boundingBox())?.y ?? Number.POSITIVE_INFINITY);
   });
 
+  test("日期范围清除按钮可独立键盘操作", async ({ page }) => {
+    await gotoDashboard(page, "/dashboard/trade-center?currency=USD&market=fx", "交易记录");
+    const clearDate = page.getByRole("button", { name: "清除日期" });
+    await expect(clearDate).toBeVisible();
+    await expect(page.locator("main [inert]")).toHaveCount(0);
+    await clearDate.focus();
+    await page.keyboard.press("Enter");
+    await expect(page.getByRole("button", { name: "全部日期" })).toBeVisible();
+    await expect(page).not.toHaveURL(/from=/);
+    await expect(page.getByText("快捷选择")).toHaveCount(0);
+
+    await page.getByRole("button", { name: "选择日期范围" }).click();
+    await expect(page.getByText("快捷选择")).toBeVisible();
+  });
+
   test("临时删除市场和币种后确认仍恢复默认值", async ({ page }) => {
     await gotoDashboard(page, "/dashboard/trade-center?currency=USD&market=fx", "交易记录");
     await page.getByRole("button", { name: /筛选器/ }).click();
@@ -54,7 +76,7 @@ test.describe("全局多条件筛选器", () => {
     await gotoDashboard(page, "/dashboard/trade-center?currency=USD&market=fx", "交易记录");
     await page.getByRole("button", { name: /筛选器/ }).click();
     const menu = page.getByRole("menu");
-    await menu.getByRole("button", { name: "品种", exact: true }).click();
+    await menu.getByRole("radio", { name: "品种", exact: true }).click();
     const audusd = menu.locator("label").filter({ hasText: "AUDUSD" }).first();
     await expect(audusd).toContainText("Sim-Gold-A");
     await expect(audusd).toContainText("Sim-Gold-B");

@@ -13,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 export interface SelectOption {
   id?: string;
@@ -165,26 +166,24 @@ export function SelectMultiConditionControl({
       >
         <div className="grid h-[min(420px,calc(100vh-12rem))] grid-cols-[140px_minmax(0,1fr)] sm:grid-cols-[180px_minmax(0,1fr)]">
           <div className="overflow-y-auto border-r bg-muted/20 p-3">
-            <div className="grid gap-1">
-              {groups.map((group) => {
-                const active = group.id === activeGroupId;
-                return (
-                  <button
-                    key={group.id}
-                    type="button"
-                    aria-pressed={active}
-                    className={`flex min-h-10 w-full items-center rounded-lg border px-3 text-left text-sm transition-colors ${
-                      active
-                        ? "border-primary/35 bg-primary-soft font-semibold text-primary"
-                        : "border-transparent text-foreground hover:bg-accent"
-                    }`}
-                    onClick={() => setActiveGroupId(group.id)}
-                  >
-                    {group.label}
-                  </button>
-                );
-              })}
-            </div>
+            <ToggleGroup
+              type="single"
+              orientation="vertical"
+              value={activeGroupId}
+              onValueChange={(next) => next && setActiveGroupId(next)}
+              className="grid w-full gap-1"
+            >
+              {groups.map((group) => (
+                <ToggleGroupItem
+                  key={group.id}
+                  value={group.id}
+                  variant="outline"
+                  className="min-h-10 w-full justify-start rounded-lg border px-3 text-left text-sm font-normal data-[state=on]:border-primary/35 data-[state=on]:bg-primary-soft data-[state=on]:font-semibold data-[state=on]:text-primary"
+                >
+                  {group.label}
+                </ToggleGroupItem>
+              ))}
+            </ToggleGroup>
           </div>
 
           <div className="min-w-0 overflow-y-auto p-4">

@@ -5,6 +5,7 @@ import { Fragment, type ReactNode, useEffect, useMemo, useState } from "react";
 import { CalendarDays, Check, ChevronDown, ChevronUp, Plus, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { ButtonGroup } from "@/components/ui/button-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
@@ -13,7 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Label } from "@/components/ui/label";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Popover, PopoverAnchor, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { type Locale, useLocale } from "@/lib/i18n";
 import type { MarketProfile, TradeSymbolOption } from "@/lib/tradesync/trade-center";
@@ -303,36 +304,47 @@ export function RangeControl({
         setOpen(next);
       }}
     >
-      <div className="relative inline-flex items-center">
-        <PopoverTrigger asChild>
-          <Button
-            variant="outline"
-            size="sm"
-            className={`h-8 gap-2 px-2.5 text-sm leading-none ${
-              range.from ? "font-semibold text-foreground" : "font-semibold text-muted-foreground"
-            }`}
-          >
-            <CalendarDays className="size-4 text-muted-foreground" />
-            <span className="min-w-0 whitespace-nowrap">
-              {range.from ? formatRangeLabel(range.from, range.to, locale) : t.dateRangeNone}
-            </span>
-            {range.from && (
-              // biome-ignore lint/a11y: compact clear control inside the date trigger.
-              <span
-                className="flex size-4 cursor-pointer items-center justify-center rounded-sm text-muted-foreground hover:text-foreground"
-                onClick={(event) => {
-                  event.preventDefault();
-                  event.stopPropagation();
-                  onRange("", "");
-                }}
-              >
-                <X className="size-3.5" />
+      <PopoverAnchor asChild>
+        <ButtonGroup className="h-8">
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              className={`h-8 gap-2 px-2.5 text-sm leading-none ${
+                range.from ? "font-semibold text-foreground" : "font-semibold text-muted-foreground"
+              }`}
+            >
+              <CalendarDays className="size-4 text-muted-foreground" />
+              <span className="min-w-0 whitespace-nowrap">
+                {range.from ? formatRangeLabel(range.from, range.to, locale) : t.dateRangeNone}
               </span>
-            )}
+            </Button>
+          </PopoverTrigger>
+          {range.from && (
+            <Button
+              type="button"
+              variant="outline"
+              size="icon-sm"
+              aria-label={t.dateRangeClear}
+              className="h-8"
+              onClick={() => onRange("", "")}
+            >
+              <X className="size-3.5" />
+            </Button>
+          )}
+          <Button
+            type="button"
+            variant="outline"
+            size="icon-sm"
+            aria-label={t.dateRangeOpen}
+            aria-expanded={open}
+            className="h-8"
+            onClick={() => setOpen((current) => !current)}
+          >
             {open ? <ChevronUp className="size-3.5 opacity-50" /> : <ChevronDown className="size-3.5 opacity-50" />}
           </Button>
-        </PopoverTrigger>
-      </div>
+        </ButtonGroup>
+      </PopoverAnchor>
       <PopoverContent align="end" className="w-[560px] max-w-[calc(100vw-2rem)] p-3">
         <div className="grid gap-4">
           <div className="grid gap-4 sm:grid-cols-2">
