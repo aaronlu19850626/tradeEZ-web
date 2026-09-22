@@ -389,12 +389,15 @@ def calendar(db: DBConnection, user: DBRow, flt: TradeFilter, month: str) -> lis
     logins = _resolve_logins(db, user, flt.account_id_list())
     if not logins:
         return []
+    range_from_epoch, range_to_epoch = day_bounds(flt.from_day, flt.to_day)
     rows = repository.fetch_calendar_days(
         db,
         user_id=int(user["id"]),
         logins=logins,
         from_epoch=from_epoch,
         to_epoch=to_epoch,
+        range_from_epoch=range_from_epoch,
+        range_to_epoch=range_to_epoch,
         side=flt.side,
         result=flt.result,
         currency=flt.currency,

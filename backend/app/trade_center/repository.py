@@ -246,6 +246,8 @@ def fetch_calendar_days(
     logins: list[int] | None,
     from_epoch: int,
     to_epoch: int,
+    range_from_epoch: int | None = None,
+    range_to_epoch: int | None = None,
     side: str,
     result: str,
     currency: str | None,
@@ -254,6 +256,12 @@ def fetch_calendar_days(
     _refresh_closed_trades(db)
     clauses = ["a.user_id = %s", "t.deal_time >= %s", "t.deal_time < %s"]
     params: list = [user_id, from_epoch, to_epoch]
+    if range_from_epoch is not None:
+        clauses.append("t.deal_time >= %s")
+        params.append(range_from_epoch)
+    if range_to_epoch is not None:
+        clauses.append("t.deal_time < %s")
+        params.append(range_to_epoch)
     if logins is not None:
         placeholders = ",".join(["%s"] * len(logins))
         clauses.append(f"t.account_login IN ({placeholders})")
