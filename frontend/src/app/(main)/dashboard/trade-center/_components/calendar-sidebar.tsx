@@ -32,6 +32,7 @@ export function SideRail({
   t,
   locale,
   range,
+  latestDay,
   query,
   view,
   onPickDay,
@@ -40,12 +41,17 @@ export function SideRail({
   t: TradeCenterText;
   locale: Locale;
   range: { from: string; to: string };
+  latestDay: string;
   query: TradeListParams;
   view: ViewMode;
   onPickDay: (dayKey: string) => void;
   isFullRange: boolean;
 }) {
-  const targetMonth = isFullRange ? range.to.slice(0, 7) : range.from.slice(0, 7);
+  const targetMonth = range.from
+    ? isFullRange
+      ? range.to.slice(0, 7)
+      : range.from.slice(0, 7)
+    : latestDay.slice(0, 7);
   const [cursor, setCursor] = useState(targetMonth);
   const [hoveredWeek, setHoveredWeek] = useState<string | null>(null);
   useEffect(() => {
