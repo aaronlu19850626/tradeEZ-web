@@ -1,7 +1,10 @@
 "use client";
 
+import { useState } from "react";
+
 import { ChevronsDown, ChevronsUp, Columns3 } from "lucide-react";
 
+import { type SelectOption, SelectSingleControl } from "@/components/filters/filter-select-controls";
 import {
   AccountScopeMenu,
   RangeControl,
@@ -68,6 +71,14 @@ export function Toolbar({
   selectedAccountIds: string[];
   onAccountsChange: (accountIds: string[]) => void;
 }) {
+  const [product, setProduct] = useState("MT5");
+  const productOptions: SelectOption[] = [
+    { value: "MT5", label: "MT5" },
+    { value: "MT4", label: "MT4" },
+    { value: "cTrader", label: "cTrader" },
+    { value: "ATAS", label: "ATAS" },
+    { value: "CTP", label: "CTP" },
+  ];
   const views: { key: ViewMode; label: string }[] = [
     { key: "day", label: t.viewDay },
     { key: "week", label: t.viewWeek },
@@ -139,6 +150,13 @@ export function Toolbar({
         <RangeControl range={range} onRange={onRange} latestDay={latestDay} earliestDay={earliestDay} />
 
         <AccountScopeMenu accounts={accounts} selectedIds={selectedAccountIds} onApply={onAccountsChange} />
+        <SelectSingleControl
+          value={product}
+          options={productOptions}
+          placeholder="产品"
+          onValueChange={setProduct}
+          align="end"
+        />
       </div>
     </div>
   );
