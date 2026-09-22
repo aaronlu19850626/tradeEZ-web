@@ -188,7 +188,7 @@ export function CountPills({
       : value.toLocaleString(locale);
 
   return (
-    <div className="flex w-full items-center justify-between gap-1">
+    <div className="flex w-full items-center justify-center gap-1">
       <span
         className="rounded-full bg-profit-soft px-1.5 py-0.5 font-semibold text-[11px] text-profit-strong leading-3.5 tabular-nums"
         title={`${t.winners} ${winners}`}
