@@ -178,6 +178,7 @@ export function TradeFiltersMenu({
         onSymbolsChange(next.symbol ?? []);
       }}
       clearLabel={t.filterClear}
+      closeLabel={t.filterCancel}
       confirmLabel={t.filterConfirm}
       align="end"
     />

@@ -94,6 +94,7 @@ export function SelectMultiConditionControl({
   onChange,
   align = "end",
   clearLabel = "清空条件",
+  closeLabel = "关闭",
   confirmLabel = "确认",
 }: {
   value: Record<string, string[]>;
@@ -103,6 +104,7 @@ export function SelectMultiConditionControl({
   onChange: (value: Record<string, string[]>) => void;
   align?: "start" | "center" | "end";
   clearLabel?: string;
+  closeLabel?: string;
   confirmLabel?: string;
 }) {
   const [open, setOpen] = useState(false);
@@ -160,7 +162,7 @@ export function SelectMultiConditionControl({
               <RadioGroup
                 value={draft[group.id]?.[0] ?? ""}
                 onValueChange={(next) => setDraft((prev) => ({ ...prev, [group.id]: [next] }))}
-                className="max-h-40 gap-0 overflow-y-auto"
+                className="max-h-40 gap-0! overflow-y-auto"
               >
                 {group.options.map((option) => (
                   <label
@@ -209,16 +211,21 @@ export function SelectMultiConditionControl({
           </div>
         ))}
         <DropdownMenuSeparator className="my-1" />
-        <Button
-          variant="default"
-          className="w-full"
-          onClick={() => {
-            onChange(draft);
-            setOpen(false);
-          }}
-        >
-          {confirmLabel}
-        </Button>
+        <div className="grid grid-cols-2 gap-1">
+          <Button variant="outline" className="w-full" onClick={() => setOpen(false)}>
+            {closeLabel}
+          </Button>
+          <Button
+            variant="default"
+            className="w-full"
+            onClick={() => {
+              onChange(draft);
+              setOpen(false);
+            }}
+          >
+            {confirmLabel}
+          </Button>
+        </div>
       </DropdownMenuContent>
     </DropdownMenu>
   );
