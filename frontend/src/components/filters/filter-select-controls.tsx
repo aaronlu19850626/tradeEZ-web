@@ -51,13 +51,13 @@ export function SelectSingleControl({
           <ChevronDown className="size-3.5 opacity-50" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align={align} sideOffset={6} className="min-w-44 rounded-lg p-1">
+      <DropdownMenuContent align={align} sideOffset={6} className="min-w-44 space-y-0.5 rounded-lg p-1">
         {options.map((option) => {
           const isSelected = option.value === value;
           return (
             <DropdownMenuItem
               key={option.value}
-              className={`cursor-pointer gap-2 rounded-md px-2 py-2 text-sm leading-none font-normal ${
+              className={`cursor-pointer gap-2 rounded-md px-2 py-2.5 text-sm leading-normal font-normal ${
                 isSelected ? "bg-accent text-accent-foreground" : "text-foreground"
               }`}
               onSelect={() => {
