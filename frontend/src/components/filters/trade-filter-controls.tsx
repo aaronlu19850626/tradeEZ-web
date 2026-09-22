@@ -319,8 +319,8 @@ export function RangeControl({
               }}
             />
           </div>
-          <div className="grid gap-4 lg:grid-cols-2">
-            <div className="lg:border-r lg:pr-4">
+          <div className="flex flex-col gap-4">
+            <div>
               <p className="text-sm font-semibold text-foreground">{t.filterQuickRanges}</p>
               <div className="mt-2 flex flex-col gap-1">
                 {quickPresets.map((preset) => (
@@ -337,48 +337,42 @@ export function RangeControl({
                 ))}
               </div>
             </div>
-            <div className="flex flex-col gap-4">
-              <div>
-                <p className="text-sm font-semibold text-foreground">{t.filterRecentMonths}</p>
-                <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1">
-                  {[recentMonths.slice(0, 6), recentMonths.slice(6)].map((column, columnIndex) => (
-                    <div key={columnIndex} className="flex flex-col gap-1">
-                      {column.map((month) => (
-                        <Button
-                          key={month.label}
-                          type="button"
-                          variant={
-                            draft.from === month.range.from && draft.to === month.range.to ? "secondary" : "ghost"
-                          }
-                          size="sm"
-                          className="h-8 justify-start px-2 text-sm font-normal"
-                          onClick={() => setDraft(month.range)}
-                        >
-                          {month.label}
-                        </Button>
-                      ))}
-                    </div>
-                  ))}
-                </div>
+            <div>
+              <p className="text-sm font-semibold text-foreground">{t.filterRecentQuarters}</p>
+              <div className="mt-2 flex flex-col gap-1">
+                {recentQuarters.map((quarter) => (
+                  <Button
+                    key={quarter.label}
+                    type="button"
+                    variant={draft.from === quarter.range.from && draft.to === quarter.range.to ? "secondary" : "ghost"}
+                    size="sm"
+                    className="h-8 justify-start px-2 text-sm font-normal"
+                    onClick={() => setDraft(quarter.range)}
+                  >
+                    {quarter.label}
+                  </Button>
+                ))}
               </div>
-              <div>
-                <p className="text-sm font-semibold text-foreground">{t.filterRecentQuarters}</p>
-                <div className="mt-2 flex flex-col gap-1">
-                  {recentQuarters.map((quarter) => (
-                    <Button
-                      key={quarter.label}
-                      type="button"
-                      variant={
-                        draft.from === quarter.range.from && draft.to === quarter.range.to ? "secondary" : "ghost"
-                      }
-                      size="sm"
-                      className="h-8 justify-start px-2 text-sm font-normal"
-                      onClick={() => setDraft(quarter.range)}
-                    >
-                      {quarter.label}
-                    </Button>
-                  ))}
-                </div>
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-foreground">{t.filterRecentMonths}</p>
+              <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1">
+                {[recentMonths.slice(0, 6), recentMonths.slice(6)].map((column, columnIndex) => (
+                  <div key={columnIndex} className="flex flex-col gap-1">
+                    {column.map((month) => (
+                      <Button
+                        key={month.label}
+                        type="button"
+                        variant={draft.from === month.range.from && draft.to === month.range.to ? "secondary" : "ghost"}
+                        size="sm"
+                        className="h-8 justify-start px-2 text-sm font-normal"
+                        onClick={() => setDraft(month.range)}
+                      >
+                        {month.label}
+                      </Button>
+                    ))}
+                  </div>
+                ))}
               </div>
             </div>
           </div>
