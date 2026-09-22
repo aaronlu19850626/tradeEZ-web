@@ -41,18 +41,22 @@ test.describe("交易账户创建与管理", () => {
     const dialog = page.getByRole("dialog");
     await expect(dialog.getByRole("heading", { name: "添加新账户" })).toBeVisible();
 
-    const mt5 = dialog.getByRole("button", { name: /MetaTrader 5/ });
-    const ctp = dialog.getByRole("button", { name: /CTP/ });
-    const usd = dialog.getByRole("button", { name: /USD/ });
-    const cny = dialog.getByRole("button", { name: /CNY/ });
-    await expect(mt5).toHaveAttribute("aria-pressed", "true");
-    await expect(usd).toHaveAttribute("aria-pressed", "true");
+    const mt5 = dialog.getByRole("radio", { name: /MetaTrader 5/ });
+    const usd = dialog.getByRole("radio", { name: /USD/ });
+    const cny = dialog.getByRole("radio", { name: /CNY/ });
+    const mt5Option = dialog
+      .locator("label")
+      .filter({ hasText: /MetaTrader 5/ })
+      .first();
+    const ctpOption = dialog.locator("label").filter({ hasText: "CTP" }).first();
+    await expect(mt5).toBeChecked();
+    await expect(usd).toBeChecked();
 
-    await ctp.click();
-    await expect(cny).toHaveAttribute("aria-pressed", "true");
+    await ctpOption.click();
+    await expect(cny).toBeChecked();
     await expect(cny).toBeDisabled();
-    await mt5.click();
-    await expect(usd).toHaveAttribute("aria-pressed", "true");
+    await mt5Option.click();
+    await expect(usd).toBeChecked();
     await expect(usd).toBeEnabled();
 
     await dialog.getByRole("button", { name: "创建账户" }).click();

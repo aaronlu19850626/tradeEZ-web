@@ -3,8 +3,8 @@
 import { cn } from "cn";
 import { Check } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { findCurrency, TRADING_CURRENCIES } from "@/lib/tradesync/currencies";
 
 export function CurrencySelect({
@@ -28,22 +28,26 @@ export function CurrencySelect({
         {label}
         {required && <span className="ml-1 text-destructive">*</span>}
       </Label>
-      <div className="grid grid-cols-3 gap-1 sm:grid-cols-6" aria-disabled={disabled}>
+      <RadioGroup
+        value={selected.value}
+        onValueChange={onChange}
+        required={required}
+        disabled={disabled}
+        className="grid grid-cols-3 gap-1 sm:grid-cols-6"
+      >
         {TRADING_CURRENCIES.map((currency) => {
           const active = selected.value === currency.value;
           return (
-            <Button
+            <Label
               key={currency.value}
-              type="button"
-              variant={active ? "primary-soft" : "outline"}
-              disabled={disabled}
-              aria-pressed={active}
-              onClick={() => onChange(currency.value)}
+              htmlFor={`account-currency-${currency.value}`}
               className={cn(
-                "relative h-11 justify-center gap-1 px-1",
-                active && "font-semibold ring-1 ring-primary/25",
+                "relative flex h-11 items-center justify-center gap-1 rounded-lg border bg-background px-1 transition-colors focus-within:ring-3 focus-within:ring-ring/50",
+                disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer",
+                active ? "border-primary/35 bg-primary-soft font-semibold" : "hover:bg-muted",
               )}
             >
+              <RadioGroupItem id={`account-currency-${currency.value}`} value={currency.value} className="sr-only" />
               <span className="text-xl leading-none">{currency.flag}</span>
               <span className="font-mono text-xs font-semibold">{currency.label}</span>
               {active && (
@@ -51,10 +55,10 @@ export function CurrencySelect({
                   <Check className="size-2.5" strokeWidth={3} />
                 </span>
               )}
-            </Button>
+            </Label>
           );
         })}
-      </div>
+      </RadioGroup>
     </div>
   );
 }

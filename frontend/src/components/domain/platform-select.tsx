@@ -4,8 +4,8 @@ import { cn } from "cn";
 import { Check } from "lucide-react";
 
 import { PlatformIcon } from "@/components/domain/platform-icon";
-import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { findPlatform, TRADING_PLATFORMS } from "@/lib/tradesync/platforms";
 
 export function PlatformSelect({
@@ -27,21 +27,24 @@ export function PlatformSelect({
         {label}
         {required && <span className="ml-1 text-destructive">*</span>}
       </Label>
-      <div className="grid grid-cols-2 gap-1 sm:grid-cols-5">
+      <RadioGroup
+        value={selected.value}
+        onValueChange={onChange}
+        required={required}
+        className="grid grid-cols-2 gap-1 sm:grid-cols-5"
+      >
         {TRADING_PLATFORMS.map((platform) => {
           const active = platform.value === selected.value;
           return (
-            <Button
+            <Label
               key={platform.value}
-              type="button"
-              variant={active ? "primary-soft" : "outline"}
-              aria-pressed={active}
-              onClick={() => onChange(platform.value)}
+              htmlFor={`account-platform-${platform.value}`}
               className={cn(
-                "relative h-11 justify-start gap-1.5 px-2 py-0",
-                active && "font-semibold ring-1 ring-primary/25",
+                "relative flex h-11 cursor-pointer items-center justify-start gap-1.5 rounded-lg border bg-background px-2 py-0 transition-colors focus-within:ring-3 focus-within:ring-ring/50",
+                active ? "border-primary/35 bg-primary-soft font-semibold" : "hover:bg-muted",
               )}
             >
+              <RadioGroupItem id={`account-platform-${platform.value}`} value={platform.value} className="sr-only" />
               <PlatformIcon platform={platform.value} className="size-6 shrink-0" />
               <span className="min-w-0 truncate text-xs">{platform.label}</span>
               {active && (
@@ -49,10 +52,10 @@ export function PlatformSelect({
                   <Check className="size-2.5" strokeWidth={3} />
                 </span>
               )}
-            </Button>
+            </Label>
           );
         })}
-      </div>
+      </RadioGroup>
     </div>
   );
 }

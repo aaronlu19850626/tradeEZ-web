@@ -232,9 +232,13 @@ test.describe("MT5 完整生命周期", () => {
     await page.getByRole("button", { name: "添加新账户" }).first().click();
     const addDialog = page.getByRole("dialog");
     await capture(page, testInfo, "02-create-default");
-    await addDialog.getByRole("button", { name: /CTP/ }).click();
+    await addDialog.locator("label").filter({ hasText: "CTP" }).first().click();
     await capture(page, testInfo, "03-ctp-currency-lock");
-    await addDialog.getByRole("button", { name: /MetaTrader 5/ }).click();
+    await addDialog
+      .locator("label")
+      .filter({ hasText: /MetaTrader 5/ })
+      .first()
+      .click();
     await addDialog.getByLabel("账户名称").fill(TEST_NAME);
     await addDialog.getByLabel("券商服务器名").fill("E2E-Lifecycle-Server");
     await addDialog.getByLabel("账号").fill(TEST_LOGIN);
