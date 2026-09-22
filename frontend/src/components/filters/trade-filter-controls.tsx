@@ -180,7 +180,8 @@ export function TradeFiltersMenu({
     <SelectMultiConditionControl
       value={value}
       groups={groups}
-      placeholder={t.filters}
+      title={t.filterTitle}
+      noneLabel={t.filterNone}
       onChange={(next) => {
         onSide((next.side?.[0] ?? "all") as SideFilter);
         onResult((next.result?.[0] ?? "all") as ResultFilter);

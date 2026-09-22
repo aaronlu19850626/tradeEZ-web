@@ -2,6 +2,8 @@ import type { Locale } from "@/lib/i18n";
 
 const zh = {
   filters: "筛选",
+  filterTitle: "筛选器",
+  filterNone: "无",
   filterActive: "已选",
   filterDirection: "方向",
   filterResult: "结果",
@@ -38,6 +40,8 @@ export type TradeFilterText = Record<keyof typeof zh, string>;
 
 const en: TradeFilterText = {
   filters: "Filters",
+  filterTitle: "Filters",
+  filterNone: "None",
   filterActive: "Active",
   filterDirection: "Side",
   filterResult: "Result",

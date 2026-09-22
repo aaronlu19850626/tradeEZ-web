@@ -89,7 +89,8 @@ export function SelectSingleControl({
 export function SelectMultiConditionControl({
   value,
   groups,
-  placeholder = "请选择",
+  title = "筛选器",
+  noneLabel = "无",
   onChange,
   align = "end",
   clearLabel = "清空条件",
@@ -97,7 +98,8 @@ export function SelectMultiConditionControl({
 }: {
   value: Record<string, string[]>;
   groups: SelectConditionGroup[];
-  placeholder?: string;
+  title?: string;
+  noneLabel?: string;
   onChange: (value: Record<string, string[]>) => void;
   align?: "start" | "center" | "end";
   clearLabel?: string;
@@ -130,7 +132,9 @@ export function SelectMultiConditionControl({
             isDefault ? "font-semibold text-muted-foreground" : "font-semibold text-foreground"
           }`}
         >
-          <span className="min-w-0 whitespace-nowrap">{isDefault ? placeholder : summary}</span>
+          <span className="min-w-0 whitespace-nowrap">
+            {isDefault ? `${title} · ${noneLabel}` : `${title} · ${summary}`}
+          </span>
           {open ? <ChevronUp className="size-3.5 opacity-50" /> : <ChevronDown className="size-3.5 opacity-50" />}
         </Button>
       </DropdownMenuTrigger>

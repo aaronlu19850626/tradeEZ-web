@@ -183,13 +183,7 @@ export function Toolbar({
           onValueChange={setProduct}
           align="end"
         />
-        <SelectMultiConditionControl
-          value={multiValue}
-          groups={conditionGroups}
-          placeholder="条件"
-          onChange={setMultiValue}
-          align="end"
-        />
+        <SelectMultiConditionControl value={multiValue} groups={conditionGroups} onChange={setMultiValue} align="end" />
       </div>
     </div>
   );
