@@ -214,7 +214,12 @@ export function RangeControl({
 
   if (!latestDay) {
     return (
-      <Button variant="outline" className="gap-1.5 font-normal opacity-60" disabled>
+      <Button
+        variant="outline"
+        size="sm"
+        className="h-8 gap-2 px-2.5 text-sm leading-none font-normal opacity-60"
+        disabled
+      >
         <CalendarDays className="size-4 text-muted-foreground" />
         {t.presetAll}
       </Button>
@@ -246,10 +251,16 @@ export function RangeControl({
       }}
     >
       <PopoverTrigger asChild>
-        <Button variant="outline" className="gap-1.5 font-normal">
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-8 gap-2 px-2.5 text-sm leading-none font-normal text-foreground"
+        >
           <CalendarDays className="size-4 text-muted-foreground" />
-          {formatRangeLabel(displayRange.from, displayRange.to, locale)}
-          <ChevronDown className="size-3.5 text-muted-foreground" />
+          <span className="min-w-0 whitespace-nowrap">
+            {formatRangeLabel(displayRange.from, displayRange.to, locale)}
+          </span>
+          {open ? <ChevronUp className="size-3.5 opacity-50" /> : <ChevronDown className="size-3.5 opacity-50" />}
         </Button>
       </PopoverTrigger>
       <PopoverContent align="end" className="w-auto p-0">
