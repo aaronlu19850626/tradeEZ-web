@@ -20,6 +20,7 @@ const zh = {
   resultLoss: "亏损",
 
   presetAll: "全部",
+  presetAllDates: "全部日期",
   presetToday: "今天",
   presetThisWeek: "本周",
   presetThisMonth: "本月",
@@ -58,6 +59,7 @@ const en: TradeFilterText = {
   resultLoss: "Losses",
 
   presetAll: "All",
+  presetAllDates: "All dates",
   presetToday: "Today",
   presetThisWeek: "This week",
   presetThisMonth: "This month",

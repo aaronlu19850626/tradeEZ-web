@@ -227,9 +227,8 @@ export function RangeControl({
   }
 
   const prevMonthDay = addDays(monthStart(latestDay), -1);
-  const displayRange = range.from ? range : { from: earliestDay, to: latestDay };
   const presets: { label: string; range: { from: string; to: string } }[] = [
-    { label: t.presetAll, range: { from: earliestDay, to: latestDay } },
+    { label: t.presetAllDates, range: { from: "", to: "" } },
     { label: t.presetToday, range: { from: latestDay, to: latestDay } },
     { label: t.presetThisWeek, range: { from: shanghaiWeekStart(dayKeyToEpoch(latestDay)), to: latestDay } },
     { label: t.presetThisMonth, range: { from: monthStart(latestDay), to: latestDay } },
@@ -244,7 +243,7 @@ export function RangeControl({
       open={open}
       onOpenChange={(next) => {
         if (next) {
-          setDraft(displayRange);
+          setDraft(range);
           setAnchor(null);
         }
         setOpen(next);
@@ -261,25 +260,24 @@ export function RangeControl({
           >
             <CalendarDays className="size-4 text-muted-foreground" />
             <span className="min-w-0 whitespace-nowrap">
-              {formatRangeLabel(displayRange.from, displayRange.to, locale)}
+              {range.from ? formatRangeLabel(range.from, range.to, locale) : t.presetAllDates}
             </span>
+            {range.from && (
+              // biome-ignore lint/a11y: compact clear control inside the date trigger.
+              <span
+                className="flex size-4 cursor-pointer items-center justify-center rounded-sm text-muted-foreground hover:text-foreground"
+                onClick={(event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  onRange("", "");
+                }}
+              >
+                <X className="size-3.5" />
+              </span>
+            )}
             {open ? <ChevronUp className="size-3.5 opacity-50" /> : <ChevronDown className="size-3.5 opacity-50" />}
           </Button>
         </PopoverTrigger>
-        {range.from && (
-          <button
-            type="button"
-            aria-label={t.filterClear}
-            className="absolute right-6 flex size-4 items-center justify-center rounded-sm text-muted-foreground hover:text-foreground"
-            onClick={(event) => {
-              event.preventDefault();
-              event.stopPropagation();
-              onRange("", "");
-            }}
-          >
-            <X className="size-3.5" />
-          </button>
-        )}
       </div>
       <PopoverContent align="end" className="w-auto p-0">
         <div className="flex">
@@ -287,11 +285,15 @@ export function RangeControl({
             <Calendar
               mode="range"
               numberOfMonths={2}
-              selected={{
-                from: dayKeyToDate(draft.from || displayRange.from),
-                to: draft.to ? dayKeyToDate(draft.to) : undefined,
-              }}
-              defaultMonth={dayKeyToDate(draft.to || displayRange.to)}
+              selected={
+                draft.from
+                  ? {
+                      from: dayKeyToDate(draft.from),
+                      to: draft.to ? dayKeyToDate(draft.to) : undefined,
+                    }
+                  : undefined
+              }
+              defaultMonth={dayKeyToDate(draft.to || draft.from || latestDay)}
               locale={locale === "zh-CN" ? zhCN : enUS}
               onDayClick={(date) => {
                 const dayKey = dateToDayKey(date);
