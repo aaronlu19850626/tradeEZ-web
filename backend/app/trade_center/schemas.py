@@ -120,6 +120,7 @@ class GroupOut(BaseModel):
     endDay: str
     stats: StatsOut
     series: list[SeriesPoint]
+    days: list[DayStatOut]
     trades: list[TradeItem]
 
 
@@ -272,9 +273,6 @@ class OverviewRecentOut(BaseModel):
 class OverviewOut(BaseModel):
     stats: OverviewStatsOut
     score: CompositeScoreOut
-    cumulative: list[DatePointOut]
-    cumulativeRecent: list[DatePointOut]
-    drawdown: DrawdownOut
     recent: list[OverviewRecentOut]
     consistency: ConsistencyOut
     timeEntry: list[ScatterPointOut]

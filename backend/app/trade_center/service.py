@@ -13,9 +13,7 @@ from .schemas import (
     CalendarDayOut,
     ConsistencyCellOut,
     ConsistencyOut,
-    DatePointOut,
     DayStatOut,
-    DrawdownOut,
     GroupOut,
     OverviewOut,
     OverviewRecentOut,
@@ -408,9 +406,10 @@ def groups(
     *,
     limit: int | None = None,
     offset: int = 0,
+    include_trades: bool = True,
 ) -> list[GroupOut]:
     user_id = int(user["id"])
-    cache_variant = f"groups:{view}:{limit}:{offset}"
+    cache_variant = f"groups:{view}:{limit}:{offset}:{include_trades}"
     cached = get_cached_object(user_id, flt, cache_variant)
     if isinstance(cached, list):
         return cached
@@ -436,28 +435,89 @@ def groups(
 
     result: list[GroupOut] = []
     for key in selected_keys:
-        end_day = key if view == "day" else _add_days(key, 6)
-        from_epoch, to_epoch = day_bounds(key, end_day)
-        rows = repository.fetch_closed_trades(
-            db,
-            user_id=int(user["id"]),
-            logins=logins,
-            from_epoch=from_epoch,
-            to_epoch=to_epoch,
-        )
-        trades = _apply_filters([_to_item(row) for row in rows], flt)
-        trades = sorted(trades, key=lambda item: (item.closeTime, item.id), reverse=True)
-        days = [beijing_day(item.closeTime) for item in trades]
         result.append(
-            GroupOut(
-                key=key,
-                startDay=min(days),
-                endDay=max(days),
-                stats=compute_stats(trades),
-                series=cumulative_series(trades),
-                trades=trades,
-            ),
+            _load_group(
+                db,
+                user,
+                flt,
+                view,
+                key,
+                logins=logins,
+                include_trades=include_trades,
+            )
         )
+    put_cached_object(user_id, flt, result, cache_variant)
+    return result
+
+
+def _load_group(
+    db: DBConnection,
+    user: DBRow,
+    flt: TradeFilter,
+    view: str,
+    key: str,
+    *,
+    logins: list[int],
+    include_trades: bool = True,
+) -> GroupOut:
+    end_day = key if view == "day" else _add_days(key, 6)
+    from_epoch, to_epoch = day_bounds(key, end_day)
+    rows = repository.fetch_closed_trades(
+        db,
+        user_id=int(user["id"]),
+        logins=logins,
+        from_epoch=from_epoch,
+        to_epoch=to_epoch,
+    )
+    trades = _apply_filters([_to_item(row) for row in rows], flt)
+    trades = sorted(trades, key=lambda item: (item.closeTime, item.id), reverse=True)
+    if not trades:
+        return GroupOut(
+            key=key,
+            startDay=key,
+            endDay=end_day,
+            stats=compute_stats([]),
+            series=[SeriesPoint(index=0, value=0.0)],
+            days=[],
+            trades=[],
+        )
+    days = sorted(_overview_days(trades), key=lambda item: item.day)
+    trading_days = [item.closeTime for item in trades]
+    return GroupOut(
+        key=key,
+        startDay=beijing_day(min(trading_days)),
+        endDay=beijing_day(max(trading_days)),
+        stats=compute_stats(trades),
+        series=cumulative_series(trades),
+        days=days,
+        trades=trades if include_trades else [],
+    )
+
+
+def group_trades(
+    db: DBConnection,
+    user: DBRow,
+    flt: TradeFilter,
+    view: str,
+    key: str,
+) -> list[TradeItem]:
+    user_id = int(user["id"])
+    cache_variant = f"group-trades:{view}:{key}"
+    cached = get_cached_object(user_id, flt, cache_variant)
+    if isinstance(cached, list):
+        return cached
+    logins = _resolve_logins(db, user, flt.account_id_list())
+    if not logins:
+        return []
+    result = _load_group(
+        db,
+        user,
+        flt,
+        view,
+        key,
+        logins=logins,
+        include_trades=True,
+    ).trades
     put_cached_object(user_id, flt, result, cache_variant)
     return result
 
@@ -586,53 +646,6 @@ def _overview_stats_from_sql(row: dict, days: list[DayStatOut]) -> OverviewStats
     )
 
 
-def _cumulative_points(items: list[TradeItem]) -> list[DatePointOut]:
-    daily: dict[str, float] = {}
-    for item in items:
-        day = beijing_day(item.closeTime)
-        daily[day] = daily.get(day, 0.0) + item.netPnl
-
-    running = 0.0
-    points: list[DatePointOut] = []
-    for day in sorted(daily):
-        running = _round(running + daily[day])
-        year, month, date_part = day.split("-")
-        points.append(DatePointOut(date=day, label=f"{month}/{date_part}/{year[2:]}", value=running))
-    return points
-
-
-def _cumulative_points_from_days(days: list[DayStatOut]) -> list[DatePointOut]:
-    running = 0.0
-    points: list[DatePointOut] = []
-    for day in sorted(days, key=lambda item: item.day):
-        running = _round(running + day.net)
-        year, month, date_part = day.day.split("-")
-        points.append(
-            DatePointOut(
-                date=day.day,
-                label=f"{month}/{date_part}/{year[2:]}",
-                value=running,
-            )
-        )
-    return points
-
-
-def _drawdown_points_from_cumulative(points: list[DatePointOut]) -> DrawdownOut:
-    peak = 0.0
-    worst = 0.0
-    result: list[DatePointOut] = []
-    for point in points:
-        peak = max(peak, point.value)
-        value = _round(point.value - peak)
-        worst = min(worst, value)
-        result.append(DatePointOut(date=point.date, label=point.label, value=value))
-    return DrawdownOut(points=result, maxDrawdown=abs(worst))
-
-
-def _drawdown_points(items: list[TradeItem]) -> DrawdownOut:
-    return _drawdown_points_from_cumulative(_cumulative_points(items))
-
-
 def _consistency(days: list[DayStatOut], latest_day: str | None) -> ConsistencyOut:
     if not latest_day:
         return ConsistencyOut(cells=[], weeks=[])
@@ -658,12 +671,6 @@ def _consistency(days: list[DayStatOut], latest_day: str | None) -> ConsistencyO
     return ConsistencyOut(cells=cells, weeks=weeks)
 
 
-def _beijing_hour(epoch: int) -> float:
-    day_seconds = 86_400
-    seconds = ((epoch + 8 * 3600) % day_seconds + day_seconds) % day_seconds
-    return seconds / 3600
-
-
 def _downsample_points(points: list[ScatterPointOut], limit: int = 2000) -> list[ScatterPointOut]:
     """Deterministically cap scatter coordinates while keeping the x-axis spread."""
     if len(points) <= limit:
@@ -678,54 +685,6 @@ def _downsample_points(points: list[ScatterPointOut], limit: int = 2000) -> list
     return [points[index] for index in sorted(selected)]
 
 
-def _sample_scatter_values(values: list[tuple[float, float]], limit: int = 2000) -> list[ScatterPointOut]:
-    if len(values) <= limit:
-        return [ScatterPointOut(x=x, y=y) for x, y in values]
-    ordered = sorted(range(len(values)), key=lambda index: (values[index][0], values[index][1]))
-    selected: set[int] = set()
-    for rank in range(limit):
-        selected.add(ordered[round(rank * (len(ordered) - 1) / (limit - 1))])
-    selected.add(min(range(len(values)), key=lambda index: values[index][1]))
-    selected.add(max(range(len(values)), key=lambda index: values[index][1]))
-    return [ScatterPointOut(x=values[index][0], y=values[index][1]) for index in sorted(selected)]
-
-
-def _sample_series(points: list[SeriesPoint], limit: int = 1000) -> list[SeriesPoint]:
-    if len(points) <= limit:
-        return points
-    selected: set[int] = set()
-    for rank in range(limit):
-        selected.add(round(rank * (len(points) - 1) / (limit - 1)))
-    selected.add(0)
-    selected.add(len(points) - 1)
-    return [points[index] for index in sorted(selected)]
-
-
-def _sampled_cumulative_series(items: list[TradeItem], limit: int = 1000) -> list[SeriesPoint]:
-    ordered = sorted((item.closeTime, item.id, item.netPnl) for item in items)
-    point_count = len(ordered) + 1
-    if point_count <= limit:
-        result = [SeriesPoint(index=0, value=0.0)]
-        running = 0.0
-        for index, (_, _, net) in enumerate(ordered, start=1):
-            running = _round(running + net)
-            result.append(SeriesPoint(index=index, value=running))
-        return result
-
-    selected: set[int] = {0, point_count - 1}
-    for rank in range(limit):
-        selected.add(round(rank * (point_count - 1) / (limit - 1)))
-    result: list[SeriesPoint] = [SeriesPoint(index=0, value=0.0)]
-    running = 0.0
-    for index, (_, _, net) in enumerate(ordered, start=1):
-        running = _round(running + net)
-        if index in selected:
-            result.append(SeriesPoint(index=index, value=running))
-    if result[-1].index != point_count - 1:
-        result.append(SeriesPoint(index=point_count - 1, value=running))
-    return result
-
-
 def overview(db: DBConnection, user: DBRow, flt: TradeFilter) -> OverviewOut:
     user_id = int(user["id"])
     cached = get_cached_object(user_id, flt, "overview")
@@ -736,9 +695,6 @@ def overview(db: DBConnection, user: DBRow, flt: TradeFilter) -> OverviewOut:
         result = OverviewOut(
             stats=_overview_stats_from_sql({}, []),
             score=composite_score([]),
-            cumulative=[],
-            cumulativeRecent=[],
-            drawdown=DrawdownOut(points=[], maxDrawdown=0.0),
             recent=[],
             consistency=ConsistencyOut(cells=[], weeks=[]),
             timeEntry=[],
@@ -772,13 +728,10 @@ def overview(db: DBConnection, user: DBRow, flt: TradeFilter) -> OverviewOut:
         currency=flt.currency,
         market_profile=flt.market_profile,
         symbol=flt.symbol,
-        sample_step=max(1, (int(row.get("count") or 0) + 999) // 1000),
-        limit=1000,
+        bucket_count=256,
     )
     days = _overview_days_from_sql(day_rows)
     latest_day = days[0].day if days else None
-    recent_start = _add_days(latest_day, -29) if latest_day else None
-    recent_days = [day for day in days if recent_start and day.day >= recent_start]
     recent = [
         OverviewRecentOut(
             id=f"{row['account_login']}-{row['ticket']}",
@@ -789,7 +742,6 @@ def overview(db: DBConnection, user: DBRow, flt: TradeFilter) -> OverviewOut:
         )
         for row in recent_rows
     ]
-    cumulative = _cumulative_points_from_days(days)
     count = int(row.get("count") or 0)
     scatter: dict[str, list[ScatterPointOut]] = {
         "timeEntry": [],
@@ -825,9 +777,6 @@ def overview(db: DBConnection, user: DBRow, flt: TradeFilter) -> OverviewOut:
     result = OverviewOut(
         stats=_overview_stats_from_sql(row, days),
         score=score,
-        cumulative=cumulative,
-        cumulativeRecent=_cumulative_points_from_days(recent_days),
-        drawdown=_drawdown_points_from_cumulative(cumulative),
         recent=recent,
         consistency=_consistency(days, latest_day),
         timeEntry=scatter["timeEntry"],

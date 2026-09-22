@@ -14,6 +14,7 @@ from .schemas import (
     SummaryOut,
     SymbolOptionOut,
     TradeFilter,
+    TradeItem,
     TradePageOut,
 )
 
@@ -58,10 +59,30 @@ def groups(
     flt: TradeFilter = Depends(),
     limit: int | None = Query(default=None, ge=1, le=500),
     offset: int = Query(default=0, ge=0),
+    include_trades: bool = Query(default=True),
     db: DBConnection = Depends(get_db),
     user: DBRow = Depends(get_current_user),
 ) -> list[GroupOut]:
-    return service.groups(db, user, flt, view, limit=limit, offset=offset)
+    return service.groups(
+        db,
+        user,
+        flt,
+        view,
+        limit=limit,
+        offset=offset,
+        include_trades=include_trades,
+    )
+
+
+@router.get("/api/v1/trades/group-trades", response_model=list[TradeItem])
+def group_trades(
+    view: str = Query(default="day", pattern="^(day|week)$"),
+    key: str = Query(pattern=r"\d{4}-\d{2}-\d{2}"),
+    flt: TradeFilter = Depends(),
+    db: DBConnection = Depends(get_db),
+    user: DBRow = Depends(get_current_user),
+) -> list[TradeItem]:
+    return service.group_trades(db, user, flt, view, key)
 
 
 @router.get("/api/v1/trades/calendar", response_model=list[CalendarDayOut])

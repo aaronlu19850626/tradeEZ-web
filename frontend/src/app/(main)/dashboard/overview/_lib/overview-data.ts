@@ -134,45 +134,35 @@ export function groupByDay(trades: MockTrade[]): DayStat[] {
   return [...buckets.values()].sort((a, b) => (a.day < b.day ? 1 : -1));
 }
 
-export function cumulativePoints(trades: MockTrade[]): { date: string; label: string; value: number }[] {
-  const daily = new Map<string, number>();
-  for (const trade of trades) {
-    const day = shanghaiDayKey(trade.closeTime);
-    daily.set(day, (daily.get(day) ?? 0) + trade.netPnl);
-  }
-  const days = [...daily.entries()].sort(([left], [right]) => (left < right ? -1 : 1));
-  if (days.length === 0) return [];
-
-  const axisDate = (epoch: number) => {
-    const [year, month, day] = shanghaiDayKey(epoch).split("-");
-    return `${month}/${day}/${year.slice(2)}`;
-  };
+export function cumulativePointsFromDays(days: DayStat[]): { date: string; label: string; value: number }[] {
+  const ordered = [...days].sort((left, right) => (left.day < right.day ? -1 : 1));
+  if (ordered.length === 0) return [];
 
   let running = 0;
-  return days.map(([date, net]) => {
-    running += net;
-    const epoch = Math.floor(new Date(`${date}T00:00:00.000Z`).getTime() / 1000);
+  return ordered.map((day) => {
+    running += day.net;
+    const [year, month, date] = day.day.split("-");
     return {
-      date,
-      label: axisDate(epoch),
+      date: day.day,
+      label: `${month}/${date}/${year.slice(2)}`,
       value: Number(running.toFixed(2)),
     };
   });
 }
 
-export function drawdownPoints(trades: MockTrade[]): {
+export function drawdownPointsFromCumulative(points: { date: string; label: string; value: number }[]): {
   points: { date: string; label: string; value: number }[];
   maxDrawdown: number;
 } {
   let peak = 0;
   let worst = 0;
-  const points = cumulativePoints(trades).map((point) => {
+  const result = points.map((point) => {
     peak = Math.max(peak, point.value);
     const value = Number((point.value - peak).toFixed(2));
     worst = Math.min(worst, value);
     return { ...point, value };
   });
-  return { points, maxDrawdown: Math.abs(worst) };
+  return { points: result, maxDrawdown: Math.abs(worst) };
 }
 
 export interface OverviewStats {

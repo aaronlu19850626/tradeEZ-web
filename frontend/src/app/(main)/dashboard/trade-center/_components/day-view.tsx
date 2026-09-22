@@ -4,12 +4,12 @@ import { useEffect, useState } from "react";
 
 import { ChevronRight, Play, StickyNote } from "lucide-react";
 
+import { useDisplayCurrency } from "@/components/shared/display-currency-provider";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { useDisplayCurrency } from "@/components/shared/display-currency-provider";
 import type { Locale } from "@/lib/i18n";
 import type { TradeCenterText } from "@/lib/tradesync/trade-center-i18n";
-import type { DayGroup } from "@/lib/tradesync/trades-mock";
+import type { DayGroup, MockTrade } from "@/lib/tradesync/trades-mock";
 
 import {
   type ColumnKey,
@@ -20,7 +20,7 @@ import {
   toneClass,
 } from "../_lib/trade-center-model";
 import { DayTrendChart, StatGrid } from "./trade-metric-cards";
-import { MetaButton } from "./trade-states";
+import { LoadingWave, MetaButton } from "./trade-states";
 import { TradeTable } from "./trade-table";
 
 export function DayCharts({ group, t, locale }: { group: DayGroup; t: TradeCenterText; locale: Locale }) {
@@ -41,6 +41,8 @@ export function DayGroupCard({
   locale,
   tableCommand,
   defaultTableOpen,
+  tradesLoading,
+  onLoadTrades,
 }: {
   group: DayGroup;
   columns: ColumnKey[];
@@ -48,6 +50,8 @@ export function DayGroupCard({
   locale: Locale;
   tableCommand: { value: boolean; version: number };
   defaultTableOpen: boolean;
+  tradesLoading?: boolean;
+  onLoadTrades?: () => Promise<MockTrade[] | undefined>;
 }) {
   const currency = useDisplayCurrency();
   // Collapsing a day hides only the trade table; stats and icons stay visible.
@@ -55,6 +59,9 @@ export function DayGroupCard({
   useEffect(() => {
     if (tableCommand.version > 0) setTableOpen(tableCommand.value);
   }, [tableCommand]);
+  useEffect(() => {
+    if (tableOpen && group.trades.length === 0 && !tradesLoading) void onLoadTrades?.();
+  }, [group.trades.length, onLoadTrades, tableOpen, tradesLoading]);
   return (
     <Card className="gap-0 overflow-hidden pt-0 pb-0">
       <div className="flex items-center gap-3 px-4 py-3">
@@ -87,7 +94,11 @@ export function DayGroupCard({
         <DayCharts group={group} t={t} locale={locale} />
         {tableOpen && (
           <div className="overflow-hidden rounded-lg border">
-            <TradeTable trades={group.trades} columns={columns} t={t} locale={locale} compact />
+            {tradesLoading && group.trades.length === 0 ? (
+              <LoadingWave t={t} />
+            ) : (
+              <TradeTable trades={group.trades} columns={columns} t={t} locale={locale} compact />
+            )}
           </div>
         )}
       </div>

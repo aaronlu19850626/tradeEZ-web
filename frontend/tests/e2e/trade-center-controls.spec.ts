@@ -37,6 +37,24 @@ test.describe("交易记录视图与表格控制", () => {
     await sortedRequest;
   });
 
+  test("分组明细按展开状态懒加载", async ({ page }) => {
+    let tradeRequests = 0;
+    page.on("request", (request) => {
+      if (request.url().includes("/api/v1/trades/group-trades?")) tradeRequests += 1;
+    });
+    await gotoDashboard(page, "/dashboard/trade-center?currency=USD&market=fx", "交易记录");
+
+    const dayToggles = page.locator('main [data-slot="card"] button[aria-expanded]');
+    await expect(dayToggles.first()).toHaveAttribute("aria-expanded", "true");
+    await expect.poll(() => tradeRequests).toBe(1);
+
+    const lazyRequest = page.waitForRequest((request) => request.url().includes("/api/v1/trades/group-trades?"));
+    await dayToggles.nth(1).click();
+    await lazyRequest;
+    await expect(dayToggles.nth(1)).toHaveAttribute("aria-expanded", "true");
+    await expect.poll(() => tradeRequests).toBe(2);
+  });
+
   test("列显示支持搜索、关闭和恢复默认", async ({ page }) => {
     await gotoDashboard(page, "/dashboard/trade-center?view=all&currency=USD&market=fx", "交易记录");
     await page.getByRole("button", { name: "列显示" }).click();

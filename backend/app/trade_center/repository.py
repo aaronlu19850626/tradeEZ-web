@@ -354,8 +354,7 @@ def fetch_trade_overview_scatter_sql(
     currency: str | None,
     market_profile: str | None,
     symbol: str | None,
-    sample_step: int,
-    limit: int,
+    bucket_count: int,
 ) -> list[dict]:
     _refresh_closed_trades(db)
     filtered_cte, params = _filtered_trade_cte(
@@ -372,77 +371,130 @@ def fetch_trade_overview_scatter_sql(
     rows = db.execute(
         f"""
         WITH {filtered_cte},
-        base AS (
+        raw_points AS (
             SELECT
                 'timeEntry'::text AS kind,
                 ((open_time + 28800) % 86400) / 3600.0 AS x,
-                net AS y,
-                ticket
+                net AS y
               FROM filtered
-             WHERE MOD(ABS(ticket), %s) = 0
-                OR net = (SELECT MIN(net) FROM filtered)
-                OR net = (SELECT MAX(net) FROM filtered)
             UNION ALL
             SELECT
                 'timeExit'::text AS kind,
                 ((deal_time + 28800) % 86400) / 3600.0 AS x,
-                net AS y,
-                ticket
+                net AS y
               FROM filtered
-             WHERE MOD(ABS(ticket), %s) = 0
-                OR net = (SELECT MIN(net) FROM filtered)
-                OR net = (SELECT MAX(net) FROM filtered)
             UNION ALL
             SELECT
                 'duration'::text AS kind,
                 GREATEST(0.1, (deal_time - open_time)::double precision) AS x,
-                net AS y,
-                ticket
+                net AS y
               FROM filtered
-             WHERE MOD(ABS(ticket), %s) = 0
-                OR net = (SELECT MIN(net) FROM filtered)
-                OR net = (SELECT MAX(net) FROM filtered)
         ),
-        ranked AS (
+        params AS (
+            SELECT %s::integer AS bucket_count
+        ),
+        counts AS (
+            SELECT COUNT(*)::integer AS total_count
+              FROM filtered
+        ),
+        ranges AS (
             SELECT
-                kind,
-                x,
-                y,
-                ROW_NUMBER() OVER (
-                    PARTITION BY kind
-                    ORDER BY x, y, ticket
-                ) AS x_rank,
-                ROW_NUMBER() OVER (
-                    PARTITION BY kind
-                    ORDER BY y, x, ticket
-                ) AS y_rank,
-                COUNT(*) OVER (PARTITION BY kind) AS total_count
-              FROM base
+                MIN(
+                    CASE
+                        WHEN kind = 'duration' THEN LN(GREATEST(x, 0.1))
+                        ELSE NULL
+                    END
+                ) AS duration_log_min,
+                MAX(
+                    CASE
+                        WHEN kind = 'duration' THEN LN(GREATEST(x, 0.1))
+                        ELSE NULL
+                    END
+                ) AS duration_log_max,
+                MAX(params.bucket_count) AS bucket_count
+              FROM raw_points
+             CROSS JOIN params
+             GROUP BY params.bucket_count
+        ),
+        bucketed AS (
+            SELECT
+                points.kind,
+                LEAST(
+                    ranges.bucket_count - 1,
+                    GREATEST(
+                        0,
+                        FLOOR(
+                            CASE
+                                WHEN points.kind = 'duration'
+                                THEN (
+                                    LN(GREATEST(points.x, 0.1)) - ranges.duration_log_min
+                                ) / COALESCE(
+                                    NULLIF(
+                                        ranges.duration_log_max - ranges.duration_log_min,
+                                        0
+                                    ),
+                                    1
+                                ) * ranges.bucket_count
+                                ELSE points.x / 24.0 * ranges.bucket_count
+                            END
+                        )::integer
+                    )
+                ) AS bucket,
+                MIN(points.y) AS min_y,
+                MAX(points.y) AS max_y
+              FROM raw_points points
+             CROSS JOIN ranges
+             GROUP BY points.kind, bucket, ranges.bucket_count
+        ),
+        expanded AS (
+            SELECT kind, bucket, min_y AS y
+              FROM bucketed
+            UNION ALL
+            SELECT kind, bucket, max_y AS y
+              FROM bucketed
+             WHERE max_y > min_y
         ),
         selected AS (
-            SELECT kind, x, y
-              FROM ranked
-             WHERE total_count <= %s
-                OR x_rank = 1
-                OR x_rank = total_count
-                OR x_rank % GREATEST(1, CEIL(total_count::numeric / %s)::bigint) = 0
-            UNION
-            SELECT kind, x, y
-              FROM ranked
-             WHERE y_rank = 1
-            UNION
-            SELECT kind, x, y
-              FROM ranked
-             WHERE y_rank = total_count
+            SELECT raw_points.kind, raw_points.x, raw_points.y
+              FROM raw_points
+             CROSS JOIN params
+             CROSS JOIN counts
+             WHERE counts.total_count <= params.bucket_count
+            UNION ALL
+            SELECT
+                expanded.kind,
+                (
+                    CASE
+                        WHEN expanded.kind = 'duration'
+                        THEN EXP(
+                            (
+                                (expanded.bucket + 0.5)::double precision
+                                / ranges.bucket_count
+                            ) * (
+                                ranges.duration_log_max - ranges.duration_log_min
+                            ) + ranges.duration_log_min
+                        )
+                        ELSE (
+                            (expanded.bucket + 0.5)::double precision
+                            / ranges.bucket_count
+                        ) * 24.0
+                    END
+                ) AS x,
+                expanded.y
+              FROM expanded
+             CROSS JOIN ranges
+             CROSS JOIN params
+             CROSS JOIN counts
+             WHERE counts.total_count > params.bucket_count
         )
         SELECT
-            kind,
-            ROUND(x::numeric, 6)::double precision AS x,
-            ROUND(y::numeric, 2)::double precision AS y
+            selected.kind,
+            ROUND(selected.x::numeric, 6)::double precision AS x,
+            ROUND(selected.y::numeric, 2)::double precision AS y
           FROM selected
          ORDER BY kind, x, y
         """,
-        tuple(params) + (sample_step, sample_step, sample_step, limit, limit),
+        tuple(params) + (bucket_count,),
     ).fetchall()
     return [dict(row) for row in rows]
 

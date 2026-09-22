@@ -235,9 +235,6 @@ def test_overview_aggregates_server_side(client, db):
     assert len(body["recent"]) == 3
     assert body["recent"][0]["closeTime"] > body["recent"][1]["closeTime"]
     assert body["recent"][0]["side"] == "sell"
-    assert body["cumulative"][-1]["value"] == 115.0
-    assert body["cumulativeRecent"][-1]["value"] == 115.0
-    assert body["drawdown"]["maxDrawdown"] == 25.0
     assert len(body["consistency"]["weeks"]) == 13
     assert len(body["timeEntry"]) == 3 and len(body["timeExit"]) == 3 and len(body["duration"]) == 3
 
@@ -285,9 +282,9 @@ def test_overview_scatter_sampling_caps_large_result(client, db):
 
     body = client.get("/api/v1/trades/overview", headers=headers).json()
     assert body["stats"]["count"] == 1100
-    assert 0 < len(body["timeEntry"]) <= 1002
-    assert 0 < len(body["timeExit"]) <= 1002
-    assert 0 < len(body["duration"]) <= 1002
+    assert 0 < len(body["timeEntry"]) <= 512
+    assert 0 < len(body["timeExit"]) <= 512
+    assert 0 < len(body["duration"]) <= 512
     assert len(body["recent"]) == 8
 
 
@@ -416,6 +413,7 @@ def test_groups_day_and_week(client, db):
     day_groups = client.get("/api/v1/trades/groups", headers=headers, params={"view": "day"}).json()
     assert [group["key"] for group in day_groups] == ["2026-09-16", "2026-09-15"]
     assert day_groups[0]["stats"]["count"] == 1
+    assert len(day_groups[0]["days"]) == 1
     paged = client.get(
         "/api/v1/trades/groups",
         headers=headers,
@@ -426,6 +424,20 @@ def test_groups_day_and_week(client, db):
     week_groups = client.get("/api/v1/trades/groups", headers=headers, params={"view": "week"}).json()
     assert len(week_groups) == 1 and week_groups[0]["key"] == "2026-09-14"
     assert week_groups[0]["startDay"] == "2026-09-15" and week_groups[0]["endDay"] == "2026-09-16"
+    assert [day["day"] for day in week_groups[0]["days"]] == ["2026-09-15", "2026-09-16"]
+
+    compact = client.get(
+        "/api/v1/trades/groups",
+        headers=headers,
+        params={"view": "day", "include_trades": "false"},
+    ).json()
+    assert compact[0]["trades"] == []
+    lazy = client.get(
+        "/api/v1/trades/group-trades",
+        headers=headers,
+        params={"view": "day", "key": "2026-09-16"},
+    ).json()
+    assert len(lazy) == 1
 
 
 def test_calendar_and_symbols(client, db):

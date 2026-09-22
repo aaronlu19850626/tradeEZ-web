@@ -4,15 +4,16 @@ import { useEffect, useState } from "react";
 
 import { ChevronRight, Play, StickyNote } from "lucide-react";
 
+import { useDisplayCurrency } from "@/components/shared/display-currency-provider";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { useDisplayCurrency } from "@/components/shared/display-currency-provider";
 import type { Locale } from "@/lib/i18n";
 import type { TradeCenterText } from "@/lib/tradesync/trade-center-i18n";
 import {
   computeStats,
   cumulativeSeries,
   type DayGroup,
+  type MockTrade,
   shanghaiDayKey,
   type WeekGroup,
 } from "@/lib/tradesync/trades-mock";
@@ -20,7 +21,7 @@ import {
 import { type ColumnKey, formatStatMoney, formatWeekday, formatWeekRange, toneClass } from "../_lib/trade-center-model";
 import { DayDetailDialog } from "./day-detail-dialog";
 import { DailyChart, ScaleBar, StatGrid } from "./trade-metric-cards";
-import { MetaButton } from "./trade-states";
+import { LoadingWave, MetaButton } from "./trade-states";
 import { TradeTable } from "./trade-table";
 import { WeekDayCell } from "./week-day-cell";
 
@@ -31,6 +32,8 @@ export function WeekGroupCard({
   locale,
   tableCommand,
   defaultTableOpen,
+  tradesLoading,
+  onLoadTrades,
 }: {
   group: WeekGroup;
   columns: ColumnKey[];
@@ -38,6 +41,8 @@ export function WeekGroupCard({
   locale: Locale;
   tableCommand: { value: boolean; version: number };
   defaultTableOpen: boolean;
+  tradesLoading?: boolean;
+  onLoadTrades?: () => Promise<MockTrade[] | undefined>;
 }) {
   const currency = useDisplayCurrency();
   const [tableOpen, setTableOpen] = useState(defaultTableOpen);
@@ -45,9 +50,13 @@ export function WeekGroupCard({
   useEffect(() => {
     if (tableCommand.version > 0) setTableOpen(tableCommand.value);
   }, [tableCommand]);
+  useEffect(() => {
+    if (tableOpen && group.trades.length === 0 && !tradesLoading) void onLoadTrades?.();
+  }, [group.trades.length, onLoadTrades, tableOpen, tradesLoading]);
   const bars = group.days.map((day) => ({ ...day, label: formatWeekday(day.key, locale) }));
-  const openDayDetail = (dayKey: string) => {
-    const dayTrades = group.trades.filter((trade) => shanghaiDayKey(trade.closeTime) === dayKey);
+  const openDayDetail = async (dayKey: string) => {
+    const trades = group.trades.length > 0 ? group.trades : ((await onLoadTrades?.()) ?? []);
+    const dayTrades = trades.filter((trade) => shanghaiDayKey(trade.closeTime) === dayKey);
     setOpenDay({
       key: dayKey,
       weekday: new Date(`${dayKey}T00:00:00.000Z`).getUTCDay(),
@@ -100,7 +109,11 @@ export function WeekGroupCard({
         </div>
         {tableOpen && (
           <div className="overflow-hidden rounded-lg border">
-            <TradeTable trades={group.trades} columns={columns} t={t} locale={locale} compact />
+            {tradesLoading && group.trades.length === 0 ? (
+              <LoadingWave t={t} />
+            ) : (
+              <TradeTable trades={group.trades} columns={columns} t={t} locale={locale} compact />
+            )}
           </div>
         )}
       </div>

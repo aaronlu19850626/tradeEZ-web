@@ -332,6 +332,8 @@ export default function TradeCenterPage() {
             locale={locale}
             tableCommand={tableCommand}
             defaultTableOpen={index === 0}
+            tradesLoading={serverData.groupTradesLoading[`day:${group.key}`]}
+            onLoadTrades={() => serverData.loadGroupTrades("day", group.key)}
           />
         ))}
         {serverData.dayHasMore && (
@@ -355,6 +357,8 @@ export default function TradeCenterPage() {
             locale={locale}
             tableCommand={tableCommand}
             defaultTableOpen={index === 0}
+            tradesLoading={serverData.groupTradesLoading[`week:${group.key}`]}
+            onLoadTrades={() => serverData.loadGroupTrades("week", group.key)}
           />
         ))}
         {serverData.weekHasMore && (

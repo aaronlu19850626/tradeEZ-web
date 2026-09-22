@@ -74,6 +74,7 @@ export interface TradeGroupRecord {
   endDay: string;
   stats: TradeStats;
   series: { index: number; value: number }[];
+  days: OverviewDayRecord[];
   trades: TradeRecord[];
 }
 
@@ -88,12 +89,6 @@ export interface OverviewDayRecord {
   net: number;
   count: number;
   wins: number;
-}
-
-export interface OverviewPointRecord {
-  date: string;
-  label: string;
-  value: number;
 }
 
 export interface OverviewScoreDimensionRecord {
@@ -150,9 +145,6 @@ export interface TradeOverviewRecord {
     days: OverviewDayRecord[];
   };
   score: OverviewScoreRecord;
-  cumulative: OverviewPointRecord[];
-  cumulativeRecent: OverviewPointRecord[];
-  drawdown: { points: OverviewPointRecord[]; maxDrawdown: number };
   recent: OverviewRecentRecord[];
   consistency: { cells: OverviewConsistencyCellRecord[]; weeks: string[] };
   timeEntry: OverviewScatterPointRecord[];
@@ -229,14 +221,30 @@ export const tradeCenterApi = {
   list: (params: TradeListParams = {}) => apiFetch<TradePage>(`/trades${toQuery(params)}`),
   summary: (params: TradeListParams = {}) => apiFetch<TradeSummaryRecord>(`/trades/summary${toQuery(params)}`),
   overview: (params: TradeListParams = {}) => apiFetch<TradeOverviewRecord>(`/trades/overview${toQuery(params)}`),
-  groups: (params: TradeListParams & { view: "day" | "week"; limit?: number; offset?: number }) => {
+  groups: (
+    params: TradeListParams & {
+      view: "day" | "week";
+      limit?: number;
+      offset?: number;
+      includeTrades?: boolean;
+    },
+  ) => {
     const query = new URLSearchParams();
     query.set("view", params.view);
     if (params.limit) query.set("limit", String(params.limit));
     if (params.offset) query.set("offset", String(params.offset));
+    if (params.includeTrades !== undefined) query.set("include_trades", String(params.includeTrades));
     const base = new URLSearchParams(toQuery(params).replace(/^\?/, ""));
     for (const [key, value] of base) query.set(key, value);
     return apiFetch<TradeGroupRecord[]>(`/trades/groups?${query.toString()}`);
+  },
+  groupTrades: (params: TradeListParams & { view: "day" | "week"; key: string }) => {
+    const query = new URLSearchParams();
+    query.set("view", params.view);
+    query.set("key", params.key);
+    const base = new URLSearchParams(toQuery(params).replace(/^\?/, ""));
+    for (const [key, value] of base) query.set(key, value);
+    return apiFetch<TradeRecord[]>(`/trades/group-trades?${query.toString()}`);
   },
   bounds: (params: TradeListParams = {}) => apiFetch<TradeBounds>(`/trades/bounds${toQuery(params)}`),
   calendar: (params: TradeListParams & { month: string }) => {

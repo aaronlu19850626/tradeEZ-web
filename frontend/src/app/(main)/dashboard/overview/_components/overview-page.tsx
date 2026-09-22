@@ -28,7 +28,7 @@ import type { CompositeScore } from "@/lib/tradesync/trade-score";
 import type { DayGroup } from "@/lib/tradesync/trades-mock";
 
 import { useTradeOverviewData } from "../_hooks/use-trade-overview-data";
-import type { OverviewStats } from "../_lib/overview-data";
+import { cumulativePointsFromDays, drawdownPointsFromCumulative, type OverviewStats } from "../_lib/overview-data";
 import { OverviewHeader } from "./overview-header";
 import { OverviewMetrics } from "./overview-metrics";
 import { OverviewToolbar } from "./overview-toolbar";
@@ -163,9 +163,14 @@ export default function DashboardOverviewPage() {
 
   const stats: OverviewStats = overview?.stats ?? EMPTY_STATS;
   const score: CompositeScore = overview?.score ?? EMPTY_SCORE;
-  const cumulativeFull = overview?.cumulative ?? [];
-  const cumulativeRecent = overview?.cumulativeRecent ?? [];
-  const drawdown = overview?.drawdown ?? { points: [], maxDrawdown: 0 };
+  const cumulativeFull = useMemo(() => cumulativePointsFromDays(stats.days), [stats.days]);
+  const cumulativeRecent = useMemo(() => {
+    const latest = stats.days[0]?.day;
+    if (!latest) return [];
+    const recentStart = new Date(Date.parse(`${latest}T00:00:00.000Z`) - 29 * 86_400_000).toISOString().slice(0, 10);
+    return cumulativePointsFromDays(stats.days.filter((day) => day.day >= recentStart));
+  }, [stats.days]);
+  const drawdown = useMemo(() => drawdownPointsFromCumulative(cumulativeFull), [cumulativeFull]);
   const scoreRadar = useMemo(
     () =>
       score.dimensions.map((dimension) => ({
