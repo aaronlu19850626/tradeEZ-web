@@ -12,6 +12,10 @@ MAX_SAFE_JS_INT = 9_007_199_254_740_991
 SUPPORTED_CURRENCIES = ("USD", "CNY", "EUR", "GBP", "JPY", "HKD")
 
 
+def market_profile_for_platform(platform: str) -> str:
+    return "cn" if platform.strip().lower() == "ctp" else "fx"
+
+
 def date_to_epoch(value: date) -> int:
     return int(datetime.combine(value, datetime.min.time(), tzinfo=timezone.utc).timestamp())
 
@@ -151,6 +155,7 @@ class AccountOut(BaseModel):
     mt5_login: int
     broker_server: str | None
     currency: str | None
+    market_profile: str
     is_statistics: bool
     sync_start_date: str | None
     status: str

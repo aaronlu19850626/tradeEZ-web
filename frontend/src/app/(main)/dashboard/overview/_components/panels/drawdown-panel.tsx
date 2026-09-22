@@ -13,6 +13,7 @@ import {
 } from "recharts";
 
 import type { Locale } from "@/lib/i18n";
+import { useDisplayCurrency } from "@/components/shared/display-currency-provider";
 
 import {
   CHART_LEFT_MARGIN,
@@ -34,6 +35,7 @@ export function DrawdownChart({
   points: { date: string; label: string; value: number }[];
   locale: Locale;
 }) {
+  const currency = useDisplayCurrency();
   const tickInterval = Math.max(0, Math.floor(points.length / 6));
   return (
     <div className="h-[240px] w-full">
@@ -62,7 +64,7 @@ export function DrawdownChart({
             padding={{ top: 14, bottom: 14 }}
             domain={[(dataMin: number) => Math.min(0, dataMin), 0]}
             tick={CHART_Y_TICK}
-            tickFormatter={(value: number) => moneyAxis(value, locale)}
+            tickFormatter={(value: number) => moneyAxis(value, locale, currency)}
           />
           <ReferenceLine y={0} stroke="var(--border)" />
           <RechartsTooltip

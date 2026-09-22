@@ -58,6 +58,14 @@ def test_create_without_sync_date_defaults_to_all_history(client, db):
     assert db.execute("SELECT sync_start_time FROM accounts WHERE id=%s", (body["id"],)).fetchone()[0] == 0
 
 
+def test_account_market_profile_follows_platform(client, db):
+    headers = web_headers(db, "market-profile@example.com")
+    mt5 = create_account(client, headers, 910008, platform="mt5", currency="USD").json()
+    ctp = create_account(client, headers, 910007, platform="ctp", currency="CNY").json()
+    assert mt5["market_profile"] == "fx"
+    assert ctp["market_profile"] == "cn"
+
+
 def test_ownership_isolation(client, db):
     owner = web_headers(db, "owner-isolation@example.com")
     stranger = web_headers(db, "stranger-isolation@example.com")

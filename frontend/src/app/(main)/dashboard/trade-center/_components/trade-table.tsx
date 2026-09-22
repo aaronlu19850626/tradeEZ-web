@@ -5,8 +5,9 @@ import { type ReactNode, useCallback, useMemo, useState } from "react";
 import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react";
 
 import { DataTable, type DataTableColumn } from "@/components/data-table/data-table";
+import { useDisplayCurrency } from "@/components/shared/display-currency-provider";
 import { SymbolBadge } from "@/components/shared/symbol-badge";
-import { Badge } from "@/components/ui/badge";
+import { TradeSideBadge } from "@/components/shared/trade-side-badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import type { Locale } from "@/lib/i18n";
@@ -65,6 +66,7 @@ export function TradeTable({
   sort?: { key: ColumnKey; dir: "asc" | "desc" } | null;
   onSortChange?: (sort: { key: ColumnKey; dir: "asc" | "desc" }) => void;
 }) {
+  const displayCurrency = useDisplayCurrency();
   const [sortState, setSortState] = useState<{ key: ColumnKey; dir: "asc" | "desc" } | null>(null);
   const effectiveSort = sort ?? sortState;
   const rows = useMemo(() => {
@@ -145,14 +147,14 @@ export function TradeTable({
           ) : (
             <span className={HEADER_LABEL_CLASS}>{columnLabel(key, t)}</span>
           ),
-        cell: ({ row }) => tradeCell(row.original, key, t, locale, Boolean(dateInline)),
+        cell: ({ row }) => tradeCell(row.original, key, t, locale, displayCurrency, Boolean(dateInline)),
         meta: {
           className: `group/head whitespace-nowrap ${alignClass(COLUMN_META[key].align)}`,
         },
       });
     }
     return result;
-  }, [columns, dateInline, effectiveSort, locale, selectable, t, toggleSort]);
+  }, [columns, dateInline, displayCurrency, effectiveSort, locale, selectable, t, toggleSort]);
 
   const scrollable = compact === true || stickyHeader === true;
   const rootClassName = stickyHeader
@@ -212,8 +214,10 @@ export function tradeCell(
   key: ColumnKey,
   t: TradeCenterText,
   locale: Locale,
+  currency: string,
   dateInline = false,
 ): ReactNode {
+  const amountCurrency = trade.currency ?? currency;
   switch (key) {
     case "date":
       return <span className="text-muted-foreground">{formatShortDay(shanghaiDayKey(trade.closeTime), locale)}</span>;
@@ -222,11 +226,7 @@ export function tradeCell(
     case "openTime":
       return <span>{dateInline ? formatDateTime(trade.openTime, locale) : formatClock(trade.openTime, locale)}</span>;
     case "side":
-      return trade.side === "buy" ? (
-        <Badge variant="success-soft">{t.sideBuy}</Badge>
-      ) : (
-        <Badge variant="danger-soft">{t.sideSell}</Badge>
-      );
+      return <TradeSideBadge side={trade.side} buyLabel={t.sideBuy} sellLabel={t.sideSell} />;
     case "symbol":
       return <SymbolBadge value={trade.symbol} />;
     case "volume":
@@ -247,7 +247,7 @@ export function tradeCell(
     case "net":
       return (
         <span className={`font-semibold tabular-nums ${toneClass(trade.netPnl)}`}>
-          {formatMoney(trade.netPnl, locale)}
+          {formatMoney(trade.netPnl, locale, amountCurrency)}
         </span>
       );
     case "rr":
@@ -265,17 +265,31 @@ export function tradeCell(
         </span>
       );
     case "swap":
-      return <span className={`tabular-nums ${toneClass(trade.swap)}`}>{formatMoney(trade.swap, locale)}</span>;
+      return (
+        <span className={`tabular-nums ${toneClass(trade.swap)}`}>
+          {formatMoney(trade.swap, locale, amountCurrency)}
+        </span>
+      );
     case "commission":
       return (
-        <span className={`tabular-nums ${toneClass(trade.commission)}`}>{formatMoney(trade.commission, locale)}</span>
+        <span className={`tabular-nums ${toneClass(trade.commission)}`}>
+          {formatMoney(trade.commission, locale, amountCurrency)}
+        </span>
       );
     case "duration":
       return <span className="text-muted-foreground">{formatDuration(trade.durationSec, t)}</span>;
     case "account":
-      return <span className="text-muted-foreground">{trade.accountName}</span>;
+      return (
+        <span className="block w-full truncate text-muted-foreground" title={trade.accountName}>
+          {trade.accountName}
+        </span>
+      );
     case "strategy":
-      return <span className="text-muted-foreground">{trade.strategy ?? t.strategyNone}</span>;
+      return (
+        <span className="block w-full truncate text-muted-foreground" title={trade.strategy ?? t.strategyNone}>
+          {trade.strategy ?? t.strategyNone}
+        </span>
+      );
     default:
       return null;
   }

@@ -3,6 +3,7 @@
 import { TrendingDown, TrendingUp } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { useDisplayCurrency } from "@/components/shared/display-currency-provider";
 import type { Locale } from "@/lib/i18n";
 import type { TradeCenterText } from "@/lib/tradesync/trade-center-i18n";
 
@@ -19,6 +20,7 @@ export function WeekDayCell({
   locale: Locale;
   onOpen: () => void;
 }) {
+  const currency = useDisplayCurrency();
   const empty = day.count === 0;
   const profit = day.net >= 0;
   const tone = weekDayCellTone(day.count, day.net);
@@ -41,7 +43,7 @@ export function WeekDayCell({
       {!empty && (
         <>
           <span className={`text-lg font-semibold tabular-nums ${toneClass(day.net)}`}>
-            {formatStatMoney(day.net, locale)}
+            {formatStatMoney(day.net, locale, currency)}
           </span>
           <span className="text-xs text-muted-foreground">
             {day.count} {t.tradesUnit}

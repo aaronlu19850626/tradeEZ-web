@@ -8,6 +8,7 @@ import type { DataTableColumn } from "@/components/data-table/data-table";
 import { PlatformIcon } from "@/components/domain/platform-icon";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { formatCount } from "@/lib/format-numbers";
 import type { AccountCenterItem } from "@/lib/tradesync/account-center";
 import type { AccountCenterText } from "@/lib/tradesync/account-center-i18n";
 
@@ -90,9 +91,22 @@ export function accountTableColumns({
       header: t.tableMt5,
       cell: ({ row }) => (
         <div className="flex items-center gap-3">
-          <span className="flex size-9 shrink-0 items-center justify-center rounded-lg border bg-card shadow-sm">
-            <PlatformIcon platform={row.original.platform} className="size-5" />
-          </span>
+          <div className="flex w-9 shrink-0 flex-col items-center gap-0.5">
+            <span className="flex size-9 items-center justify-center rounded-lg border bg-card shadow-sm">
+              <PlatformIcon platform={row.original.platform} className="size-5" />
+            </span>
+            <Badge
+              variant="outline"
+              title={row.original.market_profile === "cn" ? t.marketCn : t.marketFx}
+              className={`h-3.5 w-9 bg-transparent px-0 text-[8px] leading-none ${
+                row.original.market_profile === "cn"
+                  ? "border-destructive/35 text-destructive"
+                  : "border-success/35 text-success"
+              }`}
+            >
+              {row.original.market_profile === "cn" ? t.marketCn : t.marketFx}
+            </Badge>
+          </div>
           <div className="min-w-0">
             <div className="truncate font-medium">{row.original.broker_server ?? "N/A"}</div>
             <div className="mt-1 w-fit rounded-md bg-muted px-2 py-1 font-mono text-sm font-medium">
@@ -156,7 +170,7 @@ export function accountTableColumns({
       header: t.tableTrades,
       cell: ({ row }) => (
         <>
-          <span className="text-lg font-semibold text-foreground">{row.original.trade_count}</span>
+          <span className="text-lg font-semibold text-foreground">{formatCount(row.original.trade_count, locale)}</span>
           <span className="ml-1 text-sm text-muted-foreground">{t.tradesUnit}</span>
         </>
       ),

@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { type ReactNode, useId } from "react";
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -33,13 +33,14 @@ export function Field({
   placeholder?: string;
   hint?: string;
 }) {
+  const id = useId();
   return (
     <div className="grid gap-2">
-      <Label>
+      <Label htmlFor={id}>
         {label}
         {required && <span className="ml-1 text-destructive">*</span>}
       </Label>
-      <Input type={type} value={value} placeholder={placeholder} onChange={(e) => onChange(e.target.value)} />
+      <Input id={id} type={type} value={value} placeholder={placeholder} onChange={(e) => onChange(e.target.value)} />
       {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
     </div>
   );

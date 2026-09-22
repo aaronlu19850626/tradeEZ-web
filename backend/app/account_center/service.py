@@ -23,6 +23,7 @@ from .schemas import (
     date_to_epoch,
     epoch_to_date,
     iso_to_epoch,
+    market_profile_for_platform,
 )
 from ..trade_center.cache import invalidate_user
 
@@ -94,6 +95,7 @@ def account_to_out(row: DBRow, db: DBConnection) -> AccountOut:
         mt5_login=mt5_login,
         broker_server=row.get("broker_server"),
         currency=row.get("account_currency"),
+        market_profile=str(row.get("market_profile") or market_profile_for_platform(str(row.get("platform") or "mt5"))),
         is_statistics=bool(row.get("is_statistics")),
         sync_start_date=epoch_to_date(row.get("sync_start_time")),
         status=str(row.get("status") or "active"),
@@ -144,6 +146,7 @@ def create_account(payload: AccountCreateIn, db: DBConnection, user: DBRow) -> A
             name=payload.name,
             platform=payload.platform,
             currency=payload.currency,
+            market_profile=market_profile_for_platform(payload.platform),
             broker_server=payload.broker_server,
             sync_start_time=date_to_epoch(payload.sync_start_date) if payload.sync_start_date else 0,
             key_prefix=prefix,

@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode, useState } from "react";
+import { Fragment, type ReactNode, useState } from "react";
 
 import { Check, ChevronDown, ChevronUp, X } from "lucide-react";
 
@@ -10,16 +10,17 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 export interface SelectOption {
+  id?: string;
   value: string;
   label: string;
   icon?: ReactNode;
+  section?: string;
+  description?: ReactNode;
 }
 
 export interface SelectConditionGroup {
@@ -109,10 +110,24 @@ export function SelectMultiConditionControl({
 }) {
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<Record<string, string[]>>(value);
+  const [activeGroupId, setActiveGroupId] = useState(groups[0]?.id ?? "");
+  const activeGroup = groups.find((group) => group.id === activeGroupId) ?? groups[0];
   const allOptions = groups.flatMap((group) => group.options);
   const selectedValues = Object.values(value).flat();
   const selected = allOptions.filter((option) => selectedValues.includes(option.value));
   const isDefault = selectedValues.length === 0;
+  const draftSelection = groups.flatMap((group) =>
+    (draft[group.id] ?? [])
+      .filter((item) => item !== "all")
+      .map((item) => ({
+        groupId: group.id,
+        groupLabel: group.label,
+        option: group.options.find((option) => option.value === item),
+      }))
+      .filter(
+        (item): item is { groupId: string; groupLabel: string; option: SelectOption } => item.option !== undefined,
+      ),
+  );
   const summary =
     selected.length <= 2
       ? selected.map((option) => option.label).join("/")
@@ -123,7 +138,10 @@ export function SelectMultiConditionControl({
       open={open}
       onOpenChange={(next) => {
         setOpen(next);
-        if (next) setDraft(value);
+        if (next) {
+          setDraft(value);
+          setActiveGroupId(groups[0]?.id ?? "");
+        }
       }}
     >
       <DropdownMenuTrigger asChild>
@@ -140,91 +158,164 @@ export function SelectMultiConditionControl({
           {open ? <ChevronUp className="size-3.5 opacity-50" /> : <ChevronDown className="size-3.5 opacity-50" />}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align={align} sideOffset={6} className="min-w-56 rounded-lg p-1">
-        <DropdownMenuItem
-          className="cursor-pointer gap-2 rounded-md px-2 py-1.5 text-sm font-normal text-muted-foreground"
-          onSelect={() => {
-            setDraft({});
-            onChange({});
-            setOpen(false);
-          }}
-        >
-          <X className="size-4" />
-          <span className="min-w-0 flex-1 text-left">{clearLabel}</span>
-        </DropdownMenuItem>
-        <DropdownMenuSeparator className="my-1" />
-        {groups.map((group, groupIndex) => (
-          <div key={group.id}>
-            <DropdownMenuLabel className="px-2 pt-1 pb-0.5 text-[11px] font-medium text-muted-foreground">
-              {group.label}
-            </DropdownMenuLabel>
-            {group.mode === "single" ? (
-              <RadioGroup
-                value={draft[group.id]?.[0] ?? ""}
-                onValueChange={(next) => setDraft((prev) => ({ ...prev, [group.id]: [next] }))}
-                className="max-h-40 gap-0! overflow-y-auto"
-              >
-                {group.options.map((option) => (
-                  <label
-                    key={option.value}
-                    htmlFor={`condition-${group.id}-${option.value}`}
-                    className="flex cursor-pointer items-center gap-2.5 rounded-md px-2 py-1.5 text-sm font-normal text-foreground hover:bg-accent"
+      <DropdownMenuContent
+        align={align}
+        sideOffset={6}
+        className="w-[640px] max-w-[calc(100vw-2rem)] overflow-hidden! rounded-lg p-0"
+      >
+        <div className="grid h-[min(420px,calc(100vh-12rem))] grid-cols-[140px_minmax(0,1fr)] sm:grid-cols-[180px_minmax(0,1fr)]">
+          <div className="overflow-y-auto border-r bg-muted/20 p-3">
+            <div className="grid gap-1">
+              {groups.map((group) => {
+                const active = group.id === activeGroupId;
+                return (
+                  <button
+                    key={group.id}
+                    type="button"
+                    aria-pressed={active}
+                    className={`flex min-h-10 w-full items-center rounded-lg border px-3 text-left text-sm transition-colors ${
+                      active
+                        ? "border-primary/35 bg-primary-soft font-semibold text-primary"
+                        : "border-transparent text-foreground hover:bg-accent"
+                    }`}
+                    onClick={() => setActiveGroupId(group.id)}
                   >
-                    <RadioGroupItem id={`condition-${group.id}-${option.value}`} value={option.value} />
-                    <span className="min-w-0 flex-1 truncate text-left">{option.label}</span>
-                  </label>
-                ))}
-              </RadioGroup>
-            ) : (
-              <div className="max-h-40 overflow-y-auto">
-                {group.options.map((option) => {
-                  const groupValue = draft[group.id] ?? [];
-                  const checked = groupValue.includes(option.value);
-                  return (
-                    <label
-                      key={option.value}
-                      htmlFor={`condition-${group.id}-${option.value}`}
-                      className="flex cursor-pointer items-center gap-2.5 rounded-md px-2 py-1.5 text-sm font-normal text-foreground hover:bg-accent"
-                    >
-                      <Checkbox
-                        id={`condition-${group.id}-${option.value}`}
-                        checked={checked}
-                        onCheckedChange={() =>
-                          setDraft((prev) => {
-                            const current = prev[group.id] ?? [];
-                            return {
-                              ...prev,
-                              [group.id]: checked
-                                ? current.filter((item) => item !== option.value)
-                                : [...current, option.value],
-                            };
-                          })
-                        }
-                      />
-                      <span className="min-w-0 flex-1 truncate text-left">{option.label}</span>
-                    </label>
-                  );
-                })}
-              </div>
-            )}
-            {groupIndex < groups.length - 1 && <DropdownMenuSeparator className="my-1" />}
+                    {group.label}
+                  </button>
+                );
+              })}
+            </div>
           </div>
-        ))}
-        <DropdownMenuSeparator className="my-1" />
-        <div className="grid grid-cols-2 gap-1">
-          <Button variant="outline" className="w-full" onClick={() => setOpen(false)}>
-            {closeLabel}
-          </Button>
+
+          <div className="min-w-0 overflow-y-auto p-4">
+            {activeGroup ? (
+              activeGroup.mode === "single" ? (
+                <RadioGroup
+                  key={activeGroup.id}
+                  value={draft[activeGroup.id]?.[0] ?? ""}
+                  onValueChange={(next) => setDraft((prev) => ({ ...prev, [activeGroup.id]: [next] }))}
+                  className="gap-1"
+                >
+                  {activeGroup.options.map((option, index) => {
+                    const showSection =
+                      Boolean(option.section) &&
+                      index > 0 &&
+                      activeGroup.options[index - 1]?.section !== option.section;
+                    return (
+                      <Fragment key={option.id ?? option.value}>
+                        {showSection ? <div className="my-1 h-px bg-border" /> : null}
+                        <label
+                          htmlFor={`condition-${activeGroup.id}-${option.id ?? option.value}`}
+                          className="flex min-h-10 cursor-pointer items-center gap-3 rounded-lg px-3 text-sm font-normal text-foreground hover:bg-accent"
+                        >
+                          <RadioGroupItem
+                            id={`condition-${activeGroup.id}-${option.id ?? option.value}`}
+                            value={option.value}
+                          />
+                          <span className="flex min-w-0 flex-1 flex-col gap-0.5 text-left">
+                            <span className="truncate">{option.label}</span>
+                            {option.description ? (
+                              <span className="min-w-0 text-xs text-muted-foreground">{option.description}</span>
+                            ) : null}
+                          </span>
+                        </label>
+                      </Fragment>
+                    );
+                  })}
+                </RadioGroup>
+              ) : (
+                <div className="grid gap-1">
+                  {activeGroup.options.map((option, index) => {
+                    const groupValue = draft[activeGroup.id] ?? [];
+                    const checked = groupValue.includes(option.value);
+                    const showSection =
+                      Boolean(option.section) &&
+                      index > 0 &&
+                      activeGroup.options[index - 1]?.section !== option.section;
+                    return (
+                      <Fragment key={option.id ?? option.value}>
+                        {showSection ? <div className="my-1 h-px bg-border" /> : null}
+                        <label
+                          htmlFor={`condition-${activeGroup.id}-${option.id ?? option.value}`}
+                          className="flex min-h-10 cursor-pointer items-center gap-3 rounded-lg px-3 text-sm font-normal text-foreground hover:bg-accent"
+                        >
+                          <Checkbox
+                            id={`condition-${activeGroup.id}-${option.id ?? option.value}`}
+                            checked={checked}
+                            onCheckedChange={() =>
+                              setDraft((prev) => {
+                                const current = prev[activeGroup.id] ?? [];
+                                return {
+                                  ...prev,
+                                  [activeGroup.id]: checked
+                                    ? current.filter((item) => item !== option.value)
+                                    : [...current, option.value],
+                                };
+                              })
+                            }
+                          />
+                          <span className="flex min-w-0 flex-1 flex-col gap-0.5 text-left">
+                            <span className="truncate">{option.label}</span>
+                            {option.description ? (
+                              <span className="min-w-0 text-xs text-muted-foreground">{option.description}</span>
+                            ) : null}
+                          </span>
+                        </label>
+                      </Fragment>
+                    );
+                  })}
+                </div>
+              )
+            ) : null}
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3 border-t p-4">
           <Button
-            variant="default"
-            className="w-full"
-            onClick={() => {
-              onChange(draft);
-              setOpen(false);
-            }}
+            variant="ghost"
+            className="shrink-0 px-0 text-primary hover:bg-transparent hover:text-primary-hover"
+            onClick={() => setDraft({})}
           >
-            {confirmLabel}
+            {clearLabel}
           </Button>
+
+          <div className="flex max-h-16 min-w-0 flex-1 flex-wrap items-center gap-1 overflow-y-auto">
+            {draftSelection.map(({ groupId, groupLabel, option }) => (
+              <Button
+                key={`${groupId}-${option.value}`}
+                type="button"
+                variant="secondary"
+                size="xs"
+                className="max-w-40 gap-1"
+                title={`${groupLabel}：${option.label}`}
+                aria-label={`${groupLabel}：${option.label}`}
+                onClick={() =>
+                  setDraft((prev) => ({
+                    ...prev,
+                    [groupId]: (prev[groupId] ?? []).filter((item) => item !== option.value),
+                  }))
+                }
+              >
+                <span className="truncate">{`${groupLabel}：${option.label}`}</span>
+                <X className="shrink-0 opacity-60" />
+              </Button>
+            ))}
+          </div>
+
+          <div className="flex shrink-0 items-center gap-2">
+            <Button variant="outline" onClick={() => setOpen(false)}>
+              {closeLabel}
+            </Button>
+            <Button
+              variant="default"
+              onClick={() => {
+                onChange(draft);
+                setOpen(false);
+              }}
+            >
+              {confirmLabel}
+            </Button>
+          </div>
         </div>
       </DropdownMenuContent>
     </DropdownMenu>

@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import type { ResultFilter, SideFilter } from "@/components/filters/trade-filter-controls";
+import type { MarketProfile } from "@/lib/tradesync/trade-center";
 
 import { type ColumnKey, type ViewMode } from "../_lib/trade-center-model";
 
@@ -12,6 +13,7 @@ export function useTradeViewState() {
   const [side, setSide] = useState<SideFilter>("all");
   const [result, setResult] = useState<ResultFilter>("all");
   const [currency, setCurrency] = useState("USD");
+  const [marketProfile, setMarketProfile] = useState<MarketProfile>("fx");
   const [selectedSymbols, setSelectedSymbols] = useState<string[]>([]);
   const [accountIds, setAccountIds] = useState<string[]>([]);
   const [dayVisible, setDayVisible] = useState(8);
@@ -61,6 +63,7 @@ export function useTradeViewState() {
     selectedSymbols,
     setAccountIds,
     setCurrency,
+    setMarketProfile,
     setDayVisible,
     setPage,
     setSort,
@@ -72,6 +75,7 @@ export function useTradeViewState() {
     setView,
     setWeekVisible,
     side,
+    marketProfile,
     sort,
     tableCommand,
     tableResetVersion,

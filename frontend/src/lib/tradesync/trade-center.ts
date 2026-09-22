@@ -2,12 +2,15 @@ import { apiFetch } from "./api";
 import type { ScoreDimensionKey } from "./trade-score";
 import type { MockTrade, TradeSide, TradeStats } from "./trades-mock";
 
+export type MarketProfile = "cn" | "fx";
+
 /** Account shape the trade-center page uses for the page-level scope selector. */
 export interface TradeAccount {
   id: string;
   name: string;
   login: string;
   currency: string | null;
+  marketProfile: MarketProfile;
   isStatistics: boolean;
   tradeCount: number;
   lastUpdatedAt: number | null;
@@ -20,6 +23,7 @@ export interface TradeRecord {
   accountName: string | null;
   accountLogin: string;
   currency: string | null;
+  marketProfile: MarketProfile;
   symbol: string;
   side: TradeSide;
   volume: number;
@@ -52,6 +56,11 @@ export interface TradePage {
 export interface TradeBounds {
   earliestDay: string | null;
   latestDay: string | null;
+}
+
+export interface TradeSymbolOption {
+  symbol: string;
+  accounts: { account_id: number; account_name: string }[];
 }
 
 export interface TradeSummaryRecord {
@@ -119,6 +128,7 @@ export interface OverviewRecentRecord {
   id: string;
   closeTime: number;
   symbol: string;
+  side: TradeSide;
   netPnl: number;
 }
 
@@ -157,6 +167,7 @@ export interface TradeListParams {
   side?: "all" | "buy" | "sell";
   result?: "all" | "win" | "loss" | "flat";
   currency?: string;
+  marketProfile?: MarketProfile;
   symbol?: string;
   sort?: string;
   order?: "asc" | "desc";
@@ -172,6 +183,7 @@ function toQuery(params: TradeListParams): string {
   if (params.side) query.set("side", params.side);
   if (params.result) query.set("result", params.result);
   if (params.currency) query.set("currency", params.currency);
+  if (params.marketProfile) query.set("market_profile", params.marketProfile);
   if (params.symbol) query.set("symbol", params.symbol);
   if (params.sort) query.set("sort", params.sort);
   if (params.order) query.set("order", params.order);
@@ -188,6 +200,7 @@ export function toTrade(record: TradeRecord): MockTrade {
     accountName: record.accountName ?? record.accountLogin,
     accountLogin: record.accountLogin,
     currency: record.currency,
+    marketProfile: record.marketProfile,
     magic: record.magic,
     symbol: record.symbol,
     side: record.side,
@@ -233,6 +246,8 @@ export const tradeCenterApi = {
     for (const [key, value] of base) query.set(key, value);
     return apiFetch<CalendarDayRecord[]>(`/trades/calendar?${query.toString()}`);
   },
-  symbols: () => apiFetch<string[]>("/trades/symbols"),
+  symbols: (params: TradeListParams = {}) => apiFetch<string[]>(`/trades/symbols${toQuery(params)}`),
+  symbolOptions: (params: TradeListParams = {}) =>
+    apiFetch<TradeSymbolOption[]>(`/trades/symbol-options${toQuery(params)}`),
   currencies: () => apiFetch<string[]>("/trades/currencies"),
 };

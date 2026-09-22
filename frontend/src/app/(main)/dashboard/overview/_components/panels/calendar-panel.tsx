@@ -5,7 +5,9 @@ import { Fragment } from "react";
 import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
 
 import { OutlineAction } from "@/components/shared/dashboard-actions";
+import { useDisplayCurrency } from "@/components/shared/display-currency-provider";
 import { Button } from "@/components/ui/button";
+import { formatPercent } from "@/lib/format-numbers";
 import type { Locale } from "@/lib/i18n";
 import { type DashboardText, fill } from "@/lib/tradesync/dashboard-i18n";
 import { shanghaiDayKey } from "@/lib/tradesync/trades-mock";
@@ -91,6 +93,7 @@ export function MonthCalendar({
   onThisMonth: () => void;
   onOpenDay: (day: string) => void;
 }) {
+  const currency = useDisplayCurrency();
   const weekday = (index: number) =>
     new Intl.DateTimeFormat(locale, { timeZone: "Asia/Shanghai", weekday: "short" }).format(
       new Date(Date.UTC(2024, 0, 7 + index)),
@@ -118,7 +121,7 @@ export function MonthCalendar({
         <div className="flex items-center gap-2 text-sm">
           <span className="font-medium">{t.calendarMonthly}:</span>
           <span className={`text-lg font-semibold tabular-nums ${tone(calendar.totalNet)}`}>
-            {moneyStat(calendar.totalNet, locale)}
+            {moneyStat(calendar.totalNet, locale, currency)}
           </span>
           <span className="rounded-full bg-muted px-2 py-1 text-xs">
             {fill(t.calendarDays, { count: calendar.tradedDays })}
@@ -159,7 +162,7 @@ export function MonthCalendar({
                 variant="ghost"
                 disabled={!traded}
                 onClick={() => traded && onOpenDay(cell.day)}
-                className={`relative !h-full !min-h-0 rounded-md border p-2 text-center hover:bg-transparent ${cellClass} ${
+                className={`relative !h-full !min-h-0 scroll-mt-40 rounded-md border p-2 text-center hover:bg-transparent ${cellClass} ${
                   traded ? "cursor-pointer hover:brightness-[0.985]" : "cursor-default"
                 }`}
               >
@@ -173,17 +176,13 @@ export function MonthCalendar({
                 {traded && (
                   <div className="flex h-full flex-col items-center justify-center gap-0.5 pt-2">
                     <span className="font-semibold text-base text-foreground/90 leading-tight tabular-nums">
-                      {moneyCompact(cell.net, locale)}
+                      {moneyCompact(cell.net, locale, currency)}
                     </span>
                     <span className="text-xs text-muted-foreground leading-tight">
                       {fill(t.consistencyTrades, { count: cell.count })}
                     </span>
                     <span className="text-xs text-muted-foreground leading-tight">
-                      {((cell.wins / cell.count) * 100).toLocaleString(locale, {
-                        minimumFractionDigits: 1,
-                        maximumFractionDigits: 2,
-                      })}
-                      %
+                      {formatPercent((cell.wins / cell.count) * 100, locale)}
                     </span>
                   </div>
                 )}
@@ -193,7 +192,7 @@ export function MonthCalendar({
                 <div className="flex h-full min-h-0 flex-col justify-center rounded-lg border bg-card px-5 py-3">
                   <span className="text-muted-foreground text-sm">{fill(t.calendarWeek, { n: weekIndex + 1 })}</span>
                   <span className={`mt-1 font-semibold text-xl leading-tight tabular-nums ${tone(week.net)}`}>
-                    {moneyCompact(week.net, locale)}
+                    {moneyCompact(week.net, locale, currency)}
                   </span>
                   <span className="mt-2 w-fit rounded-full bg-muted px-2.5 py-1 text-xs text-muted-foreground">
                     {fill(t.calendarDays, { count: week.days })}

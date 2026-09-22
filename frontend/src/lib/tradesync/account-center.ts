@@ -7,6 +7,7 @@ export interface AccountCenterItem {
   mt5_login: number | string;
   broker_server: string | null;
   currency: string | null;
+  market_profile: string;
   is_statistics: boolean;
   sync_start_date: string | null;
   status: string;

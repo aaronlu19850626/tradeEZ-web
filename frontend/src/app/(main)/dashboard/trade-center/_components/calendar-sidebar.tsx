@@ -10,6 +10,7 @@ import { formatMonthLabel, monthKeyShift } from "@/components/filters/trade-filt
 import { Button } from "@/components/ui/button";
 import { Calendar, CalendarDayButton } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useDisplayCurrency } from "@/components/shared/display-currency-provider";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type { Locale } from "@/lib/i18n";
 import { type TradeListParams, tradeCenterApi } from "@/lib/tradesync/trade-center";
@@ -173,6 +174,7 @@ export function PnlCalendarDayButton({
   onPickDay: (dayKey: string) => void;
   t: TradeCenterText;
 }) {
+  const currency = useDisplayCurrency();
   const dayKey = dateToDayKey(day.date);
   const dayCell = calendar.get(dayKey);
   const isToday = dayKey === shanghaiDayKey(Math.floor(Date.now() / 1000));
@@ -224,7 +226,7 @@ export function PnlCalendarDayButton({
           <span className="w-[3px] rounded-full" style={{ background: toneColor(dayCell.net) }} />
           <div className="text-xs leading-relaxed">
             <div>
-              {t.pnlLabel}: {formatMoney(dayCell.net, locale)}
+              {t.pnlLabel}: {formatMoney(dayCell.net, locale, currency)}
             </div>
             <div>
               {dayCell.count} {t.tradesUnit}

@@ -188,6 +188,52 @@ def test_duplicate_ticket_with_different_content_is_rejected_not_updated(client,
     assert row["price"] == first["price"]
 
 
+def test_duplicate_mixed_partial_close_batch_is_idempotent(client, db):
+    login = 910207
+    token = make_account(db, login)
+    rows = [
+        deal(9102070, position=9102070, entry=0, deal_type=0, open_time=1000, deal_time=1000),
+        deal(
+            9102071,
+            position=9102070,
+            entry=1,
+            deal_type=1,
+            open_time=1000,
+            deal_time=1100,
+            volume=0.1,
+        ),
+        deal(9102072, position=9102071, entry=0, deal_type=0, open_time=1200, deal_time=1200),
+        deal(
+            9102073,
+            position=9102071,
+            entry=1,
+            deal_type=1,
+            open_time=1200,
+            deal_time=1300,
+            volume=0.1,
+        ),
+        deal(
+            9102074,
+            position=9102071,
+            entry=1,
+            deal_type=1,
+            open_time=1200,
+            deal_time=1400,
+            volume=0.2,
+        ),
+    ]
+    payload = {"mt5_login": login, "deals": rows}
+
+    first = signed_post(client, "/api/v1/ingest/deals", token, payload)
+    assert first.status_code == 200, first.text
+    assert first.json()["inserted"] == len(rows)
+
+    retry = signed_post(client, "/api/v1/ingest/deals", token, payload)
+    assert retry.status_code == 200, retry.text
+    assert retry.json()["duplicated"] == len(rows)
+    assert db.execute("SELECT COUNT(*) FROM deals WHERE account_login=%s", (login,)).fetchone()[0] == len(rows)
+
+
 def test_snapshot_margin_level_is_computed_or_null(client, db):
     login = 910205
     token = make_account(db, login)

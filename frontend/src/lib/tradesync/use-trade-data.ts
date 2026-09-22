@@ -38,6 +38,7 @@ export function useTradeData({ includeTrades = true }: { includeTrades?: boolean
           name: account.name ?? `MT5 ${account.mt5_login}`,
           login: String(account.mt5_login),
           currency: account.currency,
+          marketProfile: account.market_profile === "cn" ? "cn" : "fx",
           isStatistics: account.is_statistics,
           tradeCount: account.trade_count,
           lastUpdatedAt: account.last_updated_at,

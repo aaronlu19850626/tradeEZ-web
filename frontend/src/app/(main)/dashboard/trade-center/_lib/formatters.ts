@@ -1,46 +1,32 @@
+import {
+  formatCount,
+  formatMoney,
+  formatMoneyAxis,
+  formatMoneyCompact,
+  formatMoneyStat,
+  formatPercent,
+  formatPrice,
+  formatSigned,
+  formatVolume,
+} from "@/lib/format-numbers";
 import type { Locale } from "@/lib/i18n";
 import type { TradeCenterText } from "@/lib/tradesync/trade-center-i18n";
 import { dayKeyToEpoch, shanghaiDayKey } from "@/lib/tradesync/trades-mock";
 
 import { LOSS_TEXT, PROFIT_TEXT } from "./columns";
 
-export function formatMoney(value: number, locale: Locale): string {
-  const amount = Math.abs(value).toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  return `${value < 0 ? "-" : ""}$${amount}`;
-}
-
-export function formatStatMoney(value: number, locale: Locale): string {
-  const abs = Math.abs(value);
-  if (abs >= 10000) {
-    const amount = (abs / 1000).toLocaleString(locale, { maximumFractionDigits: 1 });
-    return `${value < 0 ? "-" : ""}$${amount}K`;
-  }
-  return formatMoney(value, locale);
-}
-
-export function formatMoneyCompact(value: number, locale: Locale): string {
-  const abs = Math.abs(value);
-  if (abs >= 10000) {
-    const amount = (abs / 1000).toLocaleString(locale, { maximumFractionDigits: 1 });
-    return `${value < 0 ? "-" : ""}$${amount}K`;
-  }
-  const amount = abs.toLocaleString(locale, { maximumFractionDigits: 0 });
-  return `${value < 0 ? "-" : ""}$${amount}`;
-}
-
-export function formatSigned(value: number, digits: number, locale: Locale): string {
-  const text = Math.abs(value).toLocaleString(locale, { minimumFractionDigits: digits, maximumFractionDigits: digits });
-  return `${value < 0 ? "-" : ""}${text}`;
-}
-
-export function formatPercent(value: number, locale: Locale): string {
-  return `${value.toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`;
-}
-
-export function formatPrice(value: number, locale: Locale): string {
-  const digits = value >= 10 ? 2 : 5;
-  return value.toLocaleString(locale, { minimumFractionDigits: digits, maximumFractionDigits: digits });
-}
+export {
+  formatCount,
+  formatMoney,
+  formatMoneyAxis,
+  formatMoneyCompact,
+  formatMoneyStat,
+  formatMoneyStat as formatStatMoney,
+  formatPercent,
+  formatPrice,
+  formatSigned,
+  formatVolume,
+};
 
 /** 10小时3分钟 / 24分钟34秒 / 45秒. */
 export function formatDuration(seconds: number, t: TradeCenterText): string {
@@ -70,8 +56,8 @@ export function toneColor(value: number): string {
 
 export function calendarNumberClass(net: number | undefined): string {
   if (net === undefined) return "text-foreground/70";
-  if (net > 0) return "text-success";
-  if (net < 0) return "text-danger";
+  if (net > 0) return "text-profit";
+  if (net < 0) return "text-loss";
   return "text-muted-foreground";
 }
 

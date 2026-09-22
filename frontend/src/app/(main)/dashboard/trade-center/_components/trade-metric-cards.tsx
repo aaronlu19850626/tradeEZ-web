@@ -17,6 +17,7 @@ import {
 } from "recharts";
 
 import { InfoTip } from "@/components/shared/info-tip";
+import { useDisplayCurrency } from "@/components/shared/display-currency-provider";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type { Locale } from "@/lib/i18n";
@@ -25,22 +26,18 @@ import { type MockTrade, shanghaiDayKey, type TradeStats } from "@/lib/tradesync
 
 import {
   formatClock,
+  formatCount,
   formatMoney,
   formatMoneyCompact,
   formatPercent,
   formatStatMoney,
+  formatVolume,
   GRID_COLOR,
   LINE_COLOR,
   LOSS_SOLID,
   PROFIT_SOLID,
   toneClass,
 } from "../_lib/trade-center-model";
-
-function formatCount(value: number, locale: Locale): string {
-  return value >= 10000
-    ? `${(value / 1000).toLocaleString(locale, { maximumFractionDigits: 1 })}K`
-    : value.toLocaleString(locale);
-}
 
 export function MetricCard({
   t,
@@ -74,23 +71,24 @@ export function MetricCard({
 }
 
 export function StatGrid({ stats, t, locale }: { stats: TradeStats; t: TradeCenterText; locale: Locale }) {
+  const currency = useDisplayCurrency();
   const cells: { label: string; value: ReactNode; tip?: string }[] = [
-    { label: t.totalTrades, value: stats.count, tip: t.tipTotalTrades },
+    { label: t.totalTrades, value: formatCount(stats.count, locale), tip: t.tipTotalTrades },
     {
       label: t.grossPnl,
-      value: <span className={toneClass(stats.gross)}>{formatStatMoney(stats.gross, locale)}</span>,
+      value: <span className={toneClass(stats.gross)}>{formatStatMoney(stats.gross, locale, currency)}</span>,
       tip: t.tipGrossPnl,
     },
     { label: t.winnersLosers, value: `${formatCount(stats.winners, locale)} / ${formatCount(stats.losers, locale)}` },
     {
       label: t.swaps,
-      value: <span className={toneClass(stats.swap)}>{formatStatMoney(stats.swap, locale)}</span>,
+      value: <span className={toneClass(stats.swap)}>{formatStatMoney(stats.swap, locale, currency)}</span>,
       tip: t.tipSwaps,
     },
     { label: t.winRate, value: formatPercent(stats.winRate * 100, locale), tip: t.tipWinRate },
     {
       label: t.volume,
-      value: stats.volume.toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+      value: formatVolume(stats.volume, locale),
     },
     {
       label: t.profitFactor,
@@ -114,6 +112,7 @@ export function StatGrid({ stats, t, locale }: { stats: TradeStats; t: TradeCent
 }
 
 export function ScaleBar({ stats, t, locale }: { stats: TradeStats; t: TradeCenterText; locale: Locale }) {
+  const currency = useDisplayCurrency();
   const loss = Math.abs(stats.netTrough);
   const profit = stats.netPeak;
   const total = loss + profit;
@@ -129,7 +128,9 @@ export function ScaleBar({ stats, t, locale }: { stats: TradeStats; t: TradeCent
       <div className="flex min-w-0 flex-1 items-center gap-3">
         <div className="flex flex-col whitespace-nowrap">
           <span className="text-sm text-muted-foreground">{t.maxLoss}</span>
-          <span className="text-sm font-medium tabular-nums text-loss">{formatStatMoney(stats.netTrough, locale)}</span>
+          <span className="text-sm font-medium tabular-nums text-loss">
+            {formatStatMoney(stats.netTrough, locale, currency)}
+          </span>
         </div>
         <span className="flex min-w-16 flex-1 items-center">
           {total === 0 ? (
@@ -149,7 +150,9 @@ export function ScaleBar({ stats, t, locale }: { stats: TradeStats; t: TradeCent
         </span>
         <div className="flex flex-col items-end whitespace-nowrap">
           <span className="text-sm text-muted-foreground">{t.maxProfit}</span>
-          <span className="text-sm font-medium tabular-nums text-profit">{formatStatMoney(stats.netPeak, locale)}</span>
+          <span className="text-sm font-medium tabular-nums text-profit">
+            {formatStatMoney(stats.netPeak, locale, currency)}
+          </span>
         </div>
       </div>
     </div>
@@ -157,6 +160,7 @@ export function ScaleBar({ stats, t, locale }: { stats: TradeStats; t: TradeCent
 }
 
 export function AvgWinLossBar({ stats, t, locale }: { stats: TradeStats; t: TradeCenterText; locale: Locale }) {
+  const currency = useDisplayCurrency();
   const win = stats.avgWin ?? 0;
   const loss = stats.avgLoss ?? 0;
   const total = win + loss;
@@ -171,18 +175,18 @@ export function AvgWinLossBar({ stats, t, locale }: { stats: TradeStats; t: Trad
               <span className="flex-1" style={{ background: LOSS_SOLID }} />
             </div>
             <div className="flex items-center justify-between text-xs">
-              <span className="tabular-nums text-profit">{formatStatMoney(win, locale)}</span>
-              <span className="tabular-nums text-loss">{formatStatMoney(loss, locale)}</span>
+              <span className="tabular-nums text-profit">{formatStatMoney(win, locale, currency)}</span>
+              <span className="tabular-nums text-loss">{formatStatMoney(loss, locale, currency)}</span>
             </div>
           </div>
         </TooltipTrigger>
         <TooltipContent>
           <div className="flex flex-col gap-0.5">
             <span>
-              {t.resultWin} {formatStatMoney(win, locale)}
+              {t.resultWin} {formatStatMoney(win, locale, currency)}
             </span>
             <span>
-              {t.resultLoss} {formatStatMoney(loss, locale)}
+              {t.resultLoss} {formatStatMoney(loss, locale, currency)}
             </span>
           </div>
         </TooltipContent>
@@ -324,6 +328,7 @@ export function DayTrendTooltip({
   locale: Locale;
   t: TradeCenterText;
 }) {
+  const currency = useDisplayCurrency();
   const point = payload?.[0]?.payload;
   if (!active || !point) return null;
   const index = Math.min(ordered.length, Math.max(1, Math.round(point.x)));
@@ -337,7 +342,7 @@ export function DayTrendTooltip({
       )}
       <div className="mt-0.5 flex items-baseline gap-1.5 text-sm font-semibold">
         <span className="text-xs font-normal text-muted-foreground">{t.cumulativeNet}</span>
-        <span className={toneClass(point.value)}>{formatMoney(point.value, locale)}</span>
+        <span className={toneClass(point.value)}>{formatMoney(point.value, locale, currency)}</span>
       </div>
     </div>
   );
@@ -356,6 +361,7 @@ export function DayTrendChart({
   locale: Locale;
   compact?: boolean;
 }) {
+  const currency = useDisplayCurrency();
   const data = buildTrendData(series);
   const ordered = useMemo(() => [...trades].sort((a, b) => a.closeTime - b.closeTime), [trades]);
   const height = compact ? 92 : 180;
@@ -388,7 +394,7 @@ export function DayTrendChart({
               axisLine={false}
               padding={{ top: 18, bottom: 18 }}
               tick={{ fontSize: 12, fill: "var(--muted-foreground)" }}
-              tickFormatter={(value: number) => formatMoneyCompact(value, locale)}
+              tickFormatter={(value: number) => formatMoneyCompact(value, locale, currency)}
             />
           )}
           <ReferenceLine y={0} stroke="var(--border)" />
@@ -429,6 +435,7 @@ export function DailyTooltip({
   payload?: { payload: WeekBar }[];
   locale: Locale;
 }) {
+  const currency = useDisplayCurrency();
   const bar = payload?.[0]?.payload;
   if (!active || !bar) return null;
   return (
@@ -437,7 +444,7 @@ export function DailyTooltip({
       <div className="mt-1 flex items-center gap-2 text-xs">
         <span className="size-2.5 rounded-[3px]" style={{ background: bar.net >= 0 ? PROFIT_SOLID : LOSS_SOLID }} />
         <span>
-          {bar.label}: {formatMoney(bar.net, locale)}
+          {bar.label}: {formatMoney(bar.net, locale, currency)}
         </span>
       </div>
     </div>
@@ -445,6 +452,7 @@ export function DailyTooltip({
 }
 
 export function DailyChart({ bars, locale }: { bars: WeekBar[]; locale: Locale }) {
+  const currency = useDisplayCurrency();
   return (
     <div className="h-[190px] w-full min-w-0 overflow-hidden border-0 [&_*:focus-visible]:outline-none [&_*:focus]:outline-none">
       <ResponsiveContainer width="100%" height={190} initialDimension={{ width: 320, height: 190 }}>
@@ -463,7 +471,7 @@ export function DailyChart({ bars, locale }: { bars: WeekBar[]; locale: Locale }
             axisLine={false}
             padding={{ top: 14, bottom: 14 }}
             tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
-            tickFormatter={(value: number) => formatMoneyCompact(value, locale)}
+            tickFormatter={(value: number) => formatMoneyCompact(value, locale, currency)}
           />
           <ReferenceLine y={0} stroke="var(--border)" />
           <RechartsTooltip cursor={{ fill: "var(--muted)" }} content={<DailyTooltip locale={locale} />} />

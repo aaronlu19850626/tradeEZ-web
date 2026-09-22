@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 
+import { useDisplayCurrency } from "@/components/shared/display-currency-provider";
 import type { Locale } from "@/lib/i18n";
 
 import { CHART_Y_AXIS_WIDTH, money, moneyAxis, tone } from "../../_lib/overview-data";
@@ -77,6 +78,7 @@ export function PerformanceScatterChart({
   useLogScale?: boolean;
   locale: Locale;
 }) {
+  const currency = useDisplayCurrency();
   const hostRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const frameRef = useRef<number | null>(null);
@@ -158,7 +160,7 @@ export function PerformanceScatterChart({
         ctx.moveTo(padding.left, y);
         ctx.lineTo(width - padding.right, y);
         ctx.stroke();
-        ctx.fillText(moneyAxis(tick, locale), padding.left - 6, y);
+        ctx.fillText(moneyAxis(tick, locale, currency), padding.left - 6, y);
       }
 
       const zeroY = yPosition(0);
@@ -205,9 +207,12 @@ export function PerformanceScatterChart({
 
     draw();
     const themeObserver = new MutationObserver(draw);
-    themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+    themeObserver.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class", "data-market-profile"],
+    });
     return () => themeObserver.disconnect();
-  }, [data, domain, locale, size, tickFormatter, ticks, useLogScale, yAxis]);
+  }, [currency, data, domain, locale, size, tickFormatter, ticks, useLogScale, yAxis]);
 
   const onPointerMove = (event: React.PointerEvent<HTMLCanvasElement>) => {
     if (frameRef.current !== null) cancelAnimationFrame(frameRef.current);
@@ -241,7 +246,7 @@ export function PerformanceScatterChart({
         >
           <div className="text-muted-foreground text-xs">{tooltip.point.label}</div>
           <div className={`mt-1 font-semibold text-sm tabular-nums ${tone(tooltip.point.y)}`}>
-            {money(tooltip.point.y, locale)}
+            {money(tooltip.point.y, locale, currency)}
           </div>
         </div>
       )}

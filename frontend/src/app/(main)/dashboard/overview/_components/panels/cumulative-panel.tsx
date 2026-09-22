@@ -13,6 +13,7 @@ import {
 } from "recharts";
 
 import type { Locale } from "@/lib/i18n";
+import { useDisplayCurrency } from "@/components/shared/display-currency-provider";
 
 import {
   CHART_LEFT_MARGIN,
@@ -38,6 +39,7 @@ export function CumulativeChart({
   locale: Locale;
   heightClassName?: string;
 }) {
+  const currency = useDisplayCurrency();
   const expanded: { date: string; label: string; value: number }[] = [];
   for (const point of points) {
     const previous = expanded.at(-1);
@@ -87,7 +89,7 @@ export function CumulativeChart({
             tickMargin={CHART_Y_TICK_MARGIN}
             padding={{ top: 14, bottom: 14 }}
             tick={CHART_Y_TICK}
-            tickFormatter={(value: number) => moneyCompact(value, locale)}
+            tickFormatter={(value: number) => moneyCompact(value, locale, currency)}
           />
           <ReferenceLine y={0} stroke="var(--border)" />
           <RechartsTooltip
@@ -129,6 +131,7 @@ export function formatChartDate(day: string): string {
 }
 
 export function PnlTooltipCard({ date, value, locale }: { date: string; value: number; locale: Locale }) {
+  const currency = useDisplayCurrency();
   const label = formatChartDate(date);
   return (
     <div className="min-w-[230px] rounded-xl border border-border/70 bg-card px-4 py-3 shadow-[0_14px_36px_rgb(32_20_61_/_14%)]">
@@ -136,7 +139,7 @@ export function PnlTooltipCard({ date, value, locale }: { date: string; value: n
       <div className="mt-2 flex items-center gap-2 text-sm">
         <span className="size-3.5 rounded-[3px]" style={{ background: LINE_COLOR }} />
         <span className="text-muted-foreground">{label}:</span>
-        <span className={`font-medium tabular-nums ${tone(value)}`}>{money(value, locale)}</span>
+        <span className={`font-medium tabular-nums ${tone(value)}`}>{money(value, locale, currency)}</span>
       </div>
     </div>
   );

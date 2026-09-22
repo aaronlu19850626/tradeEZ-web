@@ -1,38 +1,43 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import type { ResultFilter, SideFilter } from "@/components/filters/trade-filter-controls";
-import type { TradeAccount } from "@/lib/tradesync/trade-center";
+import type { MarketProfile, TradeAccount } from "@/lib/tradesync/trade-center";
 import type { MockTrade } from "@/lib/tradesync/trades-mock";
 
 import { inRange, matchResult, matchSide } from "../_lib/trade-center-model";
+
+const CURRENCY_ORDER = ["USD", "CNY", "EUR", "GBP", "JPY", "HKD"];
 
 export function useTradeFilters({
   accounts,
   accountIds,
   currency,
+  marketProfile,
   fetching,
   range,
   result,
   selectedSymbols,
   setCurrency,
+  setMarketProfile,
   side,
   trades,
 }: {
   accounts: TradeAccount[];
   accountIds: string[];
   currency: string;
+  marketProfile: MarketProfile;
   fetching: boolean;
   range: { from: string; to: string };
   result: ResultFilter;
   selectedSymbols: string[];
   setCurrency: (currency: string) => void;
+  setMarketProfile: (marketProfile: MarketProfile) => void;
   side: SideFilter;
   trades: MockTrade[] | null;
 }) {
   const [loadedKey, setLoadedKey] = useState<string | null>(null);
-  const currencyUserTouched = useRef(false);
 
   const filtered = useMemo(
     () =>
@@ -58,10 +63,27 @@ export function useTradeFilters({
             .map((account) => account.currency)
             .filter(Boolean) as string[],
         ),
-      ].sort(),
+      ].sort((left, right) => {
+        const leftIndex = CURRENCY_ORDER.indexOf(left);
+        const rightIndex = CURRENCY_ORDER.indexOf(right);
+        return (
+          (leftIndex < 0 ? Number.MAX_SAFE_INTEGER : leftIndex) -
+          (rightIndex < 0 ? Number.MAX_SAFE_INTEGER : rightIndex)
+        );
+      }),
     [accounts, accountIds],
   );
   const currencyOptionsLocked = currencies.length > 1;
+  const marketProfiles = useMemo(
+    () =>
+      [
+        ...new Set(
+          accounts.filter((account) => accountIds.includes(account.id)).map((account) => account.marketProfile),
+        ),
+      ].sort((left, right) => (left === right ? 0 : left === "fx" ? -1 : 1)) as MarketProfile[],
+    [accounts, accountIds],
+  );
+  const marketOptionsLocked = marketProfiles.length > 1;
   const tradedCurrencies = useMemo(
     () =>
       [
@@ -80,18 +102,36 @@ export function useTradeFilters({
       if (currency !== "all") setCurrency("all");
       return;
     }
-    if (!currencyUserTouched.current && currency === "CNY" && currencies.includes("USD")) {
-      setCurrency("USD");
-      return;
-    }
     if (currency === "all" || !currencies.includes(currency)) {
       setCurrency(tradedCurrencies.includes("USD") ? "USD" : (tradedCurrencies[0] ?? currencies[0]));
     }
   }, [currencies, tradedCurrencies, currency, setCurrency]);
 
-  const queryKey = [accountIds.join(","), range.from, range.to, side, result, currency, selectedSymbols.join(",")].join(
-    "|",
-  );
+  useEffect(() => {
+    if (marketProfiles.length === 0) return;
+    if (currency === "CNY" && marketProfiles.includes("cn")) {
+      if (marketProfile !== "cn") setMarketProfile("cn");
+      return;
+    }
+    if (currency === "USD" && marketProfiles.includes("fx")) {
+      if (marketProfile !== "fx") setMarketProfile("fx");
+      return;
+    }
+    if (!marketProfiles.includes(marketProfile)) {
+      setMarketProfile(marketProfiles[0]);
+    }
+  }, [currency, marketProfile, marketProfiles, setMarketProfile]);
+
+  const queryKey = [
+    accountIds.join(","),
+    range.from,
+    range.to,
+    side,
+    result,
+    currency,
+    marketProfile,
+    selectedSymbols.join(","),
+  ].join("|");
 
   useEffect(() => {
     const delay = loadedKey === null ? 700 : 420;
@@ -100,7 +140,6 @@ export function useTradeFilters({
   }, [queryKey, loadedKey]);
 
   const applyCurrency = (next: string) => {
-    currencyUserTouched.current = true;
     setCurrency(next);
   };
 
@@ -110,6 +149,8 @@ export function useTradeFilters({
     currencyOptionsLocked,
     filtered,
     loading: fetching || trades === null || loadedKey !== queryKey,
+    marketOptionsLocked,
+    marketProfiles,
     symbols,
   };
 }

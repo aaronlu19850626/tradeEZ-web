@@ -15,13 +15,20 @@ def bj_epoch(day: str, hour: int = 0, minute: int = 0) -> int:
     return int(dt.replace(tzinfo=PLATFORM_TZ).timestamp())
 
 
-def create_account(client, headers, login: int, name: str | None = None, currency: str = "USD") -> dict:
+def create_account(
+    client,
+    headers,
+    login: int,
+    name: str | None = None,
+    currency: str = "USD",
+    platform: str = "mt5",
+) -> dict:
     response = client.post(
         "/api/v1/accounts",
         headers=headers,
         json={
             "name": name or f"MT5 {login}",
-            "platform": "mt5",
+            "platform": platform,
             "currency": currency,
             "mt5_login": login,
             "sync_start_date": "2026-01-01",
@@ -210,6 +217,7 @@ def test_overview_aggregates_server_side(client, db):
     assert body["stats"]["days"][0]["day"] == "2026-09-17"
     assert len(body["recent"]) == 3
     assert body["recent"][0]["closeTime"] > body["recent"][1]["closeTime"]
+    assert body["recent"][0]["side"] == "sell"
     assert body["cumulative"][-1]["value"] == 115.0
     assert body["cumulativeRecent"][-1]["value"] == 115.0
     assert body["drawdown"]["maxDrawdown"] == 25.0
@@ -270,6 +278,50 @@ def test_currency_filter_and_currency_options(client, db):
     account_ids = f"{usd['id']},{cny['id']}"
     assert client.get("/api/v1/trades", headers=headers, params={"currency": "CNY", "account_ids": account_ids}).json()["total"] == 1
     assert client.get("/api/v1/trades/summary", headers=headers, params={"currency": "CNY", "account_ids": account_ids}).json()["stats"]["net"] == 15.0
+
+
+def test_market_profile_filter_and_payload(client, db):
+    headers = web_headers(db, "trade-market@example.com")
+    fx = create_account(client, headers, 921022, platform="mt5", currency="USD")
+    cn = create_account(client, headers, 921023, platform="ctp", currency="CNY")
+    _add_symbol(db, 921022)
+    _add_symbol(db, 921023, symbol="RB", point=1.0, contract_size=10.0)
+    _ingest(client, fx["sync_key"], 921022, _closed_trade(fx, 921024, "2026-09-01", "2026-09-02", profit=10.0))
+    _ingest(client, cn["sync_key"], 921023, _closed_trade(cn, 921025, "2026-09-01", "2026-09-02", profit=20.0, symbol="RB"))
+
+    account_ids = f"{fx['id']},{cn['id']}"
+    fx_page = client.get(
+        "/api/v1/trades",
+        headers=headers,
+        params={"market_profile": "fx", "account_ids": account_ids},
+    ).json()
+    cn_page = client.get(
+        "/api/v1/trades",
+        headers=headers,
+        params={"market_profile": "cn", "account_ids": account_ids},
+    ).json()
+    assert fx_page["total"] == 1 and fx_page["items"][0]["marketProfile"] == "fx"
+    assert cn_page["total"] == 1 and cn_page["items"][0]["marketProfile"] == "cn"
+    summary = client.get(
+        "/api/v1/trades/summary",
+        headers=headers,
+        params={"market_profile": "cn", "account_ids": account_ids},
+    ).json()
+    assert summary["stats"]["count"] == 1 and summary["stats"]["net"] == 15.0
+    cn_symbols = client.get(
+        "/api/v1/trades/symbols",
+        headers=headers,
+        params={"market_profile": "cn", "account_ids": account_ids},
+    ).json()
+    assert cn_symbols == ["RB"]
+    cn_symbol_options = client.get(
+        "/api/v1/trades/symbol-options",
+        headers=headers,
+        params={"market_profile": "cn", "account_ids": account_ids},
+    ).json()
+    assert len(cn_symbol_options) == 1
+    assert cn_symbol_options[0]["symbol"] == "RB"
+    assert cn_symbol_options[0]["accounts"] == [{"account_id": cn["id"], "account_name": cn["name"]}]
 
 
 def test_account_scope_default_statistics(client, db):

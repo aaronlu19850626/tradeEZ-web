@@ -12,7 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import type { TradeAccount } from "@/lib/tradesync/trade-center";
+import type { MarketProfile, TradeAccount, TradeSymbolOption } from "@/lib/tradesync/trade-center";
 import type { TradeCenterText } from "@/lib/tradesync/trade-center-i18n";
 
 import type { ViewMode } from "../_lib/trade-center-model";
@@ -33,6 +33,10 @@ export function Toolbar({
   currencies,
   allowCurrencyAll,
   onCurrency,
+  marketProfile,
+  marketProfiles,
+  allowMarketAll,
+  onMarketProfile,
   symbolsSelected,
   symbolOptions,
   onSymbolsChange,
@@ -58,8 +62,12 @@ export function Toolbar({
   currencies: string[];
   allowCurrencyAll: boolean;
   onCurrency: (currency: string) => void;
+  marketProfile: MarketProfile;
+  marketProfiles: MarketProfile[];
+  allowMarketAll: boolean;
+  onMarketProfile: (marketProfile: MarketProfile) => void;
   symbolsSelected: string[];
-  symbolOptions: string[];
+  symbolOptions: TradeSymbolOption[];
   onSymbolsChange: (symbols: string[]) => void;
   onOpenColumns: () => void;
   tablesExpanded: boolean;
@@ -128,11 +136,15 @@ export function Toolbar({
           currency={currency}
           currencies={currencies}
           allowCurrencyAll={allowCurrencyAll}
+          marketProfile={marketProfile}
+          marketProfiles={marketProfiles}
+          allowMarketAll={allowMarketAll}
           symbolsSelected={symbolsSelected}
           symbolOptions={symbolOptions}
           onSide={onSide}
           onResult={onResult}
           onCurrency={onCurrency}
+          onMarketProfile={onMarketProfile}
           onSymbolsChange={onSymbolsChange}
         />
 

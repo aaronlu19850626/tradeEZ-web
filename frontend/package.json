@@ -10,6 +10,9 @@
     "format": "biome format --write",
     "check": "biome check",
     "check:fix": "biome check --write",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:evidence": "E2E_EVIDENCE=1 playwright test --config=playwright.evidence.config.ts",
     "prepare": "husky",
     "generate:presets": "ts-node -P tsconfig.scripts.json src/scripts/generate-theme-presets.ts"
   },
@@ -55,6 +58,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.14",
+    "@playwright/test": "^1.63.0",
     "@tailwindcss/postcss": "^4.3.3",
     "@types/d3-geo": "^3.1.1",
     "@types/node": "^22.20.3",

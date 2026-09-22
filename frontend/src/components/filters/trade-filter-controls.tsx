@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode, useEffect, useMemo, useState } from "react";
+import { Fragment, type ReactNode, useEffect, useMemo, useState } from "react";
 
 import { CalendarDays, Check, ChevronDown, ChevronUp, Plus, X } from "lucide-react";
 
@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { type Locale, useLocale } from "@/lib/i18n";
+import type { MarketProfile, TradeSymbolOption } from "@/lib/tradesync/trade-center";
 import { tradeFilterText } from "@/lib/tradesync/trade-filter-i18n";
 import { addDays, dayKeyToEpoch, shanghaiWeekStart } from "@/lib/tradesync/trades-mock";
 
@@ -94,11 +95,15 @@ export function TradeFiltersMenu({
   currency,
   currencies,
   allowCurrencyAll = true,
+  marketProfile = "fx",
+  marketProfiles = ["fx"],
+  allowMarketAll = true,
   symbolsSelected,
-  symbolOptions,
+  symbolOptions = [],
   onSide,
   onResult,
   onCurrency,
+  onMarketProfile,
   onSymbolsChange,
 }: {
   side: SideFilter;
@@ -106,11 +111,15 @@ export function TradeFiltersMenu({
   currency: string;
   currencies: string[];
   allowCurrencyAll?: boolean;
+  marketProfile: MarketProfile;
+  marketProfiles: MarketProfile[];
+  allowMarketAll?: boolean;
   symbolsSelected: string[];
-  symbolOptions: string[];
+  symbolOptions: TradeSymbolOption[];
   onSide: (side: SideFilter) => void;
   onResult: (result: ResultFilter) => void;
   onCurrency: (currency: string) => void;
+  onMarketProfile: (marketProfile: MarketProfile) => void;
   onSymbolsChange: (symbols: string[]) => void;
 }) {
   const locale = useLocale();
@@ -138,6 +147,18 @@ export function TradeFiltersMenu({
         ],
       },
       {
+        id: "market",
+        label: t.filterMarket,
+        mode: "single",
+        options: [
+          ...(allowMarketAll ? [{ value: "all", label: t.filterAll }] : []),
+          ...marketProfiles.map((profile) => ({
+            value: profile,
+            label: profile === "cn" ? t.marketCn : t.marketFx,
+          })),
+        ],
+      },
+      {
         id: "currency",
         label: t.filterCurrency,
         mode: "single",
@@ -150,19 +171,34 @@ export function TradeFiltersMenu({
         id: "symbol",
         label: t.filterSymbol,
         mode: "multiple",
-        options: symbolOptions.map((name) => ({ value: name, label: name })),
+        options: symbolOptions.map((item) => ({
+          id: `symbol:${item.symbol}`,
+          value: item.symbol,
+          label: item.symbol,
+          description: (
+            <span className="flex flex-wrap items-center gap-y-1">
+              {item.accounts?.map((account, index) => (
+                <Fragment key={account.account_id}>
+                  {index > 0 ? <span className="mx-1.5 h-3 w-px bg-border" /> : null}
+                  <span className="max-w-32 truncate">{account.account_name}</span>
+                </Fragment>
+              ))}
+            </span>
+          ),
+        })),
       },
     ],
-    [allowCurrencyAll, currencies, symbolOptions, t],
+    [allowCurrencyAll, allowMarketAll, currencies, marketProfiles, symbolOptions, t],
   );
   const value = useMemo<Record<string, string[]>>(
     () => ({
       side: side === "all" ? [] : [side],
       result: result === "all" ? [] : [result],
       currency: currency === "all" ? [] : [currency],
+      market: [marketProfile],
       symbol: symbolsSelected,
     }),
-    [currency, result, side, symbolsSelected],
+    [currency, marketProfile, result, side, symbolsSelected],
   );
 
   return (
@@ -174,7 +210,8 @@ export function TradeFiltersMenu({
       onChange={(next) => {
         onSide((next.side?.[0] ?? "all") as SideFilter);
         onResult((next.result?.[0] ?? "all") as ResultFilter);
-        onCurrency(next.currency?.[0] ?? "all");
+        onCurrency(next.currency?.[0] ?? "USD");
+        onMarketProfile((next.market?.[0] ?? "fx") as MarketProfile);
         onSymbolsChange(next.symbol ?? []);
       }}
       clearLabel={t.filterClear}

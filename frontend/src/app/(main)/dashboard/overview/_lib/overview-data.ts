@@ -34,6 +34,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  formatMoney as formatGlobalMoney,
+  formatMoneyAxis as formatGlobalMoneyAxis,
+  formatMoneyCompact as formatGlobalMoneyCompact,
+  formatMoneyStat as formatGlobalMoneyStat,
+  formatPercent as formatGlobalPercent,
+} from "@/lib/format-numbers";
 import type { Locale } from "@/lib/i18n";
 import { type DashboardText, fill } from "@/lib/tradesync/dashboard-i18n";
 import { tradeCenterText } from "@/lib/tradesync/trade-center-i18n";
@@ -81,34 +88,24 @@ export const DIMENSION_TIP: Record<ScoreDimensionKey, keyof DashboardText> = {
   winRate: "dimWinRateTip",
 };
 
-export function money(value: number, locale: Locale): string {
-  const amount = Math.abs(value).toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  return `${value < 0 ? "-" : ""}$${amount}`;
+export function money(value: number, locale: Locale, currency = "USD"): string {
+  return formatGlobalMoney(value, locale, currency);
 }
 
-export function moneyStat(value: number, locale: Locale): string {
-  const abs = Math.abs(value);
-  if (abs >= 10000) {
-    const amount = (abs / 1000).toLocaleString(locale, { maximumFractionDigits: 1 });
-    return `${value < 0 ? "-" : ""}$${amount}K`;
-  }
-  return money(value, locale);
+export function moneyStat(value: number, locale: Locale, currency = "USD"): string {
+  return formatGlobalMoneyStat(value, locale, currency);
 }
 
-export function moneyCompact(value: number, locale: Locale): string {
-  const abs = Math.abs(value);
-  const sign = value < 0 ? "-" : "";
-  if (abs >= 1000) return `${sign}$${(abs / 1000).toLocaleString(locale, { maximumFractionDigits: 2 })}K`;
-  return `${sign}$${abs.toLocaleString(locale, { maximumFractionDigits: 0 })}`;
+export function moneyCompact(value: number, locale: Locale, currency = "USD"): string {
+  return formatGlobalMoneyCompact(value, locale, currency);
 }
 
-export function moneyAxis(value: number, locale: Locale): string {
-  const sign = value < 0 ? "-" : "";
-  return `${sign}$${Math.abs(value).toLocaleString(locale, { maximumFractionDigits: 0 })}`;
+export function moneyAxis(value: number, locale: Locale, currency = "USD"): string {
+  return formatGlobalMoneyAxis(value, locale, currency);
 }
 
 export function percent(value: number, locale: Locale, digits = 2): string {
-  return `${value.toLocaleString(locale, { minimumFractionDigits: digits, maximumFractionDigits: digits })}%`;
+  return formatGlobalPercent(value, locale, digits);
 }
 
 export function tone(value: number): string {

@@ -3,7 +3,9 @@
 import type { ReactNode } from "react";
 
 import { InfoTip } from "@/components/shared/info-tip";
+import { useDisplayCurrency } from "@/components/shared/display-currency-provider";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { formatCount } from "@/lib/format-numbers";
 import type { Locale } from "@/lib/i18n";
 import type { DashboardText } from "@/lib/tradesync/dashboard-i18n";
 
@@ -69,6 +71,7 @@ export function MetricTile({
   titleKey,
   tipKey,
   badge,
+  locale,
   value,
   visual,
 }: {
@@ -76,6 +79,7 @@ export function MetricTile({
   titleKey: keyof DashboardText;
   tipKey: keyof DashboardText;
   badge?: number;
+  locale: Locale;
   value: ReactNode;
   visual?: ReactNode;
 }) {
@@ -91,9 +95,9 @@ export function MetricTile({
         {badge === undefined ? null : (
           <span
             className="rounded-full bg-muted px-1.5 py-0.5 font-semibold text-[12px] text-foreground leading-4 tabular-nums"
-            title={`${String(t.totalTrades)} ${badge}`}
+            title={`${String(t.totalTrades)} ${badge.toLocaleString(locale)}`}
           >
-            {badge}
+            {formatCount(badge, locale)}
           </span>
         )}
       </CardHeader>
@@ -182,36 +186,32 @@ export function CountPills({
   breakEven: number;
   losers: number;
 }) {
-  const formatCount = (value: number) =>
-    value >= 10000
-      ? `${(value / 1000).toLocaleString(locale, { maximumFractionDigits: 1 })}K`
-      : value.toLocaleString(locale);
-
   return (
     <div className="flex w-full items-center justify-center gap-1">
       <span
         className="rounded-full bg-profit-soft px-1.5 py-0.5 font-semibold text-[11px] text-profit-strong leading-3.5 tabular-nums"
         title={`${t.winners} ${winners}`}
       >
-        {formatCount(winners)}
+        {formatCount(winners, locale)}
       </span>
       <span
         className="rounded-full bg-breakeven-soft px-1.5 py-0.5 font-semibold text-[11px] text-breakeven leading-3.5 tabular-nums"
         title={`${t.breakEven} ${breakEven}`}
       >
-        {formatCount(breakEven)}
+        {formatCount(breakEven, locale)}
       </span>
       <span
         className="rounded-full bg-loss-soft px-1.5 py-0.5 font-semibold text-[11px] text-loss-strong leading-3.5 tabular-nums"
         title={`${t.losers} ${losers}`}
       >
-        {formatCount(losers)}
+        {formatCount(losers, locale)}
       </span>
     </div>
   );
 }
 
 export function AvgWinLossBar({ win, loss, locale }: { win: number; loss: number; locale: Locale }) {
+  const currency = useDisplayCurrency();
   const total = win + loss;
   const winRatio = total === 0 ? 0.5 : win / total;
   return (
@@ -221,8 +221,8 @@ export function AvgWinLossBar({ win, loss, locale }: { win: number; loss: number
         <span className="flex-1" style={{ background: LOSS_SOLID }} />
       </div>
       <div className="flex items-center justify-between gap-2 text-[12px]">
-        <span className="font-medium text-profit-strong tabular-nums">{moneyStat(win, locale)}</span>
-        <span className="font-medium text-loss-strong tabular-nums">{moneyStat(-loss, locale)}</span>
+        <span className="font-medium text-profit-strong tabular-nums">{moneyStat(win, locale, currency)}</span>
+        <span className="font-medium text-loss-strong tabular-nums">{moneyStat(-loss, locale, currency)}</span>
       </div>
     </div>
   );

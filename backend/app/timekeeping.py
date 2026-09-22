@@ -403,17 +403,17 @@ def update_deal_time_metadata(
             server_deal_time=COALESCE(server_deal_time, %s),
             timezone_profile_id=COALESCE(%s, timezone_profile_id),
             open_time=CASE
-                WHEN %s IS NOT NULL OR server_deal_time IS NULL
+                WHEN %s::bigint IS NOT NULL OR server_deal_time IS NULL
                 THEN %s ELSE open_time END,
             deal_time=CASE
-                WHEN %s IS NOT NULL OR server_deal_time IS NULL
+                WHEN %s::bigint IS NOT NULL OR server_deal_time IS NULL
                 THEN %s ELSE deal_time END,
             server_gmt_off=CASE
-                WHEN %s IS NOT NULL AND %s <> 0 THEN %s
+                WHEN %s::bigint IS NOT NULL AND %s::bigint <> 0 THEN %s::bigint
                 ELSE server_gmt_off END,
             time_normalized_at=now_iso()
         WHERE account_login=%s AND ticket=%s
-          AND (server_deal_time IS NULL OR %s IS NOT NULL)
+          AND (server_deal_time IS NULL OR %s::bigint IS NOT NULL)
         """,
         (
             server_open_time,

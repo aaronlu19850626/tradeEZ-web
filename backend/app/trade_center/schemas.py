@@ -10,6 +10,7 @@ PLATFORM_TZ = ZoneInfo("Asia/Shanghai")
 DAY_RE = r"\d{4}-\d{2}-\d{2}"
 
 ScoreDimensionKey = Literal["expectancy", "risk", "payoff", "recovery", "consistency", "winRate"]
+MarketProfile = Literal["cn", "fx"]
 
 
 class ScoreDimensionOut(BaseModel):
@@ -59,6 +60,7 @@ class TradeItem(BaseModel):
     accountName: str | None
     accountLogin: str
     currency: str | None
+    marketProfile: MarketProfile
     symbol: str
     side: Literal["buy", "sell"]
     volume: float
@@ -136,6 +138,7 @@ class TradeFilter(BaseModel):
     side: Literal["all", "buy", "sell"] = "all"
     result: Literal["all", "win", "loss", "flat"] = "all"
     currency: str | None = None
+    market_profile: MarketProfile | None = None
     symbol: str | None = None
 
     @field_validator("account_ids", mode="before")
@@ -196,6 +199,16 @@ class BoundsOut(BaseModel):
     latestDay: str | None
 
 
+class SymbolAccountOut(BaseModel):
+    account_id: int
+    account_name: str
+
+
+class SymbolOptionOut(BaseModel):
+    symbol: str
+    accounts: list[SymbolAccountOut]
+
+
 class DayStatOut(BaseModel):
     day: str
     net: float
@@ -252,6 +265,7 @@ class OverviewRecentOut(BaseModel):
     id: str
     closeTime: int
     symbol: str
+    side: Literal["buy", "sell"]
     netPnl: float
 
 

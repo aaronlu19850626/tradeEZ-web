@@ -6,6 +6,7 @@ import { ChevronRight, Play, StickyNote } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { useDisplayCurrency } from "@/components/shared/display-currency-provider";
 import type { Locale } from "@/lib/i18n";
 import type { TradeCenterText } from "@/lib/tradesync/trade-center-i18n";
 import {
@@ -38,6 +39,7 @@ export function WeekGroupCard({
   tableCommand: { value: boolean; version: number };
   defaultTableOpen: boolean;
 }) {
+  const currency = useDisplayCurrency();
   const [tableOpen, setTableOpen] = useState(defaultTableOpen);
   const [openDay, setOpenDay] = useState<DayGroup | null>(null);
   useEffect(() => {
@@ -73,7 +75,7 @@ export function WeekGroupCard({
         <span className="flex items-center gap-1.5 text-base">
           <span className="text-muted-foreground">{t.netPnl}</span>
           <span className={`font-semibold tabular-nums ${toneClass(group.stats.net)}`}>
-            {formatStatMoney(group.stats.net, locale)}
+            {formatStatMoney(group.stats.net, locale, currency)}
           </span>
         </span>
         <span className="ml-auto flex items-center gap-1">

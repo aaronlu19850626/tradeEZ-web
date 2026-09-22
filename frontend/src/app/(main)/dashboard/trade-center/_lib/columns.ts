@@ -99,7 +99,7 @@ export const COLUMN_META: Record<ColumnKey, { width: number; align: ColumnAlign 
   swap: { width: 88, align: "right" },
   commission: { width: 88, align: "right" },
   duration: { width: 96, align: "right" },
-  account: { width: 96, align: "left" },
+  account: { width: 160, align: "left" },
   strategy: { width: 96, align: "left" },
 };
 

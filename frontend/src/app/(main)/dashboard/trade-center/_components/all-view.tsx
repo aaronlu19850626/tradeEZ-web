@@ -7,6 +7,7 @@ import { Check, ChevronLeft, ChevronRight, Download, MoreHorizontal } from "luci
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
+import { useDisplayCurrency } from "@/components/shared/display-currency-provider";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -51,6 +52,7 @@ export function AllView({
   onSortChange: (sort: { key: ColumnKey; dir: "asc" | "desc" } | null) => void;
   loading?: boolean;
 }) {
+  const currency = useDisplayCurrency();
   const pageSize = 100;
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
   const [pageInput, setPageInput] = useState(String(page));
@@ -76,7 +78,7 @@ export function AllView({
           t={t}
           title={t.cumulativeNet}
           tip={t.tipCumulative}
-          value={<span className={toneClass(stats.net)}>{formatStatMoney(stats.net, locale)}</span>}
+          value={<span className={toneClass(stats.net)}>{formatStatMoney(stats.net, locale, currency)}</span>}
           footer={`${stats.count} ${t.tradesUnit}`}
         >
           <DayTrendChart series={series} trades={ordered} t={t} locale={locale} compact />
@@ -95,18 +97,18 @@ export function AllView({
                   label={stats.profitFactor === null ? t.na : stats.profitFactor.toFixed(2)}
                 />
                 <div className="flex items-center gap-2 text-xs font-medium">
-                  <span className="text-profit">{formatStatMoney(stats.winSum, locale)}</span>
-                  <span className="text-loss">{formatStatMoney(-stats.lossSum, locale)}</span>
+                  <span className="text-profit">{formatStatMoney(stats.winSum, locale, currency)}</span>
+                  <span className="text-loss">{formatStatMoney(-stats.lossSum, locale, currency)}</span>
                 </div>
               </div>
             </TooltipTrigger>
             <TooltipContent>
               <div className="flex flex-col gap-0.5">
                 <span>
-                  {t.winTotal} {formatStatMoney(stats.winSum, locale)}
+                  {t.winTotal} {formatStatMoney(stats.winSum, locale, currency)}
                 </span>
                 <span>
-                  {t.lossTotal} {formatStatMoney(-stats.lossSum, locale)}
+                  {t.lossTotal} {formatStatMoney(-stats.lossSum, locale, currency)}
                 </span>
               </div>
             </TooltipContent>

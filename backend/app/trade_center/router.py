@@ -12,6 +12,7 @@ from .schemas import (
     GroupOut,
     OverviewOut,
     SummaryOut,
+    SymbolOptionOut,
     TradeFilter,
     TradePageOut,
 )
@@ -75,10 +76,20 @@ def calendar(
 
 @router.get("/api/v1/trades/symbols", response_model=list[str])
 def symbols(
+    flt: TradeFilter = Depends(),
     db: DBConnection = Depends(get_db),
     user: DBRow = Depends(get_current_user),
 ) -> list[str]:
-    return service.symbols(db, user)
+    return service.symbols(db, user, flt)
+
+
+@router.get("/api/v1/trades/symbol-options", response_model=list[SymbolOptionOut])
+def symbol_options(
+    flt: TradeFilter = Depends(),
+    db: DBConnection = Depends(get_db),
+    user: DBRow = Depends(get_current_user),
+) -> list[SymbolOptionOut]:
+    return service.symbol_options(db, user, flt)
 
 
 @router.get("/api/v1/trades/currencies", response_model=list[str])

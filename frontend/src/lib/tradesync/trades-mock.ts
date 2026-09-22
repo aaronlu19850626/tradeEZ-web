@@ -10,6 +10,7 @@ export interface MockTrade {
   accountName: string;
   accountLogin?: string;
   currency?: string | null;
+  marketProfile?: "cn" | "fx";
   magic?: number;
   symbol: string;
   side: TradeSide;

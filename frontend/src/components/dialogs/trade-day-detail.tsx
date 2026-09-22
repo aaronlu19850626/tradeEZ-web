@@ -15,12 +15,21 @@ import {
 } from "recharts";
 
 import { DialogBody, DialogContent } from "@/components/dialogs/dialog-content";
+import { useDisplayCurrency } from "@/components/shared/display-currency-provider";
 import { InfoTip } from "@/components/shared/info-tip";
 import { SymbolBadge } from "@/components/shared/symbol-badge";
-import { Badge } from "@/components/ui/badge";
+import { TradeSideBadge } from "@/components/shared/trade-side-badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  formatMoney,
+  formatMoneyCompact,
+  formatPercent,
+  formatPrice,
+  formatSigned,
+  formatVolume,
+} from "@/lib/format-numbers";
 import type { Locale } from "@/lib/i18n";
 import type { TradeCenterText } from "@/lib/tradesync/trade-center-i18n";
 import { type DayGroup, dayKeyToEpoch, type MockTrade, type TradeStats } from "@/lib/tradesync/trades-mock";
@@ -60,30 +69,6 @@ function buildTrendData(series: CurvePoint[]): TrendPoint[] {
     pos: Math.max(point.value, 0),
     neg: Math.min(point.value, 0),
   }));
-}
-
-function formatMoney(value: number, locale: Locale): string {
-  const amount = Math.abs(value).toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  return `${value < 0 ? "-" : ""}$${amount}`;
-}
-
-function formatMoneyCompact(value: number, locale: Locale): string {
-  const amount = Math.abs(Math.round(value)).toLocaleString(locale, { maximumFractionDigits: 0 });
-  return `${value < 0 ? "-" : ""}$${amount}`;
-}
-
-function formatSigned(value: number, digits: number, locale: Locale): string {
-  const text = Math.abs(value).toLocaleString(locale, { minimumFractionDigits: digits, maximumFractionDigits: digits });
-  return `${value < 0 ? "-" : ""}${text}`;
-}
-
-function formatPercent(value: number, locale: Locale): string {
-  return `${value.toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`;
-}
-
-function formatPrice(value: number, locale: Locale): string {
-  const digits = value >= 10 ? 2 : 5;
-  return value.toLocaleString(locale, { minimumFractionDigits: digits, maximumFractionDigits: digits });
 }
 
 function formatClock(epoch: number, locale: Locale): string {
@@ -150,6 +135,7 @@ function DayTrendTooltip({
   locale: Locale;
   t: TradeCenterText;
 }) {
+  const currency = useDisplayCurrency();
   const point = payload?.[0]?.payload;
   if (!active || !point) return null;
   const index = Math.min(ordered.length, Math.max(1, Math.round(point.x)));
@@ -163,7 +149,7 @@ function DayTrendTooltip({
       )}
       <div className="mt-0.5 flex items-baseline gap-1.5 text-sm font-semibold">
         <span className="text-xs font-normal text-muted-foreground">{t.cumulativeNet}</span>
-        <span className={toneClass(point.value)}>{formatMoney(point.value, locale)}</span>
+        <span className={toneClass(point.value)}>{formatMoney(point.value, locale, currency)}</span>
       </div>
     </div>
   );
@@ -180,6 +166,7 @@ function DayTrendChart({
   t: TradeCenterText;
   locale: Locale;
 }) {
+  const currency = useDisplayCurrency();
   const data = buildTrendData(series);
   const ordered = useMemo(() => [...trades].sort((a, b) => a.closeTime - b.closeTime), [trades]);
   return (
@@ -204,7 +191,7 @@ function DayTrendChart({
             axisLine={false}
             padding={{ top: 18, bottom: 18 }}
             tick={{ fontSize: 12, fill: "var(--muted-foreground)" }}
-            tickFormatter={(value: number) => formatMoneyCompact(value, locale)}
+            tickFormatter={(value: number) => formatMoneyCompact(value, locale, currency)}
           />
           <ReferenceLine y={0} stroke="var(--border)" />
           <RechartsTooltip
@@ -229,23 +216,24 @@ function DayTrendChart({
 }
 
 function StatGrid({ stats, t, locale }: { stats: TradeStats; t: TradeCenterText; locale: Locale }) {
+  const currency = useDisplayCurrency();
   const cells: { label: string; value: ReactNode; tip?: string }[] = [
     { label: t.totalTrades, value: stats.count, tip: t.tipTotalTrades },
     {
       label: t.grossPnl,
-      value: <span className={toneClass(stats.gross)}>{formatMoney(stats.gross, locale)}</span>,
+      value: <span className={toneClass(stats.gross)}>{formatMoney(stats.gross, locale, currency)}</span>,
       tip: t.tipGrossPnl,
     },
     { label: t.winnersLosers, value: `${stats.winners} / ${stats.losers}` },
     {
       label: t.swaps,
-      value: <span className={toneClass(stats.swap)}>{formatMoney(stats.swap, locale)}</span>,
+      value: <span className={toneClass(stats.swap)}>{formatMoney(stats.swap, locale, currency)}</span>,
       tip: t.tipSwaps,
     },
     { label: t.winRate, value: formatPercent(stats.winRate * 100, locale), tip: t.tipWinRate },
     {
       label: t.volume,
-      value: stats.volume.toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+      value: formatVolume(stats.volume, locale),
     },
     {
       label: t.profitFactor,
@@ -269,6 +257,7 @@ function StatGrid({ stats, t, locale }: { stats: TradeStats; t: TradeCenterText;
 }
 
 function DayDetailTable({ trades, t, locale }: { trades: MockTrade[]; t: TradeCenterText; locale: Locale }) {
+  const displayCurrency = useDisplayCurrency();
   const columns = [
     [t.colCloseTime, 96],
     [t.colOpenTime, 96],
@@ -307,20 +296,11 @@ function DayDetailTable({ trades, t, locale }: { trades: MockTrade[]; t: TradeCe
                 <SymbolBadge value={trade.symbol} />
               </TableCell>
               <TableCell className="text-center">
-                <Badge
-                  variant="outline"
-                  className={
-                    trade.side === "buy"
-                      ? "border-profit-strong/35 bg-profit-soft text-profit"
-                      : "border-loss-strong/35 bg-loss-soft text-loss"
-                  }
-                >
-                  {trade.side === "buy" ? t.sideBuy : t.sideSell}
-                </Badge>
+                <TradeSideBadge side={trade.side} buyLabel={t.sideBuy} sellLabel={t.sideSell} />
               </TableCell>
               <TableCell className="text-right tabular-nums">{trade.volume.toFixed(2)}</TableCell>
               <TableCell className={`text-right font-semibold tabular-nums ${toneClass(trade.netPnl)}`}>
-                {formatMoney(trade.netPnl, locale)}
+                {formatMoney(trade.netPnl, locale, trade.currency ?? displayCurrency)}
               </TableCell>
               <TableCell className="text-right tabular-nums">
                 {trade.openPrice === null ? t.na : formatPrice(trade.openPrice, locale)}
@@ -351,6 +331,7 @@ export function TradeDayDetailDialog({
   onClose: () => void;
   tradeTable?: ReactNode;
 }) {
+  const currency = useDisplayCurrency();
   if (!day) return null;
   return (
     <Dialog open onOpenChange={(next) => !next && onClose()}>
@@ -361,7 +342,7 @@ export function TradeDayDetailDialog({
             <span className="flex items-baseline gap-1.5 font-normal">
               <span className="text-sm text-muted-foreground">{t.netPnl}</span>
               <span className={`text-base font-semibold tabular-nums ${toneClass(day.stats.net)}`}>
-                {formatMoney(day.stats.net, locale)}
+                {formatMoney(day.stats.net, locale, currency)}
               </span>
             </span>
           </DialogTitle>

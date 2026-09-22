@@ -13,8 +13,12 @@ import {
 } from "lightweight-charts";
 
 import { DialogBody, DialogContent } from "@/components/dialogs/dialog-content";
+import { useMarketColorProfile } from "@/components/shared/market-color-provider";
+import { useDisplayCurrency } from "@/components/shared/display-currency-provider";
 import { Dialog, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { formatMoney } from "@/lib/format-numbers";
 import type { Locale } from "@/lib/i18n";
+import { MARKET_COLOR_FALLBACKS, readMarketColor } from "@/lib/market-colors";
 
 const LINE_LIGHT = "#6b4fc4";
 const LINE_DARK = "#8b6de8";
@@ -22,6 +26,16 @@ const GRID_LIGHT = "#e3dfed";
 const GRID_DARK = "#352e46";
 const TEXT_LIGHT = "#6f6a7d";
 const TEXT_DARK = "#aaa4ba";
+
+function withAlpha(hex: string, alpha: number): string {
+  const normalized = hex.replace("#", "");
+  const value = normalized.length === 3 ? normalized.replace(/(.)/g, "$1$1") : normalized;
+  const red = Number.parseInt(value.slice(0, 2), 16);
+  const green = Number.parseInt(value.slice(2, 4), 16);
+  const blue = Number.parseInt(value.slice(4, 6), 16);
+  if (![red, green, blue].every(Number.isFinite)) return hex;
+  return `rgba(${red}, ${green}, ${blue}, ${alpha})`;
+}
 
 export interface CumulativeHistoryPoint {
   date: string;
@@ -45,6 +59,8 @@ export function CumulativeHistoryDialog({
   loadingText: string;
   locale: Locale;
 }) {
+  const marketProfile = useMarketColorProfile();
+  const currency = useDisplayCurrency();
   const hostRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const seriesRef = useRef<ISeriesApi<SeriesType> | null>(null);
@@ -66,6 +82,9 @@ export function CumulativeHistoryDialog({
     let chart: IChartApi | null = null;
     const frame = requestAnimationFrame(() => {
       const dark = document.documentElement.classList.contains("dark");
+      const fallback = marketProfile === "cn" ? MARKET_COLOR_FALLBACKS.cn : MARKET_COLOR_FALLBACKS.fx;
+      const profit = readMarketColor("--profit-strong", fallback.profitStrong);
+      const loss = readMarketColor("--loss-strong", fallback.lossStrong);
       const line = dark ? LINE_DARK : LINE_LIGHT;
       const grid = dark ? GRID_DARK : GRID_LIGHT;
       const text = dark ? TEXT_DARK : TEXT_LIGHT;
@@ -77,8 +96,7 @@ export function CumulativeHistoryDialog({
           attributionLogo: false,
         },
         localization: {
-          priceFormatter: (value: number) =>
-            value.toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+          priceFormatter: (value: number) => formatMoney(value, locale, currency),
         },
         grid: {
           vertLines: { color: grid },
@@ -113,11 +131,11 @@ export function CumulativeHistoryDialog({
       seriesRef.current = chart.addSeries(BaselineSeries, {
         baseValue: { type: "price", price: 0 },
         topLineColor: line,
-        topFillColor1: "rgba(78, 191, 148, 0.28)",
-        topFillColor2: "rgba(78, 191, 148, 0.04)",
+        topFillColor1: withAlpha(profit, 0.28),
+        topFillColor2: withAlpha(profit, 0.04),
         bottomLineColor: line,
-        bottomFillColor1: "rgba(240, 99, 99, 0.04)",
-        bottomFillColor2: "rgba(240, 99, 99, 0.32)",
+        bottomFillColor1: withAlpha(loss, 0.04),
+        bottomFillColor2: withAlpha(loss, 0.32),
         lineWidth: 2,
         priceLineVisible: false,
         lastValueVisible: true,
@@ -139,7 +157,7 @@ export function CumulativeHistoryDialog({
       chartRef.current = null;
       seriesRef.current = null;
     };
-  }, [data, locale, open]);
+  }, [currency, data, locale, marketProfile, open]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

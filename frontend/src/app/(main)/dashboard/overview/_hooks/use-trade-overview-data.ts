@@ -9,6 +9,7 @@ import {
   type TradeBounds,
   type TradeGroupRecord,
   type TradeOverviewRecord,
+  type TradeSymbolOption,
   toTrade,
   tradeCenterApi,
 } from "@/lib/tradesync/trade-center";
@@ -31,6 +32,7 @@ function commonParams(
   side: SideFilter,
   result: ResultFilter,
   currency: string,
+  marketProfile: "cn" | "fx",
   selectedSymbols: string[],
 ) {
   return {
@@ -40,6 +42,7 @@ function commonParams(
     side,
     result,
     currency: currency === "all" ? undefined : currency,
+    marketProfile,
     symbol: selectedSymbols.length > 0 ? selectedSymbols.join(",") : undefined,
   };
 }
@@ -50,6 +53,7 @@ export function useTradeOverviewData({
   side,
   result,
   currency,
+  marketProfile,
   selectedSymbols,
 }: {
   accountIds: string[];
@@ -57,11 +61,12 @@ export function useTradeOverviewData({
   side: SideFilter;
   result: ResultFilter;
   currency: string;
+  marketProfile: "cn" | "fx";
   selectedSymbols: string[];
 }) {
   const [accounts, setAccounts] = useState<TradeAccount[]>([]);
   const [bounds, setBounds] = useState<TradeBounds>({ earliestDay: null, latestDay: null });
-  const [symbols, setSymbols] = useState<string[]>([]);
+  const [symbolOptions, setSymbolOptions] = useState<TradeSymbolOption[]>([]);
   const [overview, setOverview] = useState<TradeOverviewRecord | null>(null);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -79,6 +84,7 @@ export function useTradeOverviewData({
           name: account.name ?? `MT5 ${account.mt5_login}`,
           login: String(account.mt5_login),
           currency: account.currency,
+          marketProfile: account.market_profile === "cn" ? "cn" : "fx",
           isStatistics: account.is_statistics,
           tradeCount: account.trade_count,
           lastUpdatedAt: account.last_updated_at,
@@ -91,12 +97,16 @@ export function useTradeOverviewData({
           return;
         }
         const selected = accountIds;
-        const [boundsData, symbolsData] = await Promise.all([
+        const [boundsData, symbolOptionsData] = await Promise.all([
           tradeCenterApi.bounds({ accountIds: selected }),
-          tradeCenterApi.symbols(),
+          tradeCenterApi.symbolOptions({
+            accountIds: selected,
+            currency: currency === "all" ? undefined : currency,
+            marketProfile,
+          }),
         ]);
         setBounds(boundsData);
-        setSymbols(symbolsData);
+        setSymbolOptions(symbolOptionsData);
         if ((!range.from || !range.to) && !loaded) {
           setOverview(null);
           setTotal(0);
@@ -104,7 +114,7 @@ export function useTradeOverviewData({
         }
         setTotal(0);
         const countData = await tradeCenterApi.list({
-          ...commonParams(selected, range, side, result, currency, selectedSymbols),
+          ...commonParams(selected, range, side, result, currency, marketProfile, selectedSymbols),
           page: 1,
           pageSize: 1,
           sort: "closeTime",
@@ -112,7 +122,7 @@ export function useTradeOverviewData({
         });
         setTotal(countData.total);
         const overviewData = await tradeCenterApi.overview(
-          commonParams(selected, range, side, result, currency, selectedSymbols),
+          commonParams(selected, range, side, result, currency, marketProfile, selectedSymbols),
         );
         setOverview(overviewData);
         setLoaded(true);
@@ -122,7 +132,7 @@ export function useTradeOverviewData({
         if (!background) setLoading(false);
       }
     },
-    [accountIds, currency, loaded, range, result, selectedSymbols, side],
+    [accountIds, currency, loaded, marketProfile, range, result, selectedSymbols, side],
   );
 
   useEffect(() => {
@@ -146,7 +156,7 @@ export function useTradeOverviewData({
     async (day: string): Promise<DayGroup | null> => {
       if (accountIds.length === 0) return null;
       const groups = await tradeCenterApi.groups({
-        ...commonParams(accountIds, range, side, result, currency, selectedSymbols),
+        ...commonParams(accountIds, range, side, result, currency, marketProfile, selectedSymbols),
         view: "day",
         fromDay: day,
         toDay: day,
@@ -155,7 +165,7 @@ export function useTradeOverviewData({
       });
       return groups[0] ? toDayGroup(groups[0]) : null;
     },
-    [accountIds, currency, range, result, selectedSymbols, side],
+    [accountIds, currency, marketProfile, range, result, selectedSymbols, side],
   );
 
   return {
@@ -166,7 +176,7 @@ export function useTradeOverviewData({
     loading,
     overview,
     reload,
-    symbols,
+    symbolOptions,
     total,
   };
 }

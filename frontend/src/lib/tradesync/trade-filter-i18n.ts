@@ -8,6 +8,7 @@ const zh = {
   filterDirection: "方向",
   filterResult: "结果",
   filterCurrency: "币种",
+  filterMarket: "市场",
   filterSymbol: "品种",
   filterAll: "全部",
   filterClear: "清除筛选",
@@ -25,6 +26,8 @@ const zh = {
   sideSell: "做空",
   resultWin: "盈利",
   resultLoss: "亏损",
+  marketCn: "国内期货",
+  marketFx: "外汇市场",
 
   presetAll: "全部",
   presetAllDates: "全量日期",
@@ -56,6 +59,7 @@ const en: TradeFilterText = {
   filterDirection: "Side",
   filterResult: "Result",
   filterCurrency: "Currency",
+  filterMarket: "Market",
   filterSymbol: "Symbol",
   filterAll: "All",
   filterClear: "Clear filters",
@@ -73,6 +77,8 @@ const en: TradeFilterText = {
   sideSell: "Short",
   resultWin: "Wins",
   resultLoss: "Losses",
+  marketCn: "China Futures",
+  marketFx: "Forex",
 
   presetAll: "All",
   presetAllDates: "All dates",

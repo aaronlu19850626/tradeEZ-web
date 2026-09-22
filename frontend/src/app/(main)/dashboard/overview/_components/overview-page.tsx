@@ -8,6 +8,8 @@ import { toast } from "sonner";
 import { CumulativeHistoryDialog } from "@/components/dialogs/cumulative-history-dialog";
 import type { ResultFilter, SideFilter } from "@/components/filters/trade-filter-controls";
 import { PanelAction, PanelIconAction, PanelMenuTrigger } from "@/components/shared/dashboard-actions";
+import { DisplayCurrencyProvider } from "@/components/shared/display-currency-provider";
+import { MarketColorProvider } from "@/components/shared/market-color-provider";
 import { SyncEmptyState } from "@/components/shared/sync-empty-state";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -18,7 +20,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { formatCount } from "@/lib/format-numbers";
 import { useLocale } from "@/lib/i18n";
+import { resolveMarketProfile } from "@/lib/market-colors";
 import { dashboardText } from "@/lib/tradesync/dashboard-i18n";
 import type { CompositeScore } from "@/lib/tradesync/trade-score";
 import type { DayGroup } from "@/lib/tradesync/trades-mock";
@@ -71,6 +75,8 @@ const EMPTY_SCORE: CompositeScore = {
   weakest: [],
 };
 
+const CURRENCY_ORDER = ["USD", "CNY", "EUR", "GBP", "JPY", "HKD"];
+
 export default function DashboardOverviewPage() {
   const locale = useLocale();
   const t = dashboardText[locale];
@@ -80,6 +86,7 @@ export default function DashboardOverviewPage() {
   const [side, setSide] = useState<SideFilter>("all");
   const [result, setResult] = useState<ResultFilter>("all");
   const [currency, setCurrency] = useState("USD");
+  const [marketProfile, setMarketProfile] = useState<"cn" | "fx">("fx");
   const [selectedSymbols, setSelectedSymbols] = useState<string[]>([]);
   const [timeBasis, setTimeBasis] = useState<"entry" | "exit">("entry");
   const [scoreOpen, setScoreOpen] = useState(false);
@@ -94,14 +101,16 @@ export default function DashboardOverviewPage() {
   const firstFilterRender = useRef(true);
   const currencyUserTouched = useRef(false);
 
-  const { accounts, bounds, error, loading, overview, reload, symbols, loadDayGroup, total } = useTradeOverviewData({
-    accountIds,
-    range,
-    side,
-    result,
-    currency,
-    selectedSymbols,
-  });
+  const { accounts, bounds, error, loading, overview, reload, symbolOptions, loadDayGroup, total } =
+    useTradeOverviewData({
+      accountIds,
+      range,
+      side,
+      result,
+      currency,
+      marketProfile,
+      selectedSymbols,
+    });
 
   const statisticsAccounts = useMemo(() => accounts.filter((account) => account.isStatistics), [accounts]);
   const scopeDefaults = useMemo(
@@ -138,6 +147,7 @@ export default function DashboardOverviewPage() {
     side,
     result,
     currency,
+    marketProfile,
     selectedSymbols.join(","),
   ].join("|");
   useEffect(() => {
@@ -180,10 +190,27 @@ export default function DashboardOverviewPage() {
             .map((account) => account.currency)
             .filter(Boolean) as string[],
         ),
-      ].sort(),
+      ].sort((left, right) => {
+        const leftIndex = CURRENCY_ORDER.indexOf(left);
+        const rightIndex = CURRENCY_ORDER.indexOf(right);
+        return (
+          (leftIndex < 0 ? Number.MAX_SAFE_INTEGER : leftIndex) -
+          (rightIndex < 0 ? Number.MAX_SAFE_INTEGER : rightIndex)
+        );
+      }),
     [accounts, accountIds],
   );
   const currencyOptionsLocked = currencies.length > 1;
+  const marketProfiles = useMemo(
+    () =>
+      resolveMarketProfile(
+        accounts.filter((account) => accountIds.includes(account.id)).map((account) => account.marketProfile),
+      ) === "mixed"
+        ? (["cn", "fx"] as const)
+        : [accounts.find((account) => accountIds.includes(account.id))?.marketProfile ?? "fx"],
+    [accounts, accountIds],
+  );
+  const marketOptionsLocked = marketProfiles.length > 1;
 
   useEffect(() => {
     if (currencies.length === 0) {
@@ -198,6 +225,20 @@ export default function DashboardOverviewPage() {
       setCurrency(currencies.includes("USD") ? "USD" : currencies[0]);
     }
   }, [currencies, currency]);
+
+  useEffect(() => {
+    if (currency === "CNY" && marketProfiles.includes("cn")) {
+      if (marketProfile !== "cn") setMarketProfile("cn");
+      return;
+    }
+    if (currency === "USD" && marketProfiles.includes("fx")) {
+      if (marketProfile !== "fx") setMarketProfile("fx");
+      return;
+    }
+    if (!marketProfiles.includes(marketProfile)) {
+      setMarketProfile(marketProfiles[0]);
+    }
+  }, [currency, marketProfile, marketProfiles]);
 
   const applyCurrency = (value: string) => {
     currencyUserTouched.current = true;
@@ -275,8 +316,11 @@ export default function DashboardOverviewPage() {
       currency={currency}
       currencies={currencies}
       allowCurrencyAll={!currencyOptionsLocked}
+      marketProfile={marketProfile}
+      marketProfiles={[...marketProfiles]}
+      allowMarketAll={!marketOptionsLocked}
       symbolsSelected={selectedSymbols}
-      symbolOptions={symbols}
+      symbolOptions={symbolOptions}
       accounts={accounts}
       accountIds={accountIds}
       dateRange={range}
@@ -285,6 +329,7 @@ export default function DashboardOverviewPage() {
       onSide={setSide}
       onResult={setResult}
       onCurrency={applyCurrency}
+      onMarketProfile={setMarketProfile}
       onSymbolsChange={setSelectedSymbols}
       onRange={(from, to) => setRange({ from, to })}
       onAccountsChange={(ids) => setAccountIds(ids.length > 0 ? ids : [...scopeDefaults])}
@@ -293,17 +338,21 @@ export default function DashboardOverviewPage() {
 
   if (error) {
     return (
-      <div className="mx-auto flex w-full max-w-screen-2xl flex-col gap-5">
-        {header}
-        {toolbar}
-        <Card className="items-center gap-3 py-16 text-center">
-          <CardTitle className="text-base">{t.errorTitle}</CardTitle>
-          <p className="text-sm text-muted-foreground">{t.errorDescription}</p>
-          <Button variant="outline" size="sm" onClick={() => void reload()}>
-            {t.errorRetry}
-          </Button>
-        </Card>
-      </div>
+      <DisplayCurrencyProvider currency={currency}>
+        <MarketColorProvider profile={marketProfile}>
+          <div className="mx-auto flex w-full max-w-screen-2xl flex-col gap-5">
+            {header}
+            {toolbar}
+            <Card className="items-center gap-3 py-16 text-center">
+              <CardTitle className="text-base">{t.errorTitle}</CardTitle>
+              <p className="text-sm text-muted-foreground">{t.errorDescription}</p>
+              <Button variant="outline" size="sm" onClick={() => void reload()}>
+                {t.errorRetry}
+              </Button>
+            </Card>
+          </div>
+        </MarketColorProvider>
+      </DisplayCurrencyProvider>
     );
   }
 
@@ -311,179 +360,187 @@ export default function DashboardOverviewPage() {
 
   if (initialLoading) {
     return (
-      <div className="mx-auto flex w-full max-w-screen-2xl flex-col gap-5">
-        {header}
-        {toolbar}
-        <div className="flex flex-col items-center justify-center gap-6 py-24">
-          <div className="flex h-16 items-center gap-2" aria-hidden>
-            {[0, 1, 2, 3, 4].map((index) => (
-              <span
-                key={index}
-                className="tradeez-loading-bar h-16 w-3 rounded-full bg-primary"
-                style={{ animationDelay: `${(-index * 1.45) / 5}s` }}
-              />
-            ))}
+      <DisplayCurrencyProvider currency={currency}>
+        <MarketColorProvider profile={marketProfile}>
+          <div className="mx-auto flex w-full max-w-screen-2xl flex-col gap-5">
+            {header}
+            {toolbar}
+            <div className="flex flex-col items-center justify-center gap-6 py-24">
+              <div className="flex h-16 items-center gap-2" aria-hidden>
+                {[0, 1, 2, 3, 4].map((index) => (
+                  <span
+                    key={index}
+                    className="tradeez-loading-bar h-16 w-3 rounded-full bg-primary"
+                    style={{ animationDelay: `${(-index * 1.45) / 5}s` }}
+                  />
+                ))}
+              </div>
+              <div className="text-center">
+                <p className="font-semibold text-xl">{t.loadingTitle}</p>
+                <p className="mt-1.5 text-sm text-muted-foreground">{t.loadingDescription}</p>
+              </div>
+            </div>
           </div>
-          <div className="text-center">
-            <p className="font-semibold text-xl">{t.loadingTitle}</p>
-            <p className="mt-1.5 text-sm text-muted-foreground">{t.loadingDescription}</p>
-          </div>
-        </div>
-      </div>
+        </MarketColorProvider>
+      </DisplayCurrencyProvider>
     );
   }
 
   const empty = stats.count === 0;
 
   return (
-    <div className="relative mx-auto flex w-full max-w-screen-2xl flex-col gap-5">
-      {header}
-      {toolbar}
-      {largeDataLoading && (
-        <Alert className="pointer-events-none absolute top-3 left-1/2 z-40 w-auto max-w-[90%] -translate-x-1/2 shadow-md">
-          <RefreshCw className="size-4 animate-spin" />
-          <AlertDescription className="whitespace-nowrap">
-            {t.largeDataLoading.replace("{count}", total.toLocaleString(locale))}
-          </AlertDescription>
-        </Alert>
-      )}
-      {empty ? (
-        <SyncEmptyState
-          title={t.emptyTitle}
-          description={t.emptyDescription}
-          actionLabel={t.goToAccounts}
-          href="/dashboard/account-center"
-          actionIcon={<Plus className="size-4" />}
-        />
-      ) : (
-        <>
-          <OverviewMetrics t={t} locale={locale} stats={stats} />
+    <DisplayCurrencyProvider currency={currency}>
+      <MarketColorProvider profile={marketProfile}>
+        <div className="relative mx-auto flex w-full max-w-screen-2xl flex-col gap-5">
+          {header}
+          {toolbar}
+          {largeDataLoading && (
+            <Alert className="pointer-events-none absolute top-3 left-1/2 z-40 w-auto max-w-[90%] -translate-x-1/2 shadow-md">
+              <RefreshCw className="size-4 animate-spin" />
+              <AlertDescription className="whitespace-nowrap">
+                {t.largeDataLoading.replace("{count}", formatCount(total, locale))}
+              </AlertDescription>
+            </Alert>
+          )}
+          {empty ? (
+            <SyncEmptyState
+              title={t.emptyTitle}
+              description={t.emptyDescription}
+              actionLabel={t.goToAccounts}
+              href="/dashboard/account-center"
+              actionIcon={<Plus className="size-4" />}
+            />
+          ) : (
+            <>
+              <OverviewMetrics t={t} locale={locale} stats={stats} />
 
-          <div className="grid gap-3 xl:grid-cols-3">
-            <Panel
-              t={t}
-              titleKey="scoreTitle"
-              tipKey="scoreTip"
-              action={<PanelAction onClick={() => setScoreOpen(true)}>{t.scoreDetail}</PanelAction>}
-            >
-              <ScoreRadar t={t} locale={locale} score={score} radar={scoreRadar} />
-            </Panel>
-            <Panel
-              t={t}
-              titleKey="consistencyTitle"
-              tipKey="consistencyTip"
-              action={<PanelAction href="/dashboard/trade-center">{t.viewMore}</PanelAction>}
-            >
-              <ConsistencyHeatmap
-                t={t}
-                locale={locale}
-                statuses={consistency}
-                onOpenChecklist={() => toast(t.checklistUnavailable)}
-              />
-            </Panel>
-            <Panel
-              t={t}
-              titleKey="cumulativeTitle"
-              tipKey="cumulativeTip"
-              action={
-                <PanelIconAction label={t.expandCumulative} onClick={() => setCumulativeOpen(true)}>
-                  <Maximize2 className="size-4" />
-                </PanelIconAction>
-              }
-            >
-              <CumulativeChart points={cumulativeRecent} locale={locale} heightClassName="h-[310px] min-h-0" />
-            </Panel>
-          </div>
+              <div className="grid gap-3 xl:grid-cols-3">
+                <Panel
+                  t={t}
+                  titleKey="scoreTitle"
+                  tipKey="scoreTip"
+                  action={<PanelAction onClick={() => setScoreOpen(true)}>{t.scoreDetail}</PanelAction>}
+                >
+                  <ScoreRadar t={t} locale={locale} score={score} radar={scoreRadar} />
+                </Panel>
+                <Panel
+                  t={t}
+                  titleKey="consistencyTitle"
+                  tipKey="consistencyTip"
+                  action={<PanelAction href="/dashboard/trade-center">{t.viewMore}</PanelAction>}
+                >
+                  <ConsistencyHeatmap
+                    t={t}
+                    locale={locale}
+                    statuses={consistency}
+                    onOpenChecklist={() => toast(t.checklistUnavailable)}
+                  />
+                </Panel>
+                <Panel
+                  t={t}
+                  titleKey="cumulativeTitle"
+                  tipKey="cumulativeTip"
+                  action={
+                    <PanelIconAction label={t.expandCumulative} onClick={() => setCumulativeOpen(true)}>
+                      <Maximize2 className="size-4" />
+                    </PanelIconAction>
+                  }
+                >
+                  <CumulativeChart points={cumulativeRecent} locale={locale} heightClassName="h-[310px] min-h-0" />
+                </Panel>
+              </div>
 
-          <div className="grid gap-3 xl:grid-cols-3">
-            <Panel
-              t={t}
-              titleKey="dailyTitle"
-              tipKey="dailyTip"
-              className="relative z-20 overflow-visible!"
-              bodyClassName="relative z-20 justify-center overflow-visible"
-            >
-              <DailyChart days={[...stats.days].reverse()} locale={locale} />
-            </Panel>
-            <Panel t={t} titleKey="recentTitle" tipKey="recentTip" bodyClassName="min-h-0 overflow-hidden">
-              <RecentTrades t={t} trades={recent} locale={locale} />
-            </Panel>
-            <Panel t={t} titleKey="drawdownTitle" tipKey="drawdownTip" bodyClassName="justify-center">
-              <DrawdownChart points={drawdown.points} locale={locale} />
-            </Panel>
-          </div>
+              <div className="grid gap-3 xl:grid-cols-3">
+                <Panel
+                  t={t}
+                  titleKey="dailyTitle"
+                  tipKey="dailyTip"
+                  className="relative z-20 overflow-visible!"
+                  bodyClassName="relative z-20 justify-center overflow-visible"
+                >
+                  <DailyChart days={[...stats.days].reverse()} locale={locale} />
+                </Panel>
+                <Panel t={t} titleKey="recentTitle" tipKey="recentTip" bodyClassName="min-h-0 overflow-hidden">
+                  <RecentTrades t={t} trades={recent} locale={locale} />
+                </Panel>
+                <Panel t={t} titleKey="drawdownTitle" tipKey="drawdownTip" bodyClassName="justify-center">
+                  <DrawdownChart points={drawdown.points} locale={locale} />
+                </Panel>
+              </div>
 
-          <div className="grid gap-3 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] xl:grid-rows-[440px_440px]">
-            <Panel
-              t={t}
-              titleKey="calendarTitle"
-              tipKey="calendarTip"
-              className="h-auto xl:row-span-2 xl:h-full"
-              bodyClassName="min-h-0 overflow-hidden"
-            >
-              <MonthCalendar
-                t={t}
-                locale={locale}
-                month={monthKey}
-                calendar={calendar}
-                onShiftMonth={(delta) => setCursor(shiftMonth(monthKey, delta))}
-                onThisMonth={() => setCursor(latestDay.slice(0, 7))}
-                onOpenDay={openCalendarDay}
-              />
-            </Panel>
-            <Panel
-              t={t}
-              titleKey="timeOfDayTitle"
-              tipKey={timeBasis === "entry" ? "timeOfDayTipEntry" : "timeOfDayTipExit"}
-              bodyClassName="justify-center"
-              action={
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <PanelMenuTrigger label={t.timeOfDaySettings}>
-                      <Settings className="size-4" />
-                    </PanelMenuTrigger>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-44 p-1.5">
-                    <DropdownMenuItem
-                      className={`cursor-pointer py-2 ${timeBasis === "entry" ? "font-semibold" : ""}`}
-                      onSelect={() => setTimeBasis("entry")}
-                    >
-                      {t.entryTime}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      className={`cursor-pointer py-2 ${timeBasis === "exit" ? "font-semibold" : ""}`}
-                      onSelect={() => setTimeBasis("exit")}
-                    >
-                      {t.exitTime}
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              }
-            >
-              <TimePerformanceChart
-                points={(timeBasis === "entry" ? overview?.timeEntry : overview?.timeExit) ?? []}
-                basis={timeBasis}
-                locale={locale}
-              />
-            </Panel>
-            <Panel t={t} titleKey="durationTitle" tipKey="durationTip" bodyClassName="justify-center">
-              <DurationPerformanceChart points={overview?.duration ?? []} locale={locale} />
-            </Panel>
-          </div>
-        </>
-      )}
+              <div className="grid gap-3 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] xl:grid-rows-[440px_440px]">
+                <Panel
+                  t={t}
+                  titleKey="calendarTitle"
+                  tipKey="calendarTip"
+                  className="h-auto xl:row-span-2 xl:h-full"
+                  bodyClassName="min-h-0 overflow-hidden"
+                >
+                  <MonthCalendar
+                    t={t}
+                    locale={locale}
+                    month={monthKey}
+                    calendar={calendar}
+                    onShiftMonth={(delta) => setCursor(shiftMonth(monthKey, delta))}
+                    onThisMonth={() => setCursor(latestDay.slice(0, 7))}
+                    onOpenDay={openCalendarDay}
+                  />
+                </Panel>
+                <Panel
+                  t={t}
+                  titleKey="timeOfDayTitle"
+                  tipKey={timeBasis === "entry" ? "timeOfDayTipEntry" : "timeOfDayTipExit"}
+                  bodyClassName="justify-center"
+                  action={
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <PanelMenuTrigger label={t.timeOfDaySettings}>
+                          <Settings className="size-4" />
+                        </PanelMenuTrigger>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-44 p-1.5">
+                        <DropdownMenuItem
+                          className={`cursor-pointer py-2 ${timeBasis === "entry" ? "font-semibold" : ""}`}
+                          onSelect={() => setTimeBasis("entry")}
+                        >
+                          {t.entryTime}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          className={`cursor-pointer py-2 ${timeBasis === "exit" ? "font-semibold" : ""}`}
+                          onSelect={() => setTimeBasis("exit")}
+                        >
+                          {t.exitTime}
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  }
+                >
+                  <TimePerformanceChart
+                    points={(timeBasis === "entry" ? overview?.timeEntry : overview?.timeExit) ?? []}
+                    basis={timeBasis}
+                    locale={locale}
+                  />
+                </Panel>
+                <Panel t={t} titleKey="durationTitle" tipKey="durationTip" bodyClassName="justify-center">
+                  <DurationPerformanceChart points={overview?.duration ?? []} locale={locale} />
+                </Panel>
+              </div>
+            </>
+          )}
 
-      <ScoreDialog t={t} open={scoreOpen} score={score} onClose={() => setScoreOpen(false)} />
-      <CumulativeHistoryDialog
-        open={cumulativeOpen}
-        onOpenChange={setCumulativeOpen}
-        points={cumulativeFull}
-        title={t.cumulativeTitle}
-        description={t.cumulativeHistoryDescription}
-        loadingText={t.cumulativeHistoryLoading}
-        locale={locale}
-      />
-      <DayTradesDialog locale={locale} day={calendarDay ? dayGroup : null} onClose={closeCalendarDay} />
-    </div>
+          <ScoreDialog t={t} open={scoreOpen} score={score} onClose={() => setScoreOpen(false)} />
+          <CumulativeHistoryDialog
+            open={cumulativeOpen}
+            onOpenChange={setCumulativeOpen}
+            points={cumulativeFull}
+            title={t.cumulativeTitle}
+            description={t.cumulativeHistoryDescription}
+            loadingText={t.cumulativeHistoryLoading}
+            locale={locale}
+          />
+          <DayTradesDialog locale={locale} day={calendarDay ? dayGroup : null} onClose={closeCalendarDay} />
+        </div>
+      </MarketColorProvider>
+    </DisplayCurrencyProvider>
   );
 }

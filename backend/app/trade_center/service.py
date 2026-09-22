@@ -26,6 +26,8 @@ from .schemas import (
     BoundsOut,
     StatsOut,
     SummaryOut,
+    SymbolAccountOut,
+    SymbolOptionOut,
     TradeFilter,
     TradeItem,
     beijing_day,
@@ -57,6 +59,7 @@ class LightTrade:
     symbol: str
     side: str
     currency: str | None
+    marketProfile: str
     openTime: int
     closeTime: int
     grossPnl: float
@@ -111,6 +114,7 @@ def _to_item(row: DBRow) -> TradeItem:
         accountName=row["account_name"],
         accountLogin=account_login,
         currency=row["currency"],
+        marketProfile=str(row["market_profile"] or "fx"),
         symbol=str(row["symbol"] or ""),
         side=side,
         volume=volume,
@@ -157,6 +161,7 @@ def _to_light_item(row: DBRow) -> LightTrade:
         symbol=str(row["symbol"] or ""),
         side=side,
         currency=row["currency"],
+        marketProfile=str(row["market_profile"] or "fx"),
         openTime=int(row["open_time"] or 0),
         closeTime=int(row["deal_time"] or 0),
         grossPnl=gross_pnl,
@@ -181,6 +186,8 @@ def _apply_filters(items: list[TradeItem], flt: TradeFilter) -> list[TradeItem]:
             items = [item for item in items if item.netPnl == 0]
     if flt.currency:
         items = [item for item in items if item.currency == flt.currency]
+    if flt.market_profile:
+        items = [item for item in items if item.marketProfile == flt.market_profile]
     symbols = flt.symbol_list()
     if symbols:
         items = [item for item in items if item.symbol in symbols]
@@ -316,6 +323,7 @@ def list_trades(db: DBConnection, user: DBRow, flt: TradeFilter, sort: str, orde
             side=flt.side,
             result=flt.result,
             currency=flt.currency,
+            market_profile=flt.market_profile,
             symbol=flt.symbol,
             sort=sort,
             order=order,
@@ -401,6 +409,7 @@ def calendar(db: DBConnection, user: DBRow, flt: TradeFilter, month: str) -> lis
         side=flt.side,
         result=flt.result,
         currency=flt.currency,
+        market_profile=flt.market_profile,
         symbol=flt.symbol,
     )
     return [CalendarDayOut(day=str(row["day"]), net=float(row["net"] or 0), count=int(row["count"] or 0)) for row in rows]
@@ -410,7 +419,12 @@ def bounds(db: DBConnection, user: DBRow, flt: TradeFilter) -> BoundsOut:
     logins = _resolve_logins(db, user, flt.account_id_list())
     if not logins:
         return BoundsOut(earliestDay=None, latestDay=None)
-    row = repository.fetch_closed_trade_bounds(db, int(user["id"]), logins)
+    row = repository.fetch_closed_trade_bounds(
+        db,
+        int(user["id"]),
+        logins,
+        market_profile=flt.market_profile,
+    )
     if row is None or row["earliest_epoch"] is None:
         return BoundsOut(earliestDay=None, latestDay=None)
     return BoundsOut(
@@ -589,7 +603,13 @@ def overview(db: DBConnection, user: DBRow, flt: TradeFilter) -> OverviewOut:
     recent_start = _add_days(latest_day, -29) if latest_day else None
     recent_items = [item for item in items if recent_start and beijing_day(item.closeTime) >= recent_start]
     recent = [
-        OverviewRecentOut(id=item.id, closeTime=item.closeTime, symbol=item.symbol, netPnl=item.netPnl)
+        OverviewRecentOut(
+            id=item.id,
+            closeTime=item.closeTime,
+            symbol=item.symbol,
+            side=item.side,
+            netPnl=item.netPnl,
+        )
         for item in sorted(items, key=lambda item: (item.closeTime, item.id), reverse=True)[:8]
     ]
     return OverviewOut(
@@ -606,8 +626,42 @@ def overview(db: DBConnection, user: DBRow, flt: TradeFilter) -> OverviewOut:
     )
 
 
-def symbols(db: DBConnection, user: DBRow) -> list[str]:
-    return repository.distinct_symbols(db, int(user["id"]))
+def symbols(db: DBConnection, user: DBRow, flt: TradeFilter) -> list[str]:
+    logins = _resolve_logins(db, user, flt.account_id_list())
+    if not logins:
+        return []
+    return repository.distinct_symbols(
+        db,
+        int(user["id"]),
+        logins=logins,
+        currency=flt.currency,
+        market_profile=flt.market_profile,
+    )
+
+
+def symbol_options(db: DBConnection, user: DBRow, flt: TradeFilter) -> list[SymbolOptionOut]:
+    logins = _resolve_logins(db, user, flt.account_id_list())
+    if not logins:
+        return []
+    rows = repository.distinct_symbol_options(
+        db,
+        int(user["id"]),
+        logins=logins,
+        currency=flt.currency,
+        market_profile=flt.market_profile,
+    )
+    grouped: dict[str, list[SymbolAccountOut]] = {}
+    for row in rows:
+        symbol = str(row["symbol"] or "")
+        if not symbol:
+            continue
+        grouped.setdefault(symbol, []).append(
+            SymbolAccountOut(
+                account_id=int(row["account_id"]),
+                account_name=str(row["account_name"] or row["account_id"]),
+            )
+        )
+    return [SymbolOptionOut(symbol=symbol, accounts=accounts) for symbol, accounts in sorted(grouped.items())]
 
 
 def currencies(db: DBConnection, user: DBRow) -> list[str]:

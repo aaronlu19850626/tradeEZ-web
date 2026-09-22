@@ -66,6 +66,7 @@ def insert_account(
     name: str,
     platform: str,
     currency: str,
+    market_profile: str,
     broker_server: str | None,
     sync_start_time: int,
     key_prefix: str,
@@ -78,9 +79,10 @@ def insert_account(
         """
         INSERT INTO accounts (
             user_id, mt5_login, label, platform, broker_server, sync_start_time,
-            account_currency, key_prefix, key_hash, key_encrypted, key_environment, is_statistics,
+            account_currency, market_profile, key_prefix, key_hash, key_encrypted,
+            key_environment, is_statistics,
             key_created_at, updated_at
-        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, now_iso(), now_iso())
+        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, now_iso(), now_iso())
         RETURNING id
         """,
         (
@@ -91,6 +93,7 @@ def insert_account(
             broker_server,
             sync_start_time,
             currency,
+            market_profile,
             key_prefix,
             key_hash,
             key_encrypted,

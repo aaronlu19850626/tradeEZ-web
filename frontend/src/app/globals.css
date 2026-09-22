@@ -111,10 +111,10 @@
   --breakeven: #3b6fd4;
   --breakeven-soft: #eaf0ff;
   --warning: #d9901a;
-  --success: var(--profit);
+  --success: #2fa77b;
   --success-foreground: var(--color-white);
   --success-hover: color-mix(in oklch, var(--success), black 12%);
-  --danger: var(--loss);
+  --danger: #dc4c4c;
   --danger-foreground: var(--color-white);
   --danger-hover: color-mix(in oklch, var(--danger), black 12%);
   --warning-hover: color-mix(in oklch, var(--warning), black 12%);
@@ -189,6 +189,37 @@
   --sidebar-accent-foreground: #f4f5f6;
   --sidebar-border: #283038;
   --sidebar-ring: #8b72f0;
+}
+
+[data-market-profile="cn"] {
+  --profit: #dc4c4c;
+  --profit-strong: #f06a6a;
+  --profit-soft: #fdecec;
+  --loss: #2fa77b;
+  --loss-strong: #4ebf94;
+  --loss-soft: #ebfaf4;
+  --color-profit: var(--profit);
+  --color-loss: var(--loss);
+  --color-profit-strong: var(--profit-strong);
+  --color-profit-soft: var(--profit-soft);
+  --color-loss-strong: var(--loss-strong);
+  --color-loss-soft: var(--loss-soft);
+}
+
+.dark [data-market-profile="cn"],
+.dark[data-market-profile="cn"] {
+  --profit: #ff6868;
+  --profit-strong: #ff7373;
+  --profit-soft: #321b1d;
+  --loss: #3bcb9a;
+  --loss-strong: #4dd6a4;
+  --loss-soft: #122a23;
+  --color-profit: var(--profit);
+  --color-loss: var(--loss);
+  --color-profit-strong: var(--profit-strong);
+  --color-profit-soft: var(--profit-soft);
+  --color-loss-strong: var(--loss-strong);
+  --color-loss-soft: var(--loss-soft);
 }
 
 @layer base {

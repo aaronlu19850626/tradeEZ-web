@@ -1,6 +1,7 @@
 "use client";
 
 import { OutlineAction } from "@/components/shared/dashboard-actions";
+import { useDisplayCurrency } from "@/components/shared/display-currency-provider";
 import { InfoTip } from "@/components/shared/info-tip";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type { Locale } from "@/lib/i18n";
@@ -53,6 +54,7 @@ export function ConsistencyHeatmap({
   statuses: { cells: ConsistencyCell[]; weeks: string[] };
   onOpenChecklist: () => void;
 }) {
+  const currency = useDisplayCurrency();
   const weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
   const dayOffsets = [6, 0, 1, 2, 3, 4, 5];
   if (statuses.cells.length === 0) {
@@ -134,7 +136,9 @@ export function ConsistencyHeatmap({
                       <TooltipContent>
                         <div className="flex flex-col gap-0.5 text-xs">
                           <span>{day}</span>
-                          <span className={tone(cell?.net ?? 0)}>{money(cell?.net ?? 0, locale)}</span>
+                          <span className={tone(cell?.net ?? 0)}>
+                            {money(cell?.net ?? 0, locale, currency)}
+                          </span>
                           <span>{fill(t.consistencyTrades, { count: cell?.count ?? 0 })}</span>
                           <span className="text-muted-foreground">{t.consistencyChecklistOff}</span>
                         </div>

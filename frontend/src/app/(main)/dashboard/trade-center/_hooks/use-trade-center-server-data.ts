@@ -3,7 +3,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import type { ResultFilter, SideFilter } from "@/components/filters/trade-filter-controls";
-import { type TradeBounds, type TradeGroupRecord, toTrade, tradeCenterApi } from "@/lib/tradesync/trade-center";
+import {
+  type TradeBounds,
+  type TradeGroupRecord,
+  type TradeSymbolOption,
+  toTrade,
+  tradeCenterApi,
+} from "@/lib/tradesync/trade-center";
 import {
   type DayGroup,
   type MockTrade,
@@ -60,6 +66,7 @@ function commonParams(
   side: SideFilter,
   result: ResultFilter,
   currency: string,
+  marketProfile: "cn" | "fx",
   selectedSymbols: string[],
 ) {
   return {
@@ -69,6 +76,7 @@ function commonParams(
     side,
     result,
     currency: currency === "all" ? undefined : currency,
+    marketProfile,
     symbol: selectedSymbols.length > 0 ? selectedSymbols.join(",") : undefined,
   };
 }
@@ -80,6 +88,7 @@ export function useTradeCenterServerData({
   side,
   result,
   currency,
+  marketProfile,
   selectedSymbols,
   page,
   dayVisible,
@@ -93,6 +102,7 @@ export function useTradeCenterServerData({
   side: SideFilter;
   result: ResultFilter;
   currency: string;
+  marketProfile: "cn" | "fx";
   selectedSymbols: string[];
   page: number;
   dayVisible: number;
@@ -101,7 +111,7 @@ export function useTradeCenterServerData({
   order?: "asc" | "desc";
 }) {
   const [bounds, setBounds] = useState<TradeBounds>({ earliestDay: null, latestDay: null });
-  const [symbols, setSymbols] = useState<string[]>([]);
+  const [symbolOptions, setSymbolOptions] = useState<TradeSymbolOption[]>([]);
   const [dayGroups, setDayGroups] = useState<DayGroup[]>([]);
   const [weekGroups, setWeekGroups] = useState<WeekGroup[]>([]);
   const [dayHasMore, setDayHasMore] = useState(false);
@@ -126,10 +136,14 @@ export function useTradeCenterServerData({
       .then(setBounds)
       .catch(() => setBounds({ earliestDay: null, latestDay: null }));
     void tradeCenterApi
-      .symbols()
-      .then(setSymbols)
+      .symbolOptions({
+        accountIds,
+        currency: currency === "all" ? undefined : currency,
+        marketProfile,
+      })
+      .then(setSymbolOptions)
       .catch(() => undefined);
-  }, [accountIds]);
+  }, [accountIds, currency, marketProfile]);
 
   const load = useCallback(
     async (pageOnly = false) => {
@@ -142,7 +156,7 @@ export function useTradeCenterServerData({
       else setLoading(true);
       setError(false);
       try {
-        const params = commonParams(accountIds, range, side, result, currency, selectedSymbols);
+        const params = commonParams(accountIds, range, side, result, currency, marketProfile, selectedSymbols);
         if (view === "day") {
           const groups = await tradeCenterApi.groups({ ...params, view: "day", limit: dayVisible + 1, offset: 0 });
           setDayGroups(groups.slice(0, dayVisible).map(toDayGroup));
@@ -174,6 +188,7 @@ export function useTradeCenterServerData({
       currency,
       dayVisible,
       loaded,
+      marketProfile,
       order,
       page,
       range,
@@ -214,7 +229,7 @@ export function useTradeCenterServerData({
     reload: load,
     summary,
     summarySeries,
-    symbols,
+    symbolOptions,
     weekHasMore,
     weekGroups,
   };

@@ -29,6 +29,7 @@ CREATE TABLE accounts (
     platform TEXT NOT NULL DEFAULT 'mt5',
     broker_company TEXT,
     account_currency TEXT,
+    market_profile TEXT NOT NULL DEFAULT 'fx' CHECK(market_profile IN ('cn','fx')),
     server_gmt_off BIGINT,
     key_prefix TEXT NOT NULL UNIQUE,
     key_hash TEXT NOT NULL,

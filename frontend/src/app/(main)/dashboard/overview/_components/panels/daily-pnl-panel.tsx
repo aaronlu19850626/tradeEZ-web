@@ -13,6 +13,7 @@ import {
 } from "recharts";
 
 import type { Locale } from "@/lib/i18n";
+import { useDisplayCurrency } from "@/components/shared/display-currency-provider";
 
 import {
   CHART_LEFT_MARGIN,
@@ -40,6 +41,7 @@ export function DailyPnlTooltip({
   payload?: { payload: DayStat }[];
   locale: Locale;
 }) {
+  const currency = useDisplayCurrency();
   const day = payload?.[0]?.payload;
   if (!active || !day) return null;
 
@@ -52,7 +54,7 @@ export function DailyPnlTooltip({
           style={{ background: color, borderColor: day.net >= 0 ? PROFIT_TEXT : LOSS_TEXT }}
         />
         <span className="font-medium">{formatChartDate(day.day)}:</span>
-        <span className="font-medium tabular-nums">{money(day.net, locale)}</span>
+        <span className="font-medium tabular-nums">{money(day.net, locale, currency)}</span>
       </div>
       <span className="absolute top-1/2 -right-1 size-2 -translate-y-1/2 rotate-45 border-border/60 border-r border-t bg-card" />
     </div>
@@ -60,6 +62,7 @@ export function DailyPnlTooltip({
 }
 
 export function DailyChart({ days, locale }: { days: DayStat[]; locale: Locale }) {
+  const currency = useDisplayCurrency();
   const data = days.slice(-60);
   const tickInterval = Math.max(0, Math.floor(data.length / 5));
   const maxBarSize = data.length <= 7 ? 14 : data.length <= 14 ? 10 : data.length <= 31 ? 7 : 4;
@@ -84,7 +87,7 @@ export function DailyChart({ days, locale }: { days: DayStat[]; locale: Locale }
             tickMargin={CHART_Y_TICK_MARGIN}
             padding={{ top: 14, bottom: 14 }}
             tick={CHART_Y_TICK}
-            tickFormatter={(value: number) => moneyCompact(value, locale)}
+            tickFormatter={(value: number) => moneyCompact(value, locale, currency)}
           />
           <ReferenceLine y={0} stroke="var(--border)" />
           <RechartsTooltip

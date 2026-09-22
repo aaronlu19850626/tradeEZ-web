@@ -14,7 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type { DashboardText } from "@/lib/tradesync/dashboard-i18n";
-import type { TradeAccount } from "@/lib/tradesync/trade-center";
+import type { MarketProfile, TradeAccount, TradeSymbolOption } from "@/lib/tradesync/trade-center";
 
 function formatLastUpdated(epoch: number | null, locale: string, fallback: string): string {
   if (epoch === null) return fallback;
@@ -38,6 +38,9 @@ export function OverviewToolbar({
   currency,
   currencies,
   allowCurrencyAll,
+  marketProfile,
+  marketProfiles,
+  allowMarketAll,
   symbolsSelected,
   symbolOptions,
   accounts,
@@ -48,6 +51,7 @@ export function OverviewToolbar({
   onSide,
   onResult,
   onCurrency,
+  onMarketProfile,
   onSymbolsChange,
   onRange,
   onAccountsChange,
@@ -65,8 +69,11 @@ export function OverviewToolbar({
   currency: string;
   currencies: string[];
   allowCurrencyAll: boolean;
+  marketProfile: MarketProfile;
+  marketProfiles: MarketProfile[];
+  allowMarketAll: boolean;
   symbolsSelected: string[];
-  symbolOptions: string[];
+  symbolOptions: TradeSymbolOption[];
   accounts: TradeAccount[];
   accountIds: string[];
   dateRange: { from: string; to: string };
@@ -75,6 +82,7 @@ export function OverviewToolbar({
   onSide: (side: SideFilter) => void;
   onResult: (result: ResultFilter) => void;
   onCurrency: (currency: string) => void;
+  onMarketProfile: (marketProfile: MarketProfile) => void;
   onSymbolsChange: (symbols: string[]) => void;
   onRange: (from: string, to: string) => void;
   onAccountsChange: (accountIds: string[]) => void;
@@ -120,11 +128,15 @@ export function OverviewToolbar({
               currency={currency}
               currencies={currencies}
               allowCurrencyAll={allowCurrencyAll}
+              marketProfile={marketProfile}
+              marketProfiles={marketProfiles}
+              allowMarketAll={allowMarketAll}
               symbolsSelected={symbolsSelected}
               symbolOptions={symbolOptions}
               onSide={onSide}
               onResult={onResult}
               onCurrency={onCurrency}
+              onMarketProfile={onMarketProfile}
               onSymbolsChange={onSymbolsChange}
             />
             <RangeControl range={dateRange} onRange={onRange} latestDay={latestDay} earliestDay={earliestDay} />

@@ -10,7 +10,7 @@ def _refresh_closed_trades(db: DBConnection) -> None:
 def list_owned_accounts(db: DBConnection, user_id: int) -> list[dict]:
     return db.execute(
         """
-        SELECT id, mt5_login, label, account_currency, is_statistics
+        SELECT id, mt5_login, label, account_currency, market_profile, is_statistics
           FROM accounts
          WHERE user_id = %s
          ORDER BY created_at DESC, id DESC
@@ -67,7 +67,8 @@ def fetch_closed_trades(
             t.contract_size,
             t.account_id,
             a.label AS account_name,
-            a.account_currency AS currency
+            a.account_currency AS currency,
+            a.market_profile AS market_profile
           FROM closed_trades t
           JOIN accounts a ON a.id = t.account_id
          WHERE {where}
@@ -87,6 +88,7 @@ def fetch_closed_trades_page(
     side: str,
     result: str,
     currency: str | None,
+    market_profile: str | None,
     symbol: str | None,
     sort: str,
     order: str,
@@ -131,7 +133,8 @@ def fetch_closed_trades_page(
             t.contract_size,
             t.account_id,
             a.label AS account_name,
-            a.account_currency AS currency
+            a.account_currency AS currency,
+            a.market_profile AS market_profile
           FROM closed_trades t
           JOIN accounts a ON a.id = t.account_id
          WHERE {where}
@@ -143,6 +146,9 @@ def fetch_closed_trades_page(
     if currency:
         post_where.append("currency = %s")
         params.append(currency)
+    if market_profile:
+        post_where.append("market_profile = %s")
+        params.append(market_profile)
     if symbol:
         symbols = [part.strip() for part in symbol.split(",") if part.strip()]
         if symbols:
@@ -187,20 +193,74 @@ def fetch_closed_trades_page(
     return rows, total
 
 
-def distinct_symbols(db: DBConnection, user_id: int) -> list[str]:
+def distinct_symbols(
+    db: DBConnection,
+    user_id: int,
+    logins: list[int] | None = None,
+    currency: str | None = None,
+    market_profile: str | None = None,
+) -> list[str]:
     _refresh_closed_trades(db)
+    clauses = ["a.user_id = %s", "t.symbol IS NOT NULL"]
+    params: list = [user_id]
+    if logins is not None:
+        placeholders = ",".join(["%s"] * len(logins))
+        clauses.append(f"t.account_login IN ({placeholders})")
+        params.extend(logins)
+    if currency:
+        clauses.append("a.account_currency = %s")
+        params.append(currency)
+    if market_profile:
+        clauses.append("a.market_profile = %s")
+        params.append(market_profile)
+    where = " AND ".join(clauses)
     rows = db.execute(
-        """
+        f"""
         SELECT DISTINCT t.symbol
           FROM closed_trades t
           JOIN accounts a ON a.id = t.account_id
-         WHERE a.user_id = %s
-           AND t.symbol IS NOT NULL
+         WHERE {where}
          ORDER BY t.symbol
         """,
-        (user_id,),
+        tuple(params),
     ).fetchall()
     return [str(row["symbol"]) for row in rows if row["symbol"]]
+
+
+def distinct_symbol_options(
+    db: DBConnection,
+    user_id: int,
+    logins: list[int] | None = None,
+    currency: str | None = None,
+    market_profile: str | None = None,
+) -> list[dict]:
+    _refresh_closed_trades(db)
+    clauses = ["a.user_id = %s", "t.symbol IS NOT NULL"]
+    params: list = [user_id]
+    if logins is not None:
+        placeholders = ",".join(["%s"] * len(logins))
+        clauses.append(f"t.account_login IN ({placeholders})")
+        params.extend(logins)
+    if currency:
+        clauses.append("a.account_currency = %s")
+        params.append(currency)
+    if market_profile:
+        clauses.append("a.market_profile = %s")
+        params.append(market_profile)
+    where = " AND ".join(clauses)
+    return db.execute(
+        f"""
+        SELECT DISTINCT
+               t.account_id,
+               COALESCE(NULLIF(TRIM(a.label), ''), a.mt5_login::text) AS account_name,
+               t.symbol
+          FROM closed_trades t
+          JOIN accounts a ON a.id = t.account_id
+         WHERE {where}
+         ORDER BY account_name, t.symbol
+        """,
+        tuple(params),
+    ).fetchall()
 
 
 def distinct_currencies(db: DBConnection, user_id: int) -> list[str]:
@@ -218,7 +278,12 @@ def distinct_currencies(db: DBConnection, user_id: int) -> list[str]:
     return [str(row["currency"]).upper() for row in rows if row["currency"]]
 
 
-def fetch_closed_trade_bounds(db: DBConnection, user_id: int, logins: list[int] | None) -> dict | None:
+def fetch_closed_trade_bounds(
+    db: DBConnection,
+    user_id: int,
+    logins: list[int] | None,
+    market_profile: str | None = None,
+) -> dict | None:
     _refresh_closed_trades(db)
     clauses = ["a.user_id = %s"]
     params: list = [user_id]
@@ -226,6 +291,9 @@ def fetch_closed_trade_bounds(db: DBConnection, user_id: int, logins: list[int] 
         placeholders = ",".join(["%s"] * len(logins))
         clauses.append(f"t.account_login IN ({placeholders})")
         params.extend(logins)
+    if market_profile:
+        clauses.append("a.market_profile = %s")
+        params.append(market_profile)
     where = " AND ".join(clauses)
     return db.execute(
         f"""
@@ -251,6 +319,7 @@ def fetch_calendar_days(
     side: str,
     result: str,
     currency: str | None,
+    market_profile: str | None,
     symbol: str | None,
 ) -> list[dict]:
     _refresh_closed_trades(db)
@@ -279,6 +348,9 @@ def fetch_calendar_days(
     if currency:
         clauses.append("a.account_currency = %s")
         params.append(currency)
+    if market_profile:
+        clauses.append("a.market_profile = %s")
+        params.append(market_profile)
     if symbol:
         symbols = [part.strip() for part in symbol.split(",") if part.strip()]
         if symbols:
