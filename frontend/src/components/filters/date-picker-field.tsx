@@ -73,10 +73,14 @@ export function DatePickerField({
         <PopoverContent align="start" className="w-auto p-0">
           <Calendar
             mode="single"
+            captionLayout="dropdown"
             selected={selected}
             defaultMonth={selected}
             autoFocus
             locale={locale === "zh-CN" ? zhCN : enUS}
+            formatters={{
+              formatYearDropdown: (date) => String(date.getFullYear()),
+            }}
             onSelect={(date) => {
               onChange(date ? toDayValue(date) : "");
               setOpen(false);
