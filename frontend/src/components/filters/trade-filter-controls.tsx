@@ -227,6 +227,7 @@ export function RangeControl({
   }
 
   const prevMonthDay = addDays(monthStart(latestDay), -1);
+  const isFullRange = range.from === earliestDay && range.to === latestDay;
   const presets: { label: string; range: { from: string; to: string } }[] = [
     { label: t.presetAllDates, range: { from: earliestDay, to: latestDay } },
     { label: t.presetToday, range: { from: latestDay, to: latestDay } },
@@ -260,7 +261,11 @@ export function RangeControl({
           >
             <CalendarDays className="size-4 text-muted-foreground" />
             <span className="min-w-0 whitespace-nowrap">
-              {range.from ? formatRangeLabel(range.from, range.to, locale) : t.dateRangeNone}
+              {range.from
+                ? isFullRange
+                  ? t.presetAllDates
+                  : formatRangeLabel(range.from, range.to, locale)
+                : t.dateRangeNone}
             </span>
             {range.from && (
               // biome-ignore lint/a11y: compact clear control inside the date trigger.
