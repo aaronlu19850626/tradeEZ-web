@@ -10,11 +10,16 @@ test.describe("交易记录", () => {
       .filter({ has: page.locator('span[aria-hidden][style*="background"]') })
       .first();
     await expect(calendarDay).toBeVisible();
-    const number = calendarDay.locator("span").first();
-    const line = calendarDay.locator("span[aria-hidden]").first();
-    const numberColor = await number.evaluate((element) => getComputedStyle(element).color);
-    const lineColor = await line.evaluate((element) => getComputedStyle(element).backgroundColor);
-    expect(lineColor).toBe(numberColor);
+    await expect
+      .poll(() =>
+        calendarDay.evaluate((element) => {
+          const spans = element.querySelectorAll(":scope > span");
+          const numberColor = spans[0] ? getComputedStyle(spans[0]).color : "";
+          const lineColor = spans[1] ? getComputedStyle(spans[1]).backgroundColor : "";
+          return lineColor !== "" && lineColor === numberColor;
+        }),
+      )
+      .toBe(true);
   });
 
   test("做多做空使用无配色描边徽标", async ({ page }) => {

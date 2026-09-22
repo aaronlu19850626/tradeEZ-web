@@ -499,6 +499,175 @@ def fetch_trade_overview_scatter_sql(
     return [dict(row) for row in rows]
 
 
+def fetch_group_summaries_sql(
+    db: DBConnection,
+    *,
+    user_id: int,
+    logins: list[int] | None,
+    from_epoch: int | None,
+    to_epoch: int | None,
+    side: str,
+    result: str,
+    currency: str | None,
+    market_profile: str | None,
+    symbol: str | None,
+    view: str,
+    keys: list[str],
+    group_from_epoch: int,
+    group_to_epoch: int,
+) -> tuple[list[dict], list[dict]]:
+    _refresh_closed_trades(db)
+    if not keys:
+        return [], []
+    clauses, params = _summary_filter_clauses(
+        user_id=user_id,
+        logins=logins,
+        from_epoch=from_epoch,
+        to_epoch=to_epoch,
+        side=side,
+        result=result,
+        currency=currency,
+        market_profile=market_profile,
+        symbol=symbol,
+    )
+    clauses.append("t.deal_time >= %s")
+    params.append(group_from_epoch)
+    clauses.append("t.deal_time < %s")
+    params.append(group_to_epoch)
+    where = " AND ".join(clauses)
+    key_placeholders = ",".join(["%s"] * len(keys))
+    key_params = list(params) + keys
+    shanghai_day = "((to_timestamp(t.deal_time) AT TIME ZONE 'UTC') + interval '8 hours')::date"
+    group_expression = (
+        f"TO_CHAR({shanghai_day}, 'YYYY-MM-DD')"
+        if view == "day"
+        else f"TO_CHAR(DATE_TRUNC('week', {shanghai_day}), 'YYYY-MM-DD')"
+    )
+    filtered_cte = f"""
+        filtered AS (
+            SELECT
+                {group_expression} AS group_key,
+                t.ticket,
+                t.deal_time,
+                ROUND((t.profit + t.swap)::numeric, 2)::double precision AS gross,
+                ROUND((t.profit + t.swap + t.commission)::numeric, 2)::double precision AS net,
+                t.commission,
+                t.swap,
+                t.volume,
+                CASE
+                    WHEN t.open_price IS NOT NULL
+                     AND COALESCE(t.sl_price, 0) > 0
+                     AND COALESCE(t.contract_size, 0) > 0
+                     AND t.volume > 0
+                    THEN ROUND(
+                        (
+                            ROUND((t.profit + t.swap + t.commission)::numeric, 2)
+                            / NULLIF(
+                                ABS(t.open_price - t.sl_price) * t.contract_size * t.volume,
+                                0
+                            )
+                        )::numeric,
+                        4
+                    )::double precision
+                    ELSE NULL
+                END AS r_multiple
+              FROM closed_trades t
+              JOIN accounts a ON a.id = t.account_id
+            WHERE {where}
+        )
+    """
+    cumulative_cte = f"""
+        cumulative AS (
+            SELECT
+                group_key,
+                ticket,
+                deal_time,
+                gross,
+                net,
+                commission,
+                swap,
+                volume,
+                r_multiple,
+                ROW_NUMBER() OVER (
+                    PARTITION BY group_key
+                    ORDER BY deal_time, ticket
+                ) AS row_index,
+                COUNT(*) OVER (PARTITION BY group_key) AS total_count,
+                SUM(net) OVER (
+                    PARTITION BY group_key
+                    ORDER BY deal_time, ticket
+                    ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+                ) AS running
+              FROM filtered
+             WHERE group_key IN ({key_placeholders})
+        )
+    """
+    summaries = db.execute(
+        f"""
+        WITH {filtered_cte},
+        {cumulative_cte}
+        SELECT
+            group_key,
+            COUNT(*) AS count,
+            COALESCE(ROUND(SUM(net)::numeric, 2), 0) AS net,
+            COALESCE(ROUND(SUM(gross)::numeric, 2), 0) AS gross,
+            COALESCE(ROUND(SUM(commission)::numeric, 2), 0) AS commission,
+            COALESCE(ROUND(SUM(swap)::numeric, 2), 0) AS swap,
+            COUNT(*) FILTER (WHERE net > 0) AS winners,
+            COUNT(*) FILTER (WHERE net < 0) AS losers,
+            COUNT(*) FILTER (WHERE net = 0) AS breakeven,
+            COALESCE(ROUND(SUM(volume)::numeric, 2), 0) AS volume,
+            COALESCE(ROUND((SUM(net) FILTER (WHERE net > 0))::numeric, 2), 0) AS win_sum,
+            COALESCE(ROUND(ABS((SUM(net) FILTER (WHERE net < 0))::numeric), 2), 0) AS loss_sum,
+            ROUND(AVG(r_multiple)::numeric, 2) AS avg_r,
+            COALESCE(ROUND(MAX(running)::numeric, 2), 0) AS net_peak,
+            COALESCE(ROUND(MIN(running)::numeric, 2), 0) AS net_trough,
+            COALESCE(
+                jsonb_agg(
+                    jsonb_build_object(
+                        'index',
+                        row_index,
+                        'value',
+                        ROUND(running::numeric, 2)
+                    )
+                    ORDER BY row_index
+                ) FILTER (
+                    WHERE row_index = 1
+                       OR row_index = total_count
+                       OR row_index % GREATEST(
+                            1,
+                            CEIL(total_count::numeric / 1000)::bigint
+                       ) = 0
+                ),
+                '[]'::jsonb
+            ) AS series
+          FROM cumulative
+         GROUP BY group_key
+        """,
+        tuple(key_params),
+    ).fetchall()
+    days = db.execute(
+        f"""
+        WITH {filtered_cte}
+        SELECT
+            group_key,
+            TO_CHAR(
+                (to_timestamp(deal_time) AT TIME ZONE 'UTC') + interval '8 hours',
+                'YYYY-MM-DD'
+            ) AS day,
+            ROUND(SUM(net)::numeric, 2) AS net,
+            COUNT(*) AS count,
+            COUNT(*) FILTER (WHERE net > 0) AS wins
+          FROM filtered
+         WHERE group_key IN ({key_placeholders})
+         GROUP BY group_key, day
+         ORDER BY group_key DESC, day DESC
+        """,
+        tuple(key_params),
+    ).fetchall()
+    return [dict(row) for row in summaries], [dict(row) for row in days]
+
+
 def fetch_group_keys_sql(
     db: DBConnection,
     *,
@@ -512,6 +681,8 @@ def fetch_group_keys_sql(
     market_profile: str | None,
     symbol: str | None,
     view: str,
+    limit: int | None,
+    offset: int,
 ) -> list[str]:
     _refresh_closed_trades(db)
     clauses, params = _summary_filter_clauses(
@@ -532,6 +703,10 @@ def fetch_group_keys_sql(
         if view == "day"
         else f"TO_CHAR(DATE_TRUNC('week', {shanghai_day}), 'YYYY-MM-DD')"
     )
+    limit_sql = " LIMIT %s OFFSET %s" if limit is not None else ""
+    query_params = list(params)
+    if limit is not None:
+        query_params.extend([limit, offset])
     rows = db.execute(
         f"""
         SELECT DISTINCT {group_expression} AS group_key
@@ -539,8 +714,9 @@ def fetch_group_keys_sql(
           JOIN accounts a ON a.id = t.account_id
          WHERE {where}
          ORDER BY group_key DESC
+         {limit_sql}
         """,
-        tuple(params),
+        tuple(query_params),
     ).fetchall()
     return [str(row["group_key"]) for row in rows if row["group_key"]]
 

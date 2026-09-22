@@ -418,6 +418,7 @@ def groups(
         put_cached_object(user_id, flt, [], cache_variant)
         return []
     from_epoch, to_epoch = day_bounds(flt.from_day, flt.to_day)
+    key_limit = (limit + 1) if limit is not None else None
     keys = repository.fetch_group_keys_sql(
         db,
         user_id=user_id,
@@ -430,8 +431,75 @@ def groups(
         market_profile=flt.market_profile,
         symbol=flt.symbol,
         view=view,
+        limit=key_limit,
+        offset=offset,
     )
-    selected_keys = keys[offset : (offset + limit) if limit else None]
+    selected_keys = keys[:limit] if limit is not None else keys
+    if not selected_keys:
+        return []
+
+    if not include_trades:
+        first_key = selected_keys[-1]
+        last_key = selected_keys[0]
+        first_end = first_key if view == "day" else _add_days(first_key, 6)
+        last_end = last_key if view == "day" else _add_days(last_key, 6)
+        group_from_epoch, _ = day_bounds(first_key, first_end)
+        _, group_to_epoch = day_bounds(last_key, last_end)
+        summary_rows, day_rows = repository.fetch_group_summaries_sql(
+            db,
+            user_id=user_id,
+            logins=logins,
+            from_epoch=from_epoch,
+            to_epoch=to_epoch,
+            side=flt.side,
+            result=flt.result,
+            currency=flt.currency,
+            market_profile=flt.market_profile,
+            symbol=flt.symbol,
+            view=view,
+            keys=selected_keys,
+            group_from_epoch=int(group_from_epoch or 0),
+            group_to_epoch=int(group_to_epoch or 0),
+        )
+        summaries = {str(row["group_key"]): row for row in summary_rows}
+        days_by_group: dict[str, list[DayStatOut]] = {}
+        for row in day_rows:
+            days_by_group.setdefault(str(row["group_key"]), []).append(
+                DayStatOut(
+                    day=str(row["day"]),
+                    net=_round(float(row["net"] or 0)),
+                    count=int(row["count"] or 0),
+                    wins=int(row["wins"] or 0),
+                )
+            )
+        result: list[GroupOut] = []
+        for key in selected_keys:
+            summary = summaries.get(key)
+            if summary is None:
+                continue
+            days = days_by_group.get(key, [])
+            result.append(
+                GroupOut(
+                    key=key,
+                    startDay=days[0].day if days else key,
+                    endDay=days[-1].day if days else (_add_days(key, 6) if view == "week" else key),
+                    stats=_stats_from_sql(summary),
+                    series=[
+                        SeriesPoint(index=0, value=0.0),
+                        *[
+                            SeriesPoint(
+                                index=int(item["index"]),
+                                value=_round(float(item["value"] or 0)),
+                            )
+                            for item in (summary.get("series") or [])
+                        ],
+                    ],
+                    days=days,
+                    trades=[],
+                )
+            )
+        put_cached_object(user_id, flt, result, cache_variant)
+        return result
 
     result: list[GroupOut] = []
     for key in selected_keys:
