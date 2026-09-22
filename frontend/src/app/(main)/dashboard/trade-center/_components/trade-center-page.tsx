@@ -422,6 +422,7 @@ export default function TradeCenterPage() {
         <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4">{body}</div>
         {view !== "all" && range.from !== "" && (
           <SideRail
+            key={range.from}
             t={t}
             locale={locale}
             range={range}
