@@ -89,6 +89,7 @@ export default function DashboardOverviewPage() {
   const [cursor, setCursor] = useState<string | null>(null);
   const [filterRefreshing, setFilterRefreshing] = useState(false);
   const toolbarRef = useRef<HTMLDivElement>(null);
+  const rangeInitialized = useRef(false);
   const [toolbarStuck, setToolbarStuck] = useState(false);
   const firstFilterRender = useRef(true);
   const currencyUserTouched = useRef(false);
@@ -124,8 +125,11 @@ export default function DashboardOverviewPage() {
   const earliestDay = bounds.earliestDay ?? "";
 
   useEffect(() => {
-    if (latestDay && range.from === "") setRange({ from: earliestDay, to: latestDay });
-  }, [earliestDay, latestDay, range.from]);
+    if (!rangeInitialized.current && latestDay) {
+      setRange({ from: earliestDay, to: latestDay });
+      rangeInitialized.current = true;
+    }
+  }, [earliestDay, latestDay]);
 
   const filterKey = [
     accountIds.join(","),

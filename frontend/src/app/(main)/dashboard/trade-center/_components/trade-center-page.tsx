@@ -30,6 +30,7 @@ export default function TradeCenterPage() {
   const locale = useLocale();
   const t = tradeCenterText[locale];
   const toolbarRef = useRef<HTMLDivElement>(null);
+  const rangeInitialized = useRef(false);
   const [toolbarStuck, setToolbarStuck] = useState(false);
   const {
     accountIds,
@@ -196,10 +197,11 @@ export default function TradeCenterPage() {
 
   // Default the range to the full synced span once trades arrive.
   useEffect(() => {
-    if (latestDay && earliestDay && range.from === "") {
+    if (!rangeInitialized.current && latestDay && earliestDay) {
       setRange({ from: earliestDay, to: latestDay });
+      rangeInitialized.current = true;
     }
-  }, [earliestDay, latestDay, range.from, setRange]);
+  }, [earliestDay, latestDay, setRange]);
 
   const { applyCurrency, currencies, currencyOptionsLocked } = useTradeFilters({
     accounts,
