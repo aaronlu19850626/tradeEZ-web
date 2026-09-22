@@ -171,34 +171,41 @@ export function ShareRing({ ratio }: { ratio: number }) {
 
 export function CountPills({
   t,
+  locale,
   winners,
   breakEven,
   losers,
 }: {
   t: DashboardText;
+  locale: Locale;
   winners: number;
   breakEven: number;
   losers: number;
 }) {
+  const formatCount = (value: number) =>
+    value >= 10000
+      ? `${(value / 1000).toLocaleString(locale, { maximumFractionDigits: 1 })}K`
+      : value.toLocaleString(locale);
+
   return (
     <div className="flex w-full items-center justify-between gap-1">
       <span
         className="rounded-full bg-profit-soft px-1.5 py-0.5 font-semibold text-[11px] text-profit-strong leading-3.5 tabular-nums"
         title={`${t.winners} ${winners}`}
       >
-        {winners}
+        {formatCount(winners)}
       </span>
       <span
         className="rounded-full bg-breakeven-soft px-1.5 py-0.5 font-semibold text-[11px] text-breakeven leading-3.5 tabular-nums"
         title={`${t.breakEven} ${breakEven}`}
       >
-        {breakEven}
+        {formatCount(breakEven)}
       </span>
       <span
         className="rounded-full bg-loss-soft px-1.5 py-0.5 font-semibold text-[11px] text-loss-strong leading-3.5 tabular-nums"
         title={`${t.losers} ${losers}`}
       >
-        {losers}
+        {formatCount(losers)}
       </span>
     </div>
   );

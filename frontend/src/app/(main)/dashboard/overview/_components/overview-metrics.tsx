@@ -27,7 +27,13 @@ export function OverviewMetrics({ t, locale, stats }: { t: DashboardText; locale
         visual={
           <div className="flex w-[104px] flex-col items-center gap-1">
             <SemiGauge ratio={stats.winRate} />
-            <CountPills t={t} winners={stats.winners} breakEven={stats.breakEven} losers={stats.losers} />
+            <CountPills
+              t={t}
+              locale={locale}
+              winners={stats.winners}
+              breakEven={stats.breakEven}
+              losers={stats.losers}
+            />
           </div>
         }
       />
@@ -46,7 +52,13 @@ export function OverviewMetrics({ t, locale, stats }: { t: DashboardText; locale
         visual={
           <div className="flex w-[104px] flex-col items-center gap-1">
             <SemiGauge ratio={stats.dayWinRate} />
-            <CountPills t={t} winners={stats.winDays} breakEven={stats.flatDays} losers={stats.lossDays} />
+            <CountPills
+              t={t}
+              locale={locale}
+              winners={stats.winDays}
+              breakEven={stats.flatDays}
+              losers={stats.lossDays}
+            />
           </div>
         }
       />
