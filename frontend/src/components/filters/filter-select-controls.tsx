@@ -39,16 +39,16 @@ export function SelectSingleControl({
 
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
-      <InputGroup className={`h-8 w-auto min-w-0 ${className ?? ""}`}>
+      <InputGroup className={`h-8 max-w-44 ${className ?? ""}`}>
         <DropdownMenuTrigger asChild>
           <Button
             variant="ghost"
-            className={`h-full min-w-0 justify-start gap-1.5 rounded-none border-0 px-2.5 pr-1 shadow-none hover:bg-transparent aria-expanded:bg-transparent ${
+            className={`h-full min-w-0 flex-1 justify-start gap-1.5 rounded-none border-0 px-2.5 shadow-none hover:bg-transparent aria-expanded:bg-transparent ${
               selected ? "font-semibold text-foreground" : "font-normal text-muted-foreground"
             }`}
           >
             {selected?.icon}
-            <span className="min-w-0 whitespace-nowrap text-left">{selected ? selected.label : placeholder}</span>
+            <span className="min-w-0 flex-1 truncate text-left">{selected ? selected.label : placeholder}</span>
           </Button>
         </DropdownMenuTrigger>
         <InputGroupAddon align="inline-end" className="pl-0 pr-1">
@@ -63,11 +63,7 @@ export function SelectSingleControl({
           </InputGroupButton>
         </InputGroupAddon>
       </InputGroup>
-      <DropdownMenuContent
-        align={align}
-        sideOffset={6}
-        className="w-[var(--radix-dropdown-menu-trigger-width)] min-w-0 rounded-lg p-1"
-      >
+      <DropdownMenuContent align={align} sideOffset={6} className="min-w-40 rounded-lg p-1">
         {options.map((option) => {
           const isSelected = option.value === value;
           return (
