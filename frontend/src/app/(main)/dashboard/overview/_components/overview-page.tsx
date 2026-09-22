@@ -93,7 +93,7 @@ export default function DashboardOverviewPage() {
   const firstFilterRender = useRef(true);
   const currencyUserTouched = useRef(false);
 
-  const { accounts, bounds, error, loading, overview, reload, symbols, loadDayGroup } = useTradeOverviewData({
+  const { accounts, bounds, error, loading, overview, reload, symbols, loadDayGroup, total } = useTradeOverviewData({
     accountIds,
     range,
     side,
@@ -206,14 +206,7 @@ export default function DashboardOverviewPage() {
       .filter((value): value is number => value !== null);
     return values.length > 0 ? Math.max(...values) : null;
   }, [accounts, accountIds]);
-  const totalTradeCount = useMemo(
-    () =>
-      accounts
-        .filter((account) => accountIds.includes(account.id))
-        .reduce((sum, account) => sum + account.tradeCount, 0),
-    [accounts, accountIds],
-  );
-  const largeDataLoading = toolbarBusy && totalTradeCount > 10000;
+  const largeDataLoading = toolbarBusy && total > 10000;
 
   const refreshData = () => {
     if (loading) return;
@@ -346,7 +339,7 @@ export default function DashboardOverviewPage() {
         <Alert className="pointer-events-none absolute top-3 left-1/2 z-40 w-auto max-w-[90%] -translate-x-1/2 shadow-md">
           <RefreshCw className="size-4 animate-spin" />
           <AlertDescription className="whitespace-nowrap">
-            {t.largeDataLoading.replace("{count}", totalTradeCount.toLocaleString(locale))}
+            {t.largeDataLoading.replace("{count}", total.toLocaleString(locale))}
           </AlertDescription>
         </Alert>
       )}

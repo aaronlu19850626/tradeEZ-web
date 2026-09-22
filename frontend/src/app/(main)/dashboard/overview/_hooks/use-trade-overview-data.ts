@@ -63,6 +63,7 @@ export function useTradeOverviewData({
   const [bounds, setBounds] = useState<TradeBounds>({ earliestDay: null, latestDay: null });
   const [symbols, setSymbols] = useState<string[]>([]);
   const [overview, setOverview] = useState<TradeOverviewRecord | null>(null);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
@@ -97,8 +98,18 @@ export function useTradeOverviewData({
         setSymbols(symbolsData);
         if (!range.from || !range.to) {
           setOverview(null);
+          setTotal(0);
           return;
         }
+        setTotal(0);
+        const countData = await tradeCenterApi.list({
+          ...commonParams(selected, range, side, result, currency, selectedSymbols),
+          page: 1,
+          pageSize: 1,
+          sort: "closeTime",
+          order: "desc",
+        });
+        setTotal(countData.total);
         const overviewData = await tradeCenterApi.overview(
           commonParams(selected, range, side, result, currency, selectedSymbols),
         );
@@ -154,5 +165,6 @@ export function useTradeOverviewData({
     overview,
     reload,
     symbols,
+    total,
   };
 }

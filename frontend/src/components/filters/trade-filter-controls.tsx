@@ -451,19 +451,23 @@ export function AccountScopeMenu({
   const scoped = [...accounts].sort((left, right) => Number(right.isStatistics) - Number(left.isStatistics));
   const allSelected = draft.length === scoped.length;
   const selectedLabels = scoped.filter((account) => selectedIds.includes(account.id)).map((account) => account.name);
+  const accountLabel =
+    selectedLabels.length <= 2
+      ? selectedLabels.join(" · ")
+      : `${selectedLabels[0]} · ${selectedLabels[1]} · ${selectedLabels[2].slice(0, 4)}…${
+          selectedLabels.length > 3 ? ` +${selectedLabels.length - 2}` : ""
+        }`;
 
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
-      <InputGroup className="h-8 max-w-64">
+      <InputGroup className="h-8 max-w-80">
         <DropdownMenuTrigger asChild>
           <Button
             variant="ghost"
             className="h-full min-w-0 flex-1 justify-start rounded-none border-0 px-2.5 font-normal shadow-none hover:bg-transparent aria-expanded:bg-transparent"
           >
-            <span className="truncate">
-              {selectedLabels.length > 0
-                ? `${t.accountScopeTitle} · ${selectedLabels.join(" · ")}`
-                : t.accountScopeTitle}
+            <span className="whitespace-nowrap">
+              {selectedLabels.length > 0 ? `${t.accountScopeTitle} · ${accountLabel}` : t.accountScopeTitle}
             </span>
           </Button>
         </DropdownMenuTrigger>
