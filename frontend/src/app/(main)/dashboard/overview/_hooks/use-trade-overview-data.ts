@@ -65,6 +65,7 @@ export function useTradeOverviewData({
   const [overview, setOverview] = useState<TradeOverviewRecord | null>(null);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState(false);
 
   const reload = useCallback(
@@ -96,7 +97,7 @@ export function useTradeOverviewData({
         ]);
         setBounds(boundsData);
         setSymbols(symbolsData);
-        if (!range.from || !range.to) {
+        if ((!range.from || !range.to) && !loaded) {
           setOverview(null);
           setTotal(0);
           return;
@@ -114,13 +115,14 @@ export function useTradeOverviewData({
           commonParams(selected, range, side, result, currency, selectedSymbols),
         );
         setOverview(overviewData);
+        setLoaded(true);
       } catch {
         if (!background) setError(true);
       } finally {
         if (!background) setLoading(false);
       }
     },
-    [accountIds, currency, range, result, selectedSymbols, side],
+    [accountIds, currency, loaded, range, result, selectedSymbols, side],
   );
 
   useEffect(() => {

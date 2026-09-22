@@ -134,7 +134,7 @@ export function useTradeCenterServerData({
   const load = useCallback(
     async (pageOnly = false) => {
       if (accountIds.length === 0) return;
-      if (!range.from || !range.to) {
+      if ((!range.from || !range.to) && !loaded) {
         setLoading(false);
         return;
       }
@@ -169,7 +169,21 @@ export function useTradeCenterServerData({
         else setLoading(false);
       }
     },
-    [accountIds, currency, dayVisible, order, page, range, result, selectedSymbols, side, sort, view, weekVisible],
+    [
+      accountIds,
+      currency,
+      dayVisible,
+      loaded,
+      order,
+      page,
+      range,
+      result,
+      selectedSymbols,
+      side,
+      sort,
+      view,
+      weekVisible,
+    ],
   );
 
   useEffect(() => {
