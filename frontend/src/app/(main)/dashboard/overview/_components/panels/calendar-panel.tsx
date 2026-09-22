@@ -10,7 +10,7 @@ import type { Locale } from "@/lib/i18n";
 import { type DashboardText, fill } from "@/lib/tradesync/dashboard-i18n";
 import { shanghaiDayKey } from "@/lib/tradesync/trades-mock";
 
-import { type DayStat, money, moneyCompact, tone } from "../../_lib/overview-data";
+import { type DayStat, moneyCompact, moneyStat, tone } from "../../_lib/overview-data";
 
 export interface CalendarCell {
   day: string;
@@ -118,7 +118,7 @@ export function MonthCalendar({
         <div className="flex items-center gap-2 text-sm">
           <span className="font-medium">{t.calendarMonthly}:</span>
           <span className={`text-lg font-semibold tabular-nums ${tone(calendar.totalNet)}`}>
-            {money(calendar.totalNet, locale)}
+            {moneyStat(calendar.totalNet, locale)}
           </span>
           <span className="rounded-full bg-muted px-2 py-1 text-xs">
             {fill(t.calendarDays, { count: calendar.tradedDays })}

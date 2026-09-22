@@ -187,7 +187,9 @@ export function TradeFiltersMenu({
         <DropdownMenuTrigger asChild>
           <Button
             variant="ghost"
-            className="h-full min-w-0 flex-1 justify-start rounded-none border-0 px-2.5 font-normal shadow-none hover:bg-transparent aria-expanded:bg-transparent"
+            className={`h-full min-w-0 flex-1 justify-start rounded-none border-0 px-2.5 shadow-none hover:bg-transparent aria-expanded:bg-transparent ${
+              filtersActive ? "font-medium" : "font-normal"
+            }`}
           >
             <span className="truncate">
               {selectedLabels.length > 0 ? `${t.filters} · ${selectedLabels.join(" · ")}` : t.filters}
@@ -460,13 +462,13 @@ export function AccountScopeMenu({
 
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
-      <InputGroup className="h-8 max-w-80">
+      <InputGroup className="h-8 max-w-64">
         <DropdownMenuTrigger asChild>
           <Button
             variant="ghost"
             className="h-full min-w-0 flex-1 justify-start rounded-none border-0 px-2.5 font-normal shadow-none hover:bg-transparent aria-expanded:bg-transparent"
           >
-            <span className="whitespace-nowrap">
+            <span className="min-w-0 flex-1 truncate text-left">
               {selectedLabels.length > 0 ? `${t.accountScopeTitle} · ${accountLabel}` : t.accountScopeTitle}
             </span>
           </Button>
