@@ -2,7 +2,7 @@
 
 import { type ReactNode, useEffect, useState } from "react";
 
-import { CalendarDays, Check, ChevronDown, Plus, X } from "lucide-react";
+import { CalendarDays, Check, ChevronDown, ChevronUp, Plus, X } from "lucide-react";
 import { enUS, zhCN } from "react-day-picker/locale";
 
 import { Button } from "@/components/ui/button";
@@ -215,7 +215,7 @@ export function TradeFiltersMenu({
             aria-expanded={open}
             onClick={() => setOpen((current) => !current)}
           >
-            <ChevronDown className="size-3.5" />
+            {open ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
           </InputGroupButton>
         </InputGroupAddon>
       </InputGroup>
@@ -453,12 +453,12 @@ export function AccountScopeMenu({
   const scoped = [...accounts].sort((left, right) => Number(right.isStatistics) - Number(left.isStatistics));
   const allSelected = draft.length === scoped.length;
   const selectedLabels = scoped.filter((account) => selectedIds.includes(account.id)).map((account) => account.name);
-  const accountLabel =
-    selectedLabels.length <= 2
-      ? selectedLabels.join(" · ")
-      : `${selectedLabels[0]} · ${selectedLabels[1]} · ${selectedLabels[2].slice(0, 4)}…${
-          selectedLabels.length > 3 ? ` +${selectedLabels.length - 2}` : ""
-        }`;
+  const isDefaultScope = selectedIds.length === 0 || selectedIds.length === scoped.length;
+  const accountLabel = isDefaultScope
+    ? t.filterAll
+    : selectedLabels.length <= 2
+      ? selectedLabels.join("/")
+      : `${selectedLabels[0]}/${selectedLabels[1]} 等${selectedLabels.length}项`;
 
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
@@ -466,10 +466,12 @@ export function AccountScopeMenu({
         <DropdownMenuTrigger asChild>
           <Button
             variant="ghost"
-            className="h-full min-w-0 flex-1 justify-start rounded-none border-0 px-2.5 font-normal shadow-none hover:bg-transparent aria-expanded:bg-transparent"
+            className={`h-full min-w-0 flex-1 justify-start rounded-none border-0 px-2.5 shadow-none hover:bg-transparent aria-expanded:bg-transparent ${
+              isDefaultScope ? "font-semibold text-muted-foreground" : "font-semibold text-foreground"
+            }`}
           >
             <span className="min-w-0 flex-1 truncate text-left">
-              {selectedLabels.length > 0 ? `${t.accountScopeTitle} · ${accountLabel}` : t.accountScopeTitle}
+              {t.accountScopeTitle} · {accountLabel}
             </span>
           </Button>
         </DropdownMenuTrigger>
@@ -481,7 +483,7 @@ export function AccountScopeMenu({
             aria-expanded={open}
             onClick={() => setOpen((current) => !current)}
           >
-            <ChevronDown className="size-3.5" />
+            {open ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
           </InputGroupButton>
         </InputGroupAddon>
       </InputGroup>
