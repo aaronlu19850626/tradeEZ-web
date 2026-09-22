@@ -170,7 +170,7 @@ export default function DashboardOverviewPage() {
   const calendar = useMemo(() => buildMonth(monthKey, stats.days), [monthKey, stats.days]);
   const consistency = overview?.consistency ?? { cells: [], weeks: [] };
 
-  const toolbarBusy = loading || filterRefreshing;
+  const toolbarBusy = loading || filterRefreshing || !overview;
   const currencies = useMemo(
     () =>
       [
