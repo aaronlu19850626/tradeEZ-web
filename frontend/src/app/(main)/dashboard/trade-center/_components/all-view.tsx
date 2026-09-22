@@ -191,7 +191,8 @@ export function AllView({
                     max={totalPages}
                     value={pageInput}
                     aria-label={t.goToPage}
-                    className="h-7! w-14 px-1 py-0! text-center text-sm leading-none tabular-nums [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                    className="w-14 px-1 py-0! text-center text-sm leading-none tabular-nums [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                    style={{ height: "32px" }}
                     onChange={(event) => setPageInput(event.target.value)}
                     onKeyDown={(event) => {
                       if (event.key === "Enter") jumpToPage();
