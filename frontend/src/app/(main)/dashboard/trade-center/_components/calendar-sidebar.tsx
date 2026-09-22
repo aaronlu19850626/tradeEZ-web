@@ -186,7 +186,11 @@ export function PnlCalendarDayButton({
       }}
       className={`relative grid h-8 w-full grid-rows-[16px_3px] items-center justify-items-center gap-0.5 rounded-md p-0 leading-none shadow-none hover:bg-muted/60 disabled:opacity-100 ${calendarCellTone(
         weekHovered,
-      )} ${isToday && !modifiers.selected ? "bg-muted" : ""}`}
+      )} ${isToday && !modifiers.selected ? "bg-muted" : ""} ${
+        modifiers.selected
+          ? "data-[selected-single=true]:bg-primary-soft data-[selected-single=true]:text-foreground"
+          : ""
+      }`}
     >
       <span
         className={`translate-y-[6px] text-xs leading-none font-semibold tabular-nums ${calendarNumberClass(dayCell?.net)}`}
