@@ -83,13 +83,13 @@ export function Toolbar({
         variant="outline"
         size="sm"
         spacing={1}
-        className="rounded-lg border-0 bg-primary-soft p-1"
+        className="rounded-lg border-0 bg-muted/60 p-1"
       >
         {views.map((item) => (
           <ToggleGroupItem
             key={item.key}
             value={item.key}
-            className="min-w-16 border-0 px-4 data-[state=on]:bg-secondary data-[state=on]:text-secondary-foreground"
+            className="min-w-16 border-0 px-4 text-muted-foreground data-[state=on]:bg-primary-soft data-[state=on]:font-semibold data-[state=on]:text-primary"
           >
             {item.label}
           </ToggleGroupItem>
