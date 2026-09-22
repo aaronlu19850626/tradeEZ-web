@@ -22,7 +22,9 @@ export interface SelectOption {
 }
 
 export interface SelectConditionGroup {
+  id: string;
   label: string;
+  mode?: "single" | "multiple";
   options: SelectOption[];
 }
 
@@ -92,19 +94,20 @@ export function SelectMultiConditionControl({
   clearLabel = "清空条件",
   confirmLabel = "确认",
 }: {
-  value: string[];
+  value: Record<string, string[]>;
   groups: SelectConditionGroup[];
   placeholder?: string;
-  onChange: (value: string[]) => void;
+  onChange: (value: Record<string, string[]>) => void;
   align?: "start" | "center" | "end";
   clearLabel?: string;
   confirmLabel?: string;
 }) {
   const [open, setOpen] = useState(false);
-  const [draft, setDraft] = useState<string[]>(value);
+  const [draft, setDraft] = useState<Record<string, string[]>>(value);
   const allOptions = groups.flatMap((group) => group.options);
-  const selected = allOptions.filter((option) => value.includes(option.value));
-  const isDefault = value.length === 0;
+  const selectedValues = Object.values(value).flat();
+  const selected = allOptions.filter((option) => selectedValues.includes(option.value));
+  const isDefault = selectedValues.length === 0;
   const summary =
     selected.length <= 2
       ? selected.map((option) => option.label).join("/")
@@ -134,8 +137,8 @@ export function SelectMultiConditionControl({
         <DropdownMenuItem
           className="cursor-pointer gap-2 rounded-md px-2 py-1.5 text-sm font-normal text-muted-foreground"
           onSelect={() => {
-            setDraft([]);
-            onChange([]);
+            setDraft({});
+            onChange({});
             setOpen(false);
           }}
         >
@@ -144,13 +147,14 @@ export function SelectMultiConditionControl({
         </DropdownMenuItem>
         <DropdownMenuSeparator className="my-1" />
         {groups.map((group, groupIndex) => (
-          <div key={group.label}>
+          <div key={group.id}>
             <DropdownMenuLabel className="px-2 pt-1 pb-0.5 text-[11px] font-medium text-muted-foreground">
               {group.label}
             </DropdownMenuLabel>
             <div className="max-h-40 overflow-y-auto">
               {group.options.map((option) => {
-                const checked = draft.includes(option.value);
+                const groupValue = draft[group.id] ?? [];
+                const checked = groupValue.includes(option.value);
                 return (
                   <label
                     key={option.value}
@@ -160,13 +164,14 @@ export function SelectMultiConditionControl({
                     <Checkbox
                       id={`condition-${option.value}`}
                       checked={checked}
-                      onCheckedChange={() =>
-                        setDraft((prev) =>
-                          prev.includes(option.value)
-                            ? prev.filter((item) => item !== option.value)
-                            : [...prev, option.value],
-                        )
-                      }
+                      onCheckedChange={() => {
+                        const next = checked
+                          ? groupValue.filter((item) => item !== option.value)
+                          : group.mode === "single"
+                            ? [option.value]
+                            : [...groupValue, option.value];
+                        setDraft((prev) => ({ ...prev, [group.id]: next }));
+                      }}
                     />
                     <span className="min-w-0 flex-1 truncate text-left">{option.label}</span>
                   </label>

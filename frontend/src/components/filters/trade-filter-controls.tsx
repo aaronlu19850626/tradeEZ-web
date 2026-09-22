@@ -1,8 +1,8 @@
 "use client";
 
-import { type ReactNode, useEffect, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useState } from "react";
 
-import { CalendarDays, Check, ChevronDown, ChevronUp, Plus, X } from "lucide-react";
+import { CalendarDays, Check, ChevronDown, ChevronUp, Plus } from "lucide-react";
 import { enUS, zhCN } from "react-day-picker/locale";
 
 import { Button } from "@/components/ui/button";
@@ -11,19 +11,17 @@ import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { InputGroup, InputGroupAddon, InputGroupButton } from "@/components/ui/input-group";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { type Locale, useLocale } from "@/lib/i18n";
 import { tradeFilterText } from "@/lib/tradesync/trade-filter-i18n";
 import { addDays, dayKeyToEpoch, shanghaiWeekStart } from "@/lib/tradesync/trades-mock";
+
+import { type SelectConditionGroup, SelectMultiConditionControl, type SelectOption } from "./filter-select-controls";
 
 export type SideFilter = "all" | "buy" | "sell";
 export type ResultFilter = "all" | "win" | "loss";
@@ -82,23 +80,6 @@ function formatRangeLabel(from: string, to: string, locale: Locale): string {
   return `${formatter.format(new Date(dayKeyToEpoch(from) * 1000))} - ${formatter.format(new Date(dayKeyToEpoch(to) * 1000))}`;
 }
 
-function FilterGroupLabel({ children }: { children: ReactNode }) {
-  return (
-    <DropdownMenuLabel className="px-2 pt-1 pb-0.5 text-[11px] font-medium text-muted-foreground">
-      {children}
-    </DropdownMenuLabel>
-  );
-}
-
-function SingleOption({ value, label, mono }: { value: string; label: string; mono?: boolean }) {
-  return (
-    <Label className="flex cursor-pointer items-center gap-2.5 rounded-md px-2 py-1.5 text-sm hover:bg-accent">
-      <RadioGroupItem value={value} />
-      <span className={`truncate ${mono ? "font-mono" : ""}`}>{label}</span>
-    </Label>
-  );
-}
-
 function MultiOption({
   label,
   checked,
@@ -145,135 +126,71 @@ export function TradeFiltersMenu({
 }) {
   const locale = useLocale();
   const t = tradeFilterText[locale];
-  const [open, setOpen] = useState(false);
-  const [draftSide, setDraftSide] = useState<SideFilter>(side);
-  const [draftResult, setDraftResult] = useState<ResultFilter>(result);
-  const [draftCurrency, setDraftCurrency] = useState(currency);
-  const [draftSymbols, setDraftSymbols] = useState<string[]>(symbolsSelected);
-
-  useEffect(() => {
-    if (!open) return;
-    setDraftSide(side);
-    setDraftResult(result);
-    setDraftCurrency(currency);
-    setDraftSymbols(symbolsSelected);
-  }, [open, side, result, currency, symbolsSelected]);
-
-  const filtersActive = side !== "all" || result !== "all" || currency !== "all" || symbolsSelected.length > 0;
-  const selectedLabels = [
-    side !== "all" ? (side === "buy" ? t.sideBuy : t.sideSell) : "",
-    result !== "all" ? (result === "win" ? t.resultWin : t.resultLoss) : "",
-    currency !== "all" ? currency : "",
-    ...symbolsSelected,
-  ].filter(Boolean);
-  const applyClear = () => {
-    onSide("all");
-    onResult("all");
-    onCurrency("all");
-    onSymbolsChange([]);
-    setOpen(false);
-  };
-  const applyDraft = () => {
-    onSide(draftSide);
-    onResult(draftResult);
-    onCurrency(draftCurrency);
-    onSymbolsChange(draftSymbols);
-    setOpen(false);
-  };
+  const groups = useMemo<SelectConditionGroup[]>(
+    () => [
+      {
+        id: "side",
+        label: t.filterDirection,
+        mode: "single",
+        options: [
+          { value: "all", label: t.filterAll },
+          { value: "buy", label: t.sideBuy },
+          { value: "sell", label: t.sideSell },
+        ],
+      },
+      {
+        id: "result",
+        label: t.filterResult,
+        mode: "single",
+        options: [
+          { value: "all", label: t.filterAll },
+          { value: "win", label: t.resultWin },
+          { value: "loss", label: t.resultLoss },
+        ],
+      },
+      {
+        id: "currency",
+        label: t.filterCurrency,
+        mode: "single",
+        options: [
+          ...(allowCurrencyAll ? [{ value: "all", label: t.filterAll }] : []),
+          ...currencies.map((name) => ({ value: name, label: name })),
+        ],
+      },
+      {
+        id: "symbol",
+        label: t.filterSymbol,
+        mode: "multiple",
+        options: symbolOptions.map((name) => ({ value: name, label: name })),
+      },
+    ],
+    [allowCurrencyAll, currencies, symbolOptions, t],
+  );
+  const value = useMemo<Record<string, string[]>>(
+    () => ({
+      side: side === "all" ? [] : [side],
+      result: result === "all" ? [] : [result],
+      currency: currency === "all" ? [] : [currency],
+      symbol: symbolsSelected,
+    }),
+    [currency, result, side, symbolsSelected],
+  );
 
   return (
-    <DropdownMenu open={open} onOpenChange={setOpen}>
-      <InputGroup className="h-8 max-w-64">
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            className={`h-full min-w-0 flex-1 justify-start rounded-none border-0 px-2.5 shadow-none hover:bg-transparent aria-expanded:bg-transparent ${
-              filtersActive ? "font-medium" : "font-normal"
-            }`}
-          >
-            <span className="truncate">
-              {selectedLabels.length > 0 ? `${t.filters} · ${selectedLabels.join(" · ")}` : t.filters}
-            </span>
-          </Button>
-        </DropdownMenuTrigger>
-        {filtersActive && (
-          <InputGroupButton
-            variant="ghost"
-            size="icon-xs"
-            className="mx-1 shrink-0 text-muted-foreground"
-            aria-label={t.filterClear}
-            onClick={applyClear}
-          >
-            <X className="size-3.5" />
-          </InputGroupButton>
-        )}
-        <InputGroupAddon align="inline-end" className="pl-0 pr-1">
-          <InputGroupButton
-            variant="ghost"
-            size="icon-xs"
-            aria-label={t.filters}
-            aria-expanded={open}
-            onClick={() => setOpen((current) => !current)}
-          >
-            {open ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
-          </InputGroupButton>
-        </InputGroupAddon>
-      </InputGroup>
-      <DropdownMenuContent align="end" sideOffset={6} className="w-64 rounded-lg p-1">
-        <FilterGroupLabel>{t.filterDirection}</FilterGroupLabel>
-        <RadioGroup value={draftSide} onValueChange={(value) => setDraftSide(value as SideFilter)} className="gap-0">
-          <SingleOption value="all" label={t.filterAll} />
-          <SingleOption value="buy" label={t.sideBuy} />
-          <SingleOption value="sell" label={t.sideSell} />
-        </RadioGroup>
-        <DropdownMenuSeparator className="my-1" />
-        <FilterGroupLabel>{t.filterResult}</FilterGroupLabel>
-        <RadioGroup
-          value={draftResult}
-          onValueChange={(value) => setDraftResult(value as ResultFilter)}
-          className="gap-0"
-        >
-          <SingleOption value="all" label={t.filterAll} />
-          <SingleOption value="win" label={t.resultWin} />
-          <SingleOption value="loss" label={t.resultLoss} />
-        </RadioGroup>
-        <DropdownMenuSeparator className="my-1" />
-        <FilterGroupLabel>{t.filterCurrency}</FilterGroupLabel>
-        <RadioGroup value={draftCurrency} onValueChange={setDraftCurrency} className="max-h-44 gap-0 overflow-y-auto">
-          {allowCurrencyAll && <SingleOption value="all" label={t.filterAll} />}
-          {currencies.map((name) => (
-            <SingleOption key={name} value={name} label={name} />
-          ))}
-        </RadioGroup>
-        <DropdownMenuSeparator className="my-1" />
-        <FilterGroupLabel>{t.filterSymbol}</FilterGroupLabel>
-        <div className="max-h-44 overflow-y-auto">
-          <MultiOption label={t.filterAll} checked={draftSymbols.length === 0} onToggle={() => setDraftSymbols([])} />
-          {symbolOptions.map((name) => (
-            <MultiOption
-              key={name}
-              mono
-              label={name}
-              checked={draftSymbols.includes(name)}
-              onToggle={() =>
-                setDraftSymbols(
-                  draftSymbols.includes(name) ? draftSymbols.filter((item) => item !== name) : [...draftSymbols, name],
-                )
-              }
-            />
-          ))}
-        </div>
-        <DropdownMenuSeparator className="my-1" />
-        <div className="grid grid-cols-2 gap-1">
-          <Button variant="outline" className="w-full" onClick={() => setOpen(false)}>
-            {t.filterCancel}
-          </Button>
-          <Button variant="default" className="w-full" onClick={applyDraft}>
-            {t.filterConfirm}
-          </Button>
-        </div>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <SelectMultiConditionControl
+      value={value}
+      groups={groups}
+      placeholder={t.filters}
+      onChange={(next) => {
+        onSide((next.side?.[0] ?? "all") as SideFilter);
+        onResult((next.result?.[0] ?? "all") as ResultFilter);
+        onCurrency(next.currency?.[0] ?? "all");
+        onSymbolsChange(next.symbol ?? []);
+      }}
+      clearLabel={t.filterClear}
+      confirmLabel={t.filterConfirm}
+      align="end"
+    />
   );
 }
 
