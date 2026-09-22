@@ -363,7 +363,7 @@ export function RangeControl({
               </div>
               <div>
                 <p className="text-sm font-semibold text-foreground">{t.filterRecentQuarters}</p>
-                <div className="mt-2 grid grid-cols-2 gap-1">
+                <div className="mt-2 flex flex-col gap-1">
                   {recentQuarters.map((quarter) => (
                     <Button
                       key={quarter.label}
