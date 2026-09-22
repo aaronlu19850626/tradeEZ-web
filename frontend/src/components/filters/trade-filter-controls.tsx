@@ -228,7 +228,7 @@ export function RangeControl({
 
   const prevMonthDay = addDays(monthStart(latestDay), -1);
   const presets: { label: string; range: { from: string; to: string } }[] = [
-    { label: t.presetAllDates, range: { from: "", to: "" } },
+    { label: t.presetAllDates, range: { from: earliestDay, to: latestDay } },
     { label: t.presetToday, range: { from: latestDay, to: latestDay } },
     { label: t.presetThisWeek, range: { from: shanghaiWeekStart(dayKeyToEpoch(latestDay)), to: latestDay } },
     { label: t.presetThisMonth, range: { from: monthStart(latestDay), to: latestDay } },
