@@ -3,10 +3,8 @@
 import { type ReactNode, useEffect, useMemo, useState } from "react";
 
 import { CalendarDays, Check, ChevronDown, ChevronUp, Plus, X } from "lucide-react";
-import { enUS, zhCN } from "react-day-picker/locale";
 
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
@@ -21,6 +19,7 @@ import { type Locale, useLocale } from "@/lib/i18n";
 import { tradeFilterText } from "@/lib/tradesync/trade-filter-i18n";
 import { addDays, dayKeyToEpoch, shanghaiWeekStart } from "@/lib/tradesync/trades-mock";
 
+import { DatePickerField } from "./date-picker-field";
 import { type SelectConditionGroup, SelectMultiConditionControl, type SelectOption } from "./filter-select-controls";
 
 export type SideFilter = "all" | "buy" | "sell";
@@ -58,16 +57,6 @@ function quarterStart(dayKey: string): string {
 export function formatMonthLabel(monthKey: string, locale: Locale): string {
   const date = new Date(`${monthKey}-01T00:00:00.000Z`);
   return new Intl.DateTimeFormat(locale, { timeZone: "Asia/Shanghai", year: "numeric", month: "long" }).format(date);
-}
-
-function dayKeyToDate(dayKey: string): Date | undefined {
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dayKey);
-  if (!match) return undefined;
-  return new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
-}
-
-function dateToDayKey(date: Date): string {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
 
 function formatRangeLabel(from: string, to: string, locale: Locale): string {
@@ -210,7 +199,6 @@ export function RangeControl({
   const t = tradeFilterText[locale];
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState({ from: "", to: "" });
-  const [anchor, setAnchor] = useState<string | null>(null);
 
   if (!latestDay) {
     return (
@@ -244,7 +232,6 @@ export function RangeControl({
       onOpenChange={(next) => {
         if (next) {
           setDraft(range);
-          setAnchor(null);
         }
         setOpen(next);
       }}
@@ -279,54 +266,68 @@ export function RangeControl({
           </Button>
         </PopoverTrigger>
       </div>
-      <PopoverContent align="end" className="w-auto p-0">
-        <div className="flex">
-          <div className="border-r p-3">
-            <Calendar
-              mode="range"
-              numberOfMonths={2}
-              selected={
-                draft.from
-                  ? {
-                      from: dayKeyToDate(draft.from),
-                      to: draft.to ? dayKeyToDate(draft.to) : undefined,
-                    }
-                  : undefined
-              }
-              defaultMonth={dayKeyToDate(draft.to || draft.from || latestDay)}
-              locale={locale === "zh-CN" ? zhCN : enUS}
-              onDayClick={(date) => {
-                const dayKey = dateToDayKey(date);
-                if (!anchor) {
-                  setAnchor(dayKey);
-                  setDraft({ from: dayKey, to: "" });
-                  return;
-                }
-                const from = dayKey < anchor ? dayKey : anchor;
-                const to = dayKey < anchor ? anchor : dayKey;
-                setAnchor(null);
-                setDraft({ from, to });
-                onRange(from, to);
-                setOpen(false);
+      <PopoverContent align="end" className="w-[680px] max-w-[calc(100vw-2rem)] p-4">
+        <div className="grid gap-4">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <DatePickerField
+              label={t.filterStartDate}
+              value={draft.from}
+              placeholder={t.selectStartDate}
+              clearLabel={t.filterClear}
+              onChange={(nextFrom) => {
+                const nextTo = nextFrom && draft.to && nextFrom > draft.to ? nextFrom : draft.to;
+                setDraft({ from: nextFrom, to: nextTo });
+              }}
+            />
+            <DatePickerField
+              label={t.filterEndDate}
+              value={draft.to}
+              placeholder={t.selectEndDate}
+              clearLabel={t.filterClear}
+              onChange={(nextTo) => {
+                const nextFrom = nextTo && draft.from && nextTo < draft.from ? nextTo : draft.from;
+                setDraft({ from: nextFrom, to: nextTo });
               }}
             />
           </div>
-          <div className="flex w-36 flex-col gap-0.5 p-3">
-            {presets.map((preset) => (
-              <Button
-                key={preset.label}
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="h-7 justify-start px-2 text-xs font-normal"
-                onClick={() => {
-                  onRange(preset.range.from, preset.range.to);
-                  setOpen(false);
-                }}
-              >
-                {preset.label}
-              </Button>
-            ))}
+          <div className="border-t pt-3">
+            <p className="text-sm font-semibold text-foreground">{t.filterQuickRanges}</p>
+            <div className="mt-2 grid grid-cols-2 gap-1">
+              {presets.map((preset) => (
+                <Button
+                  key={preset.label}
+                  type="button"
+                  variant={draft.from === preset.range.from && draft.to === preset.range.to ? "secondary" : "ghost"}
+                  size="sm"
+                  className="h-8 justify-start px-2 text-sm font-normal"
+                  onClick={() => setDraft(preset.range)}
+                >
+                  {preset.label}
+                </Button>
+              ))}
+            </div>
+          </div>
+          <div className="flex justify-end gap-2 border-t pt-3">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setDraft(range);
+                setOpen(false);
+              }}
+            >
+              {t.filterCancel}
+            </Button>
+            <Button
+              size="sm"
+              disabled={!draft.from || !draft.to}
+              onClick={() => {
+                onRange(draft.from, draft.to);
+                setOpen(false);
+              }}
+            >
+              {t.filterConfirm}
+            </Button>
           </div>
         </div>
       </PopoverContent>
