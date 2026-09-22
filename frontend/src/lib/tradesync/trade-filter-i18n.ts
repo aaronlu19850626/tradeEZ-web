@@ -21,6 +21,7 @@ const zh = {
 
   presetAll: "全部",
   presetAllDates: "全量日期",
+  dateRangeNone: "全部日期",
   presetToday: "今天",
   presetThisWeek: "本周",
   presetThisMonth: "本月",
@@ -60,6 +61,7 @@ const en: TradeFilterText = {
 
   presetAll: "All",
   presetAllDates: "All dates",
+  dateRangeNone: "All dates",
   presetToday: "Today",
   presetThisWeek: "This week",
   presetThisMonth: "This month",

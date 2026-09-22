@@ -260,7 +260,7 @@ export function RangeControl({
           >
             <CalendarDays className="size-4 text-muted-foreground" />
             <span className="min-w-0 whitespace-nowrap">
-              {range.from ? formatRangeLabel(range.from, range.to, locale) : t.presetAllDates}
+              {range.from ? formatRangeLabel(range.from, range.to, locale) : t.dateRangeNone}
             </span>
             {range.from && (
               // biome-ignore lint/a11y: compact clear control inside the date trigger.
