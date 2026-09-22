@@ -16,7 +16,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverAnchor, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { type Locale, useLocale } from "@/lib/i18n";
+import { fill, type Locale, useLocale } from "@/lib/i18n";
 import type { MarketProfile, TradeSymbolOption } from "@/lib/tradesync/trade-center";
 import { tradeFilterText } from "@/lib/tradesync/trade-filter-i18n";
 import { addDays, dayKeyToEpoch, shanghaiWeekStart } from "@/lib/tradesync/trades-mock";
@@ -218,6 +218,7 @@ export function TradeFiltersMenu({
       clearLabel={t.filterClear}
       closeLabel={t.filterCancel}
       confirmLabel={t.filterConfirm}
+      moreLabel={t.filterMoreItems}
       align="end"
     />
   );
@@ -525,7 +526,7 @@ export function AccountScopeMenu({
     ? t.filterAll
     : selectedLabels.length <= 2
       ? selectedLabels.join("/")
-      : `${selectedLabels[0]}/${selectedLabels[1]} 等${selectedLabels.length}项`;
+      : `${selectedLabels[0]}/${selectedLabels[1]} ${fill(t.filterMoreItems, { count: selectedLabels.length })}`;
 
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>

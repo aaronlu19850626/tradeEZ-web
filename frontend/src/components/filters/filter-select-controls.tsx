@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { fill } from "@/lib/i18n";
 
 export interface SelectOption {
   id?: string;
@@ -98,6 +99,7 @@ export function SelectMultiConditionControl({
   clearLabel = "清空条件",
   closeLabel = "关闭",
   confirmLabel = "确认",
+  moreLabel = "等{count}项",
 }: {
   value: Record<string, string[]>;
   groups: SelectConditionGroup[];
@@ -108,6 +110,7 @@ export function SelectMultiConditionControl({
   clearLabel?: string;
   closeLabel?: string;
   confirmLabel?: string;
+  moreLabel?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<Record<string, string[]>>(value);
@@ -132,7 +135,7 @@ export function SelectMultiConditionControl({
   const summary =
     selected.length <= 2
       ? selected.map((option) => option.label).join("/")
-      : `${selected[0].label}/${selected[1].label} 等${selected.length}项`;
+      : `${selected[0].label}/${selected[1].label} ${fill(moreLabel, { count: selected.length })}`;
 
   return (
     <DropdownMenu
