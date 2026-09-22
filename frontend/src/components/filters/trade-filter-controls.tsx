@@ -295,7 +295,7 @@ export function RangeControl({
           </Button>
         </PopoverTrigger>
       </div>
-      <PopoverContent align="end" className="w-[680px] max-w-[calc(100vw-2rem)] p-4">
+      <PopoverContent align="end" className="w-[560px] max-w-[calc(100vw-2rem)] p-3">
         <div className="grid gap-4">
           <div className="grid gap-4 sm:grid-cols-2">
             <DatePickerField
@@ -329,7 +329,7 @@ export function RangeControl({
                     type="button"
                     variant={draft.from === preset.range.from && draft.to === preset.range.to ? "secondary" : "ghost"}
                     size="sm"
-                    className="h-8 justify-start px-2 text-sm font-normal"
+                    className="h-7 justify-start px-2 text-xs font-normal"
                     onClick={() => setDraft(preset.range)}
                   >
                     {preset.label}
@@ -346,7 +346,7 @@ export function RangeControl({
                     type="button"
                     variant={draft.from === quarter.range.from && draft.to === quarter.range.to ? "secondary" : "ghost"}
                     size="sm"
-                    className="h-8 justify-start px-2 text-sm font-normal"
+                    className="h-7 justify-start px-2 text-xs font-normal"
                     onClick={() => setDraft(quarter.range)}
                   >
                     {quarter.label}
@@ -365,7 +365,7 @@ export function RangeControl({
                         type="button"
                         variant={draft.from === month.range.from && draft.to === month.range.to ? "secondary" : "ghost"}
                         size="sm"
-                        className="h-8 justify-start px-2 text-sm font-normal"
+                        className="h-7 justify-start px-2 text-xs font-normal"
                         onClick={() => setDraft(month.range)}
                       >
                         {month.label}
