@@ -309,7 +309,13 @@ export default function TradeCenterPage() {
             defaultTableOpen={index === 0}
           />
         ))}
-        {serverData.dayHasMore && <LoadMore label={t.loadMore} onClick={() => setDayVisible((prev) => prev + 8)} />}
+        {serverData.dayHasMore && (
+          <LoadMore
+            label={t.loadMore}
+            onClick={() => setDayVisible((prev) => prev + 8)}
+            loading={serverData.pageLoading}
+          />
+        )}
       </>
     );
   } else {
@@ -326,7 +332,13 @@ export default function TradeCenterPage() {
             defaultTableOpen={index === 0}
           />
         ))}
-        {serverData.weekHasMore && <LoadMore label={t.loadMore} onClick={() => setWeekVisible((prev) => prev + 6)} />}
+        {serverData.weekHasMore && (
+          <LoadMore
+            label={t.loadMore}
+            onClick={() => setWeekVisible((prev) => prev + 6)}
+            loading={serverData.pageLoading}
+          />
+        )}
       </>
     );
   }

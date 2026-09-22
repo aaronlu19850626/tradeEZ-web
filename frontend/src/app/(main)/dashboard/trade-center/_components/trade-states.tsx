@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 
-import { Plus, TrendingDown } from "lucide-react";
+import { Loader2, Plus, TrendingDown } from "lucide-react";
 
 import { SyncEmptyState } from "@/components/shared/sync-empty-state";
 import { Button } from "@/components/ui/button";
@@ -67,9 +67,20 @@ export function MetaButton({ label, icon }: { label: string; icon: ReactNode }) 
   );
 }
 
-export function LoadMore({ label, remaining, onClick }: { label: string; remaining?: number; onClick: () => void }) {
+export function LoadMore({
+  label,
+  remaining,
+  onClick,
+  loading = false,
+}: {
+  label: string;
+  remaining?: number;
+  onClick: () => void;
+  loading?: boolean;
+}) {
   return (
-    <Button variant="outline" className="w-full" onClick={onClick}>
+    <Button variant="outline" className="w-full" disabled={loading} onClick={onClick}>
+      {loading && <Loader2 className="size-4 animate-spin" />}
       {remaining === undefined ? label : `${label} (${remaining})`}
     </Button>
   );
