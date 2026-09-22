@@ -9,6 +9,7 @@ export interface TradeAccount {
   login: string;
   currency: string | null;
   isStatistics: boolean;
+  tradeCount: number;
   lastUpdatedAt: number | null;
 }
 

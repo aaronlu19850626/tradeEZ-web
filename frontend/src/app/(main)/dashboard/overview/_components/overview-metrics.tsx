@@ -4,7 +4,7 @@ import type { Locale } from "@/lib/i18n";
 import type { DashboardText } from "@/lib/tradesync/dashboard-i18n";
 
 import type { OverviewStats } from "../_lib/overview-data";
-import { money, percent, tone } from "../_lib/overview-data";
+import { moneyStat, percent, tone } from "../_lib/overview-data";
 import { AvgWinLossBar, CountPills, MetricTile, SemiGauge, ShareRing } from "./panels";
 
 const DASH = "--";
@@ -17,7 +17,7 @@ export function OverviewMetrics({ t, locale, stats }: { t: DashboardText; locale
         titleKey="netPnl"
         tipKey="netPnlTip"
         badge={stats.count}
-        value={<span className={tone(stats.net)}>{money(stats.net, locale)}</span>}
+        value={<span className={tone(stats.net)}>{moneyStat(stats.net, locale)}</span>}
       />
       <MetricTile
         t={t}

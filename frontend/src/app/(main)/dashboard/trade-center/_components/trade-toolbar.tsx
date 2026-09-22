@@ -3,7 +3,7 @@
 import { ChevronsDown, ChevronsUp, Columns3 } from "lucide-react";
 
 import {
-  AccountScopeChips,
+  AccountScopeMenu,
   RangeControl,
   type ResultFilter,
   type SideFilter,
@@ -41,8 +41,7 @@ export function Toolbar({
   onToggleAllTables,
   accounts,
   selectedAccountIds,
-  onAccountToggle,
-  onAccountSelectAll,
+  onAccountsChange,
 }: {
   t: TradeCenterText;
   view: ViewMode;
@@ -67,8 +66,7 @@ export function Toolbar({
   onToggleAllTables: () => void;
   accounts: TradeAccount[];
   selectedAccountIds: string[];
-  onAccountToggle: (accountId: string) => void;
-  onAccountSelectAll: () => void;
+  onAccountsChange: (accountIds: string[]) => void;
 }) {
   const views: { key: ViewMode; label: string }[] = [
     { key: "day", label: t.viewDay },
@@ -140,12 +138,7 @@ export function Toolbar({
 
         <RangeControl range={range} onRange={onRange} latestDay={latestDay} earliestDay={earliestDay} />
 
-        <AccountScopeChips
-          accounts={accounts}
-          selectedIds={selectedAccountIds}
-          onToggle={onAccountToggle}
-          onSelectAll={onAccountSelectAll}
-        />
+        <AccountScopeMenu accounts={accounts} selectedIds={selectedAccountIds} onApply={onAccountsChange} />
       </div>
     </div>
   );

@@ -67,10 +67,10 @@ export function MetaButton({ label, icon }: { label: string; icon: ReactNode }) 
   );
 }
 
-export function LoadMore({ label, remaining, onClick }: { label: string; remaining: number; onClick: () => void }) {
+export function LoadMore({ label, remaining, onClick }: { label: string; remaining?: number; onClick: () => void }) {
   return (
     <Button variant="outline" className="w-full" onClick={onClick}>
-      {label} ({remaining})
+      {remaining === undefined ? label : `${label} (${remaining})`}
     </Button>
   );
 }

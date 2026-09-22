@@ -8,6 +8,7 @@ const zh = {
 
   loadingTitle: "正在加载",
   loadingDescription: "正在读取交易记录，请稍候…",
+  largeDataLoading: "数据量较大，正在汇总 {count} 笔交易，请稍候…",
   errorTitle: "数据加载失败",
   errorDescription: "交易记录读取失败，请稍后重试。",
   errorRetry: "重试",
@@ -146,6 +147,7 @@ const en: DashboardText = {
 
   loadingTitle: "Loading",
   loadingDescription: "Reading your trades…",
+  largeDataLoading: "Aggregating {count} trades, please wait…",
   errorTitle: "Failed to load",
   errorDescription: "Could not load trade records. Please try again.",
   errorRetry: "Retry",

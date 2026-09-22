@@ -9,7 +9,7 @@ import type { DashboardText } from "@/lib/tradesync/dashboard-i18n";
 
 import {
   LOSS_SOLID,
-  money,
+  moneyStat,
   PANEL_BODY_CLASS,
   PANEL_FOOTER_CLASS,
   PANEL_HEADER_CLASS,
@@ -214,8 +214,8 @@ export function AvgWinLossBar({ win, loss, locale }: { win: number; loss: number
         <span className="flex-1" style={{ background: LOSS_SOLID }} />
       </div>
       <div className="flex items-center justify-between gap-2 text-[12px]">
-        <span className="font-medium text-profit-strong tabular-nums">{money(win, locale)}</span>
-        <span className="font-medium text-loss-strong tabular-nums">{money(-loss, locale)}</span>
+        <span className="font-medium text-profit-strong tabular-nums">{moneyStat(win, locale)}</span>
+        <span className="font-medium text-loss-strong tabular-nums">{moneyStat(-loss, locale)}</span>
       </div>
     </div>
   );

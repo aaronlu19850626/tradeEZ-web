@@ -428,3 +428,96 @@ export function AccountScopeChips({
     </div>
   );
 }
+
+export function AccountScopeMenu({
+  accounts,
+  selectedIds,
+  onApply,
+}: {
+  accounts: TradeAccountOption[];
+  selectedIds: string[];
+  onApply: (ids: string[]) => void;
+}) {
+  const locale = useLocale();
+  const t = tradeFilterText[locale];
+  const [open, setOpen] = useState(false);
+  const [draft, setDraft] = useState<string[]>(selectedIds);
+
+  useEffect(() => {
+    if (!open) return;
+    setDraft(selectedIds);
+  }, [open, selectedIds]);
+
+  const scoped = [...accounts].sort((left, right) => Number(right.isStatistics) - Number(left.isStatistics));
+  const allSelected = draft.length === scoped.length;
+  const selectedLabels = scoped.filter((account) => selectedIds.includes(account.id)).map((account) => account.name);
+
+  return (
+    <DropdownMenu open={open} onOpenChange={setOpen}>
+      <InputGroup className="h-8 max-w-64">
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            className="h-full min-w-0 flex-1 justify-start rounded-none border-0 px-2.5 font-normal shadow-none hover:bg-transparent aria-expanded:bg-transparent"
+          >
+            <span className="truncate">
+              {selectedLabels.length > 0
+                ? `${t.accountScopeTitle} · ${selectedLabels.join(" · ")}`
+                : t.accountScopeTitle}
+            </span>
+          </Button>
+        </DropdownMenuTrigger>
+        <InputGroupAddon align="inline-end" className="pl-0 pr-1">
+          <InputGroupButton
+            variant="ghost"
+            size="icon-xs"
+            aria-label={t.accountScopeTitle}
+            aria-expanded={open}
+            onClick={() => setOpen((current) => !current)}
+          >
+            <ChevronDown className="size-3.5" />
+          </InputGroupButton>
+        </InputGroupAddon>
+      </InputGroup>
+      <DropdownMenuContent align="end" sideOffset={6} className="w-64 rounded-lg p-1">
+        <MultiOption
+          label={t.accountScopeAll}
+          checked={allSelected}
+          onToggle={() => setDraft(allSelected ? [] : scoped.map((account) => account.id))}
+        />
+        <DropdownMenuSeparator className="my-1" />
+        <div className="max-h-52 overflow-y-auto">
+          {scoped.map((account) => (
+            <MultiOption
+              key={account.id}
+              label={account.name}
+              checked={draft.includes(account.id)}
+              onToggle={() =>
+                setDraft((prev) =>
+                  prev.includes(account.id) ? prev.filter((id) => id !== account.id) : [...prev, account.id],
+                )
+              }
+            />
+          ))}
+        </div>
+        <DropdownMenuSeparator className="my-1" />
+        <div className="grid grid-cols-2 gap-1">
+          <Button variant="outline" className="w-full" onClick={() => setOpen(false)}>
+            {t.filterCancel}
+          </Button>
+          <Button
+            variant="default"
+            className="w-full"
+            disabled={draft.length === 0}
+            onClick={() => {
+              onApply(draft);
+              setOpen(false);
+            }}
+          >
+            {t.filterConfirm}
+          </Button>
+        </div>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}

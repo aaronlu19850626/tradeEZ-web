@@ -16,7 +16,7 @@ import {
   type WeekGroup,
 } from "@/lib/tradesync/trades-mock";
 
-import { type ColumnKey, formatMoney, formatWeekday, formatWeekRange, toneClass } from "../_lib/trade-center-model";
+import { type ColumnKey, formatStatMoney, formatWeekday, formatWeekRange, toneClass } from "../_lib/trade-center-model";
 import { DayDetailDialog } from "./day-detail-dialog";
 import { DailyChart, ScaleBar, StatGrid } from "./trade-metric-cards";
 import { MetaButton } from "./trade-states";
@@ -73,7 +73,7 @@ export function WeekGroupCard({
         <span className="flex items-center gap-1.5 text-base">
           <span className="text-muted-foreground">{t.netPnl}</span>
           <span className={`font-semibold tabular-nums ${toneClass(group.stats.net)}`}>
-            {formatMoney(group.stats.net, locale)}
+            {formatStatMoney(group.stats.net, locale)}
           </span>
         </span>
         <span className="ml-auto flex items-center gap-1">

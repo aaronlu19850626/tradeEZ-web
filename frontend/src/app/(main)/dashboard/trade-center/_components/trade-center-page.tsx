@@ -55,7 +55,6 @@ export default function TradeCenterPage() {
     sort,
     tableCommand,
     tableResetVersion,
-    toggleAccount,
     toggleAllTables,
     view,
     weekVisible,
@@ -297,13 +296,7 @@ export default function TradeCenterPage() {
             defaultTableOpen={index === 0}
           />
         ))}
-        {dayVisible < dayGroups.length && (
-          <LoadMore
-            label={t.loadMore}
-            remaining={dayGroups.length - dayVisible}
-            onClick={() => setDayVisible((prev) => prev + 8)}
-          />
-        )}
+        {serverData.dayHasMore && <LoadMore label={t.loadMore} onClick={() => setDayVisible((prev) => prev + 8)} />}
       </>
     );
   } else {
@@ -320,13 +313,7 @@ export default function TradeCenterPage() {
             defaultTableOpen={index === 0}
           />
         ))}
-        {weekVisible < weekGroups.length && (
-          <LoadMore
-            label={t.loadMore}
-            remaining={weekGroups.length - weekVisible}
-            onClick={() => setWeekVisible((prev) => prev + 6)}
-          />
-        )}
+        {serverData.weekHasMore && <LoadMore label={t.loadMore} onClick={() => setWeekVisible((prev) => prev + 6)} />}
       </>
     );
   }
@@ -389,8 +376,10 @@ export default function TradeCenterPage() {
             onToggleAllTables={toggleAllTables}
             accounts={accounts}
             selectedAccountIds={accountIds}
-            onAccountToggle={toggleAccount}
-            onAccountSelectAll={() => setAccountIds([...scopeDefaults])}
+            onAccountsChange={(ids) => {
+              setAccountIds(ids.length > 0 ? ids : [...scopeDefaults]);
+              resetPage();
+            }}
           />
         </div>
       </div>

@@ -28,6 +28,7 @@ import {
   formatMoney,
   formatMoneyCompact,
   formatPercent,
+  formatStatMoney,
   GRID_COLOR,
   LINE_COLOR,
   LOSS_SOLID,
@@ -71,13 +72,13 @@ export function StatGrid({ stats, t, locale }: { stats: TradeStats; t: TradeCent
     { label: t.totalTrades, value: stats.count, tip: t.tipTotalTrades },
     {
       label: t.grossPnl,
-      value: <span className={toneClass(stats.gross)}>{formatMoney(stats.gross, locale)}</span>,
+      value: <span className={toneClass(stats.gross)}>{formatStatMoney(stats.gross, locale)}</span>,
       tip: t.tipGrossPnl,
     },
     { label: t.winnersLosers, value: `${stats.winners} / ${stats.losers}` },
     {
       label: t.swaps,
-      value: <span className={toneClass(stats.swap)}>{formatMoney(stats.swap, locale)}</span>,
+      value: <span className={toneClass(stats.swap)}>{formatStatMoney(stats.swap, locale)}</span>,
       tip: t.tipSwaps,
     },
     { label: t.winRate, value: formatPercent(stats.winRate * 100, locale), tip: t.tipWinRate },
@@ -122,7 +123,7 @@ export function ScaleBar({ stats, t, locale }: { stats: TradeStats; t: TradeCent
       <div className="flex min-w-0 flex-1 items-center gap-3">
         <div className="flex flex-col whitespace-nowrap">
           <span className="text-sm text-muted-foreground">{t.maxLoss}</span>
-          <span className="text-sm font-medium tabular-nums text-loss">{formatMoney(stats.netTrough, locale)}</span>
+          <span className="text-sm font-medium tabular-nums text-loss">{formatStatMoney(stats.netTrough, locale)}</span>
         </div>
         <span className="flex min-w-16 flex-1 items-center">
           {total === 0 ? (
@@ -142,7 +143,7 @@ export function ScaleBar({ stats, t, locale }: { stats: TradeStats; t: TradeCent
         </span>
         <div className="flex flex-col items-end whitespace-nowrap">
           <span className="text-sm text-muted-foreground">{t.maxProfit}</span>
-          <span className="text-sm font-medium tabular-nums text-profit">{formatMoney(stats.netPeak, locale)}</span>
+          <span className="text-sm font-medium tabular-nums text-profit">{formatStatMoney(stats.netPeak, locale)}</span>
         </div>
       </div>
     </div>
@@ -164,18 +165,18 @@ export function AvgWinLossBar({ stats, t, locale }: { stats: TradeStats; t: Trad
               <span className="flex-1" style={{ background: LOSS_SOLID }} />
             </div>
             <div className="flex items-center justify-between text-xs">
-              <span className="tabular-nums text-profit">{formatMoney(win, locale)}</span>
-              <span className="tabular-nums text-loss">{formatMoney(loss, locale)}</span>
+              <span className="tabular-nums text-profit">{formatStatMoney(win, locale)}</span>
+              <span className="tabular-nums text-loss">{formatStatMoney(loss, locale)}</span>
             </div>
           </div>
         </TooltipTrigger>
         <TooltipContent>
           <div className="flex flex-col gap-0.5">
             <span>
-              {t.resultWin} {formatMoney(win, locale)}
+              {t.resultWin} {formatStatMoney(win, locale)}
             </span>
             <span>
-              {t.resultLoss} {formatMoney(loss, locale)}
+              {t.resultLoss} {formatStatMoney(loss, locale)}
             </span>
           </div>
         </TooltipContent>

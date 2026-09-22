@@ -20,7 +20,7 @@ import { fill, type Locale } from "@/lib/i18n";
 import type { TradeCenterText } from "@/lib/tradesync/trade-center-i18n";
 import type { MockTrade, TradeStats } from "@/lib/tradesync/trades-mock";
 
-import { type ColumnKey, formatMoney, formatPercent, toneClass } from "../_lib/trade-center-model";
+import { type ColumnKey, formatPercent, formatStatMoney, toneClass } from "../_lib/trade-center-model";
 import { AvgWinLossBar, DayTrendChart, DonutStat, MetricCard, WinRateStats } from "./trade-metric-cards";
 import { TradeTable } from "./trade-table";
 
@@ -76,7 +76,7 @@ export function AllView({
           t={t}
           title={t.cumulativeNet}
           tip={t.tipCumulative}
-          value={<span className={toneClass(stats.net)}>{formatMoney(stats.net, locale)}</span>}
+          value={<span className={toneClass(stats.net)}>{formatStatMoney(stats.net, locale)}</span>}
           footer={`${stats.count} ${t.tradesUnit}`}
         >
           <DayTrendChart series={series} trades={ordered} t={t} locale={locale} compact />
@@ -95,18 +95,18 @@ export function AllView({
                   label={stats.profitFactor === null ? t.na : stats.profitFactor.toFixed(2)}
                 />
                 <div className="flex items-center gap-2 text-xs font-medium">
-                  <span className="text-profit">{formatMoney(stats.winSum, locale)}</span>
-                  <span className="text-loss">{formatMoney(-stats.lossSum, locale)}</span>
+                  <span className="text-profit">{formatStatMoney(stats.winSum, locale)}</span>
+                  <span className="text-loss">{formatStatMoney(-stats.lossSum, locale)}</span>
                 </div>
               </div>
             </TooltipTrigger>
             <TooltipContent>
               <div className="flex flex-col gap-0.5">
                 <span>
-                  {t.winTotal} {formatMoney(stats.winSum, locale)}
+                  {t.winTotal} {formatStatMoney(stats.winSum, locale)}
                 </span>
                 <span>
-                  {t.lossTotal} {formatMoney(-stats.lossSum, locale)}
+                  {t.lossTotal} {formatStatMoney(-stats.lossSum, locale)}
                 </span>
               </div>
             </TooltipContent>
@@ -174,21 +174,6 @@ export function AllView({
                   </Badge>
                 </PaginationItem>
                 <PaginationItem>
-                  <Input
-                    type="number"
-                    min={1}
-                    max={totalPages}
-                    value={pageInput}
-                    aria-label={t.goToPage}
-                    className="h-8 w-16 text-center tabular-nums"
-                    onChange={(event) => setPageInput(event.target.value)}
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter") jumpToPage();
-                    }}
-                    onBlur={jumpToPage}
-                  />
-                </PaginationItem>
-                <PaginationItem>
                   <Button
                     variant="outline"
                     size="icon"
@@ -198,6 +183,21 @@ export function AllView({
                   >
                     <ChevronRight className="size-4" />
                   </Button>
+                </PaginationItem>
+                <PaginationItem>
+                  <Input
+                    type="number"
+                    min={1}
+                    max={totalPages}
+                    value={pageInput}
+                    aria-label={t.goToPage}
+                    className="h-8 w-16 text-center tabular-nums [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                    onChange={(event) => setPageInput(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") jumpToPage();
+                    }}
+                    onBlur={jumpToPage}
+                  />
                 </PaginationItem>
               </PaginationContent>
             </Pagination>

@@ -39,6 +39,7 @@ export function useTradeData({ includeTrades = true }: { includeTrades?: boolean
           login: String(account.mt5_login),
           currency: account.currency,
           isStatistics: account.is_statistics,
+          tradeCount: account.trade_count,
           lastUpdatedAt: account.last_updated_at,
         }));
         setAccounts(mapped);

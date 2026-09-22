@@ -29,6 +29,7 @@ const zh = {
   accountScopeInclude: "点击显示该账户",
   accountScopeExclude: "点击隐藏该账户",
   accountScopeAll: "全选",
+  accountScopeTitle: "账户",
   prevMonth: "上个月",
   nextMonth: "下个月",
 } as const;
@@ -64,6 +65,7 @@ const en: TradeFilterText = {
   accountScopeInclude: "Show this account",
   accountScopeExclude: "Hide this account",
   accountScopeAll: "Select all",
+  accountScopeTitle: "Accounts",
   prevMonth: "Previous month",
   nextMonth: "Next month",
 };

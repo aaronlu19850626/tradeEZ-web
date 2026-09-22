@@ -9,8 +9,22 @@ export function formatMoney(value: number, locale: Locale): string {
   return `${value < 0 ? "-" : ""}$${amount}`;
 }
 
+export function formatStatMoney(value: number, locale: Locale): string {
+  const abs = Math.abs(value);
+  if (abs >= 10000) {
+    const amount = (abs / 1000).toLocaleString(locale, { maximumFractionDigits: 1 });
+    return `${value < 0 ? "-" : ""}$${amount}K`;
+  }
+  return formatMoney(value, locale);
+}
+
 export function formatMoneyCompact(value: number, locale: Locale): string {
-  const amount = Math.abs(Math.round(value)).toLocaleString(locale, { maximumFractionDigits: 0 });
+  const abs = Math.abs(value);
+  if (abs >= 10000) {
+    const amount = (abs / 1000).toLocaleString(locale, { maximumFractionDigits: 1 });
+    return `${value < 0 ? "-" : ""}$${amount}K`;
+  }
+  const amount = abs.toLocaleString(locale, { maximumFractionDigits: 0 });
   return `${value < 0 ? "-" : ""}$${amount}`;
 }
 

@@ -2,13 +2,14 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 
-import { Maximize2, Plus, Settings } from "lucide-react";
+import { Maximize2, Plus, RefreshCw, Settings } from "lucide-react";
 import { toast } from "sonner";
 
 import { CumulativeHistoryDialog } from "@/components/dialogs/cumulative-history-dialog";
 import type { ResultFilter, SideFilter } from "@/components/filters/trade-filter-controls";
 import { PanelAction, PanelIconAction, PanelMenuTrigger } from "@/components/shared/dashboard-actions";
 import { SyncEmptyState } from "@/components/shared/sync-empty-state";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardTitle } from "@/components/ui/card";
 import {
@@ -205,6 +206,14 @@ export default function DashboardOverviewPage() {
       .filter((value): value is number => value !== null);
     return values.length > 0 ? Math.max(...values) : null;
   }, [accounts, accountIds]);
+  const totalTradeCount = useMemo(
+    () =>
+      accounts
+        .filter((account) => accountIds.includes(account.id))
+        .reduce((sum, account) => sum + account.tradeCount, 0),
+    [accounts, accountIds],
+  );
+  const largeDataLoading = toolbarBusy && totalTradeCount > 10000;
 
   const refreshData = () => {
     if (loading) return;
@@ -281,16 +290,7 @@ export default function DashboardOverviewPage() {
       onCurrency={applyCurrency}
       onSymbolsChange={setSelectedSymbols}
       onRange={(from, to) => setRange({ from, to })}
-      onToggleAccount={(id) =>
-        setAccountIds((prev) => {
-          if (prev.includes(id)) {
-            if (prev.length <= 1) return prev;
-            return prev.filter((item) => item !== id);
-          }
-          return [...prev, id];
-        })
-      }
-      onSelectAll={() => setAccountIds([...scopeDefaults])}
+      onAccountsChange={(ids) => setAccountIds(ids.length > 0 ? ids : [...scopeDefaults])}
     />
   );
 
@@ -342,6 +342,14 @@ export default function DashboardOverviewPage() {
     <div className="relative mx-auto flex w-full max-w-screen-2xl flex-col gap-5">
       {header}
       {toolbar}
+      {largeDataLoading && (
+        <Alert className="pointer-events-none absolute top-3 left-1/2 z-40 w-auto max-w-[90%] -translate-x-1/2 shadow-md">
+          <RefreshCw className="size-4 animate-spin" />
+          <AlertDescription className="whitespace-nowrap">
+            {t.largeDataLoading.replace("{count}", totalTradeCount.toLocaleString(locale))}
+          </AlertDescription>
+        </Alert>
+      )}
       {empty ? (
         <SyncEmptyState
           title={t.emptyTitle}

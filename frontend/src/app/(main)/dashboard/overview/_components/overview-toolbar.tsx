@@ -5,7 +5,7 @@ import type { RefObject } from "react";
 import { RefreshCw } from "lucide-react";
 
 import {
-  AccountScopeChips,
+  AccountScopeMenu,
   RangeControl,
   type ResultFilter,
   type SideFilter,
@@ -50,8 +50,7 @@ export function OverviewToolbar({
   onCurrency,
   onSymbolsChange,
   onRange,
-  onToggleAccount,
-  onSelectAll,
+  onAccountsChange,
 }: {
   t: DashboardText;
   locale: string;
@@ -78,8 +77,7 @@ export function OverviewToolbar({
   onCurrency: (currency: string) => void;
   onSymbolsChange: (symbols: string[]) => void;
   onRange: (from: string, to: string) => void;
-  onToggleAccount: (accountId: string) => void;
-  onSelectAll: () => void;
+  onAccountsChange: (accountIds: string[]) => void;
 }) {
   return (
     <div
@@ -130,12 +128,7 @@ export function OverviewToolbar({
               onSymbolsChange={onSymbolsChange}
             />
             <RangeControl range={dateRange} onRange={onRange} latestDay={latestDay} earliestDay={earliestDay} />
-            <AccountScopeChips
-              accounts={accounts}
-              selectedIds={accountIds}
-              onToggle={onToggleAccount}
-              onSelectAll={onSelectAll}
-            />
+            <AccountScopeMenu accounts={accounts} selectedIds={accountIds} onApply={onAccountsChange} />
           </div>
         </div>
       </div>

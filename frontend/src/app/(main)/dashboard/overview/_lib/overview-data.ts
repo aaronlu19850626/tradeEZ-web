@@ -86,6 +86,15 @@ export function money(value: number, locale: Locale): string {
   return `${value < 0 ? "-" : ""}$${amount}`;
 }
 
+export function moneyStat(value: number, locale: Locale): string {
+  const abs = Math.abs(value);
+  if (abs >= 10000) {
+    const amount = (abs / 1000).toLocaleString(locale, { maximumFractionDigits: 1 });
+    return `${value < 0 ? "-" : ""}$${amount}K`;
+  }
+  return money(value, locale);
+}
+
 export function moneyCompact(value: number, locale: Locale): string {
   const abs = Math.abs(value);
   const sign = value < 0 ? "-" : "";

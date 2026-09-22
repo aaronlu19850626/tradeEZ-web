@@ -104,6 +104,8 @@ export function useTradeCenterServerData({
   const [symbols, setSymbols] = useState<string[]>([]);
   const [dayGroups, setDayGroups] = useState<DayGroup[]>([]);
   const [weekGroups, setWeekGroups] = useState<WeekGroup[]>([]);
+  const [dayHasMore, setDayHasMore] = useState(false);
+  const [weekHasMore, setWeekHasMore] = useState(false);
   const [pageTrades, setPageTrades] = useState<MockTrade[]>([]);
   const [pageTotal, setPageTotal] = useState(0);
   const [summary, setSummary] = useState<TradeStats | null>(null);
@@ -113,6 +115,7 @@ export function useTradeCenterServerData({
   const [pageLoading, setPageLoading] = useState(false);
   const [error, setError] = useState(false);
   const lastPageRef = useRef(page);
+  const lastSortRef = useRef<string>(`${sort ?? ""}|${order ?? ""}`);
 
   useEffect(() => {
     if (accountIds.length === 0) return;
@@ -139,11 +142,13 @@ export function useTradeCenterServerData({
       try {
         const params = commonParams(accountIds, range, side, result, currency, selectedSymbols);
         if (view === "day") {
-          const groups = await tradeCenterApi.groups({ ...params, view: "day", limit: dayVisible, offset: 0 });
-          setDayGroups(groups.map(toDayGroup));
+          const groups = await tradeCenterApi.groups({ ...params, view: "day", limit: dayVisible + 1, offset: 0 });
+          setDayGroups(groups.slice(0, dayVisible).map(toDayGroup));
+          setDayHasMore(groups.length > dayVisible);
         } else if (view === "week") {
-          const groups = await tradeCenterApi.groups({ ...params, view: "week", limit: weekVisible, offset: 0 });
-          setWeekGroups(groups.map(toWeekGroup));
+          const groups = await tradeCenterApi.groups({ ...params, view: "week", limit: weekVisible + 1, offset: 0 });
+          setWeekGroups(groups.slice(0, weekVisible).map(toWeekGroup));
+          setWeekHasMore(groups.length > weekVisible);
         } else {
           const [pageData, summaryData] = await Promise.all([
             tradeCenterApi.list({ ...params, page, pageSize: 100, sort, order }),
@@ -166,13 +171,16 @@ export function useTradeCenterServerData({
   );
 
   useEffect(() => {
-    const pageOnly = view === "all" && page !== lastPageRef.current;
+    const sortKey = `${sort ?? ""}|${order ?? ""}`;
+    const pageOnly = view === "all" && (page !== lastPageRef.current || sortKey !== lastSortRef.current);
     lastPageRef.current = page;
+    lastSortRef.current = sortKey;
     void load(pageOnly);
-  }, [load, page, view]);
+  }, [load, order, page, sort, view]);
 
   return {
     bounds,
+    dayHasMore,
     dayGroups,
     error,
     loaded,
@@ -184,6 +192,7 @@ export function useTradeCenterServerData({
     summary,
     summarySeries,
     symbols,
+    weekHasMore,
     weekGroups,
   };
 }

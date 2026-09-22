@@ -10,7 +10,14 @@ import type { Locale } from "@/lib/i18n";
 import type { TradeCenterText } from "@/lib/tradesync/trade-center-i18n";
 import type { DayGroup } from "@/lib/tradesync/trades-mock";
 
-import { type ColumnKey, formatDayHeader, formatDayLabel, formatMoney, toneClass } from "../_lib/trade-center-model";
+import {
+  type ColumnKey,
+  formatDayHeader,
+  formatDayLabel,
+  formatMoney,
+  formatStatMoney,
+  toneClass,
+} from "../_lib/trade-center-model";
 import { DayTrendChart, StatGrid } from "./trade-metric-cards";
 import { MetaButton } from "./trade-states";
 import { TradeTable } from "./trade-table";
@@ -66,7 +73,7 @@ export function DayGroupCard({
         <span className="flex items-center gap-1.5 text-base">
           <span className="text-muted-foreground">{t.netPnl}</span>
           <span className={`font-semibold tabular-nums ${toneClass(group.stats.net)}`}>
-            {formatMoney(group.stats.net, locale)}
+            {formatStatMoney(group.stats.net, locale)}
           </span>
         </span>
         <span className="ml-auto flex items-center gap-1">
