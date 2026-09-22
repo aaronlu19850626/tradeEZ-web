@@ -14,6 +14,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 export interface SelectOption {
   value: string;
@@ -151,33 +152,55 @@ export function SelectMultiConditionControl({
             <DropdownMenuLabel className="px-2 pt-1 pb-0.5 text-[11px] font-medium text-muted-foreground">
               {group.label}
             </DropdownMenuLabel>
-            <div className="max-h-40 overflow-y-auto">
-              {group.options.map((option) => {
-                const groupValue = draft[group.id] ?? [];
-                const checked = groupValue.includes(option.value);
-                return (
+            {group.mode === "single" ? (
+              <RadioGroup
+                value={draft[group.id]?.[0] ?? ""}
+                onValueChange={(next) => setDraft((prev) => ({ ...prev, [group.id]: [next] }))}
+                className="max-h-40 gap-0 overflow-y-auto"
+              >
+                {group.options.map((option) => (
                   <label
                     key={option.value}
-                    htmlFor={`condition-${option.value}`}
+                    htmlFor={`condition-${group.id}-${option.value}`}
                     className="flex cursor-pointer items-center gap-2.5 rounded-md px-2 py-1.5 text-sm font-normal text-foreground hover:bg-accent"
                   >
-                    <Checkbox
-                      id={`condition-${option.value}`}
-                      checked={checked}
-                      onCheckedChange={() => {
-                        const next = checked
-                          ? groupValue.filter((item) => item !== option.value)
-                          : group.mode === "single"
-                            ? [option.value]
-                            : [...groupValue, option.value];
-                        setDraft((prev) => ({ ...prev, [group.id]: next }));
-                      }}
-                    />
+                    <RadioGroupItem id={`condition-${group.id}-${option.value}`} value={option.value} />
                     <span className="min-w-0 flex-1 truncate text-left">{option.label}</span>
                   </label>
-                );
-              })}
-            </div>
+                ))}
+              </RadioGroup>
+            ) : (
+              <div className="max-h-40 overflow-y-auto">
+                {group.options.map((option) => {
+                  const groupValue = draft[group.id] ?? [];
+                  const checked = groupValue.includes(option.value);
+                  return (
+                    <label
+                      key={option.value}
+                      htmlFor={`condition-${group.id}-${option.value}`}
+                      className="flex cursor-pointer items-center gap-2.5 rounded-md px-2 py-1.5 text-sm font-normal text-foreground hover:bg-accent"
+                    >
+                      <Checkbox
+                        id={`condition-${group.id}-${option.value}`}
+                        checked={checked}
+                        onCheckedChange={() =>
+                          setDraft((prev) => {
+                            const current = prev[group.id] ?? [];
+                            return {
+                              ...prev,
+                              [group.id]: checked
+                                ? current.filter((item) => item !== option.value)
+                                : [...current, option.value],
+                            };
+                          })
+                        }
+                      />
+                      <span className="min-w-0 flex-1 truncate text-left">{option.label}</span>
+                    </label>
+                  );
+                })}
+              </div>
+            )}
             {groupIndex < groups.length - 1 && <DropdownMenuSeparator className="my-1" />}
           </div>
         ))}
