@@ -420,7 +420,7 @@ export default function TradeCenterPage() {
         }
       >
         <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4">{body}</div>
-        {view !== "all" && (
+        {view !== "all" && latestDay !== "" && (
           <SideRail
             key={range.from}
             t={t}
