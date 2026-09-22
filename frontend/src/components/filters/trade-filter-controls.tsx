@@ -319,7 +319,7 @@ export function RangeControl({
               }}
             />
           </div>
-          <div className="grid gap-4 lg:grid-cols-3">
+          <div className="grid gap-4 lg:grid-cols-4">
             <div>
               <p className="text-sm font-semibold text-foreground">{t.filterQuickRanges}</p>
               <div className="mt-2 flex flex-col gap-1">
@@ -329,7 +329,7 @@ export function RangeControl({
                     type="button"
                     variant={draft.from === preset.range.from && draft.to === preset.range.to ? "secondary" : "ghost"}
                     size="sm"
-                    className="h-7 justify-start px-2 text-xs font-normal"
+                    className="h-8 justify-start px-2 text-sm font-normal"
                     onClick={() => setDraft(preset.range)}
                   >
                     {preset.label}
@@ -346,7 +346,7 @@ export function RangeControl({
                     type="button"
                     variant={draft.from === quarter.range.from && draft.to === quarter.range.to ? "secondary" : "ghost"}
                     size="sm"
-                    className="h-7 justify-start px-2 text-xs font-normal"
+                    className="h-8 justify-start px-2 text-sm font-normal"
                     onClick={() => setDraft(quarter.range)}
                   >
                     {quarter.label}
@@ -354,7 +354,7 @@ export function RangeControl({
                 ))}
               </div>
             </div>
-            <div>
+            <div className="lg:col-span-2">
               <p className="text-sm font-semibold text-foreground">{t.filterRecentMonths}</p>
               <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1">
                 {[recentMonths.slice(0, 6), recentMonths.slice(6)].map((column, columnIndex) => (
@@ -365,7 +365,7 @@ export function RangeControl({
                         type="button"
                         variant={draft.from === month.range.from && draft.to === month.range.to ? "secondary" : "ghost"}
                         size="sm"
-                        className="h-7 justify-start px-2 text-xs font-normal"
+                        className="h-8 justify-start px-2 text-sm font-normal"
                         onClick={() => setDraft(month.range)}
                       >
                         {month.label}
