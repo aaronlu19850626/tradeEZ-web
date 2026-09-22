@@ -2,7 +2,7 @@
 
 import { type ReactNode, useEffect, useMemo, useState } from "react";
 
-import { CalendarDays, Check, ChevronDown, ChevronUp, Plus } from "lucide-react";
+import { CalendarDays, Check, ChevronDown, ChevronUp, Plus, X } from "lucide-react";
 import { enUS, zhCN } from "react-day-picker/locale";
 
 import { Button } from "@/components/ui/button";
@@ -250,21 +250,37 @@ export function RangeControl({
         setOpen(next);
       }}
     >
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          size="sm"
-          className={`h-8 gap-2 px-2.5 text-sm leading-none ${
-            range.from ? "font-semibold text-foreground" : "font-normal text-muted-foreground"
-          }`}
-        >
-          <CalendarDays className="size-4 text-muted-foreground" />
-          <span className="min-w-0 whitespace-nowrap">
-            {formatRangeLabel(displayRange.from, displayRange.to, locale)}
-          </span>
-          {open ? <ChevronUp className="size-3.5 opacity-50" /> : <ChevronDown className="size-3.5 opacity-50" />}
-        </Button>
-      </PopoverTrigger>
+      <div className="relative inline-flex items-center">
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            size="sm"
+            className={`h-8 gap-2 px-2.5 text-sm leading-none ${
+              range.from ? "font-semibold text-foreground" : "font-normal text-muted-foreground"
+            }`}
+          >
+            <CalendarDays className="size-4 text-muted-foreground" />
+            <span className="min-w-0 whitespace-nowrap">
+              {formatRangeLabel(displayRange.from, displayRange.to, locale)}
+            </span>
+            {open ? <ChevronUp className="size-3.5 opacity-50" /> : <ChevronDown className="size-3.5 opacity-50" />}
+          </Button>
+        </PopoverTrigger>
+        {range.from && (
+          <button
+            type="button"
+            aria-label={t.filterClear}
+            className="absolute right-6 flex size-4 items-center justify-center rounded-sm text-muted-foreground hover:text-foreground"
+            onClick={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              onRange("", "");
+            }}
+          >
+            <X className="size-3.5" />
+          </button>
+        )}
+      </div>
       <PopoverContent align="end" className="w-auto p-0">
         <div className="flex">
           <div className="border-r p-3">
