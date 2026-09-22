@@ -427,6 +427,7 @@ export default function TradeCenterPage() {
             range={range}
             query={calendarQuery}
             view={view}
+            isFullRange={range.from === earliestDay && range.to === latestDay}
             onPickDay={(dayKey) => {
               if (view === "week") {
                 const start = shanghaiWeekStart(dayKeyToEpoch(dayKey));
