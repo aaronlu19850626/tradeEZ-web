@@ -3,6 +3,7 @@
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { useLocale } from "@/lib/i18n";
+import type { TradeListParams } from "@/lib/tradesync/trade-center";
 import { tradeCenterText } from "@/lib/tradesync/trade-center-i18n";
 import { addDays, computeStats, dayKeyToEpoch, shanghaiWeekStart } from "@/lib/tradesync/trades-mock";
 import { useTradeData } from "@/lib/tradesync/use-trade-data";
@@ -213,6 +214,18 @@ export default function TradeCenterPage() {
     trades: null,
   });
   const symbols = serverData.symbols;
+  const calendarQuery = useMemo<TradeListParams>(
+    () => ({
+      accountIds,
+      fromDay: range.from || undefined,
+      toDay: range.to || undefined,
+      side,
+      result,
+      currency: currency === "all" ? undefined : currency,
+      symbol: selectedSymbols.length > 0 ? selectedSymbols.join(",") : undefined,
+    }),
+    [accountIds, currency, range.from, range.to, result, selectedSymbols, side],
+  );
   const dayGroups = view === "day" ? serverData.dayGroups : [];
   const weekGroups = view === "week" ? serverData.weekGroups : [];
 
@@ -398,15 +411,7 @@ export default function TradeCenterPage() {
             t={t}
             locale={locale}
             range={range}
-            query={{
-              accountIds,
-              fromDay: range.from || undefined,
-              toDay: range.to || undefined,
-              side,
-              result,
-              currency: currency === "all" ? undefined : currency,
-              symbol: selectedSymbols.length === 1 ? selectedSymbols[0] : undefined,
-            }}
+            query={calendarQuery}
             view={view}
             onPickDay={(dayKey) => {
               if (view === "week") {

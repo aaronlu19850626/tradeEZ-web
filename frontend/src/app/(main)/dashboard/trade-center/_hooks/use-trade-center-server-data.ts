@@ -116,6 +116,8 @@ export function useTradeCenterServerData({
   const [error, setError] = useState(false);
   const lastPageRef = useRef(page);
   const lastSortRef = useRef<string>(`${sort ?? ""}|${order ?? ""}`);
+  const lastDayVisibleRef = useRef(dayVisible);
+  const lastWeekVisibleRef = useRef(weekVisible);
 
   useEffect(() => {
     if (accountIds.length === 0) return;
@@ -172,11 +174,18 @@ export function useTradeCenterServerData({
 
   useEffect(() => {
     const sortKey = `${sort ?? ""}|${order ?? ""}`;
-    const pageOnly = view === "all" && (page !== lastPageRef.current || sortKey !== lastSortRef.current);
+    const pageOnly =
+      view === "all"
+        ? page !== lastPageRef.current || sortKey !== lastSortRef.current
+        : view === "day"
+          ? dayVisible !== lastDayVisibleRef.current
+          : weekVisible !== lastWeekVisibleRef.current;
     lastPageRef.current = page;
     lastSortRef.current = sortKey;
+    lastDayVisibleRef.current = dayVisible;
+    lastWeekVisibleRef.current = weekVisible;
     void load(pageOnly);
-  }, [load, order, page, sort, view]);
+  }, [dayVisible, load, order, page, sort, view, weekVisible]);
 
   return {
     bounds,
