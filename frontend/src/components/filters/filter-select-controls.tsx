@@ -57,9 +57,7 @@ export function SelectSingleControl({
           return (
             <DropdownMenuItem
               key={option.value}
-              className={`cursor-pointer gap-2 rounded-md px-2 py-2.5 text-sm leading-normal font-normal ${
-                isSelected ? "bg-accent text-accent-foreground" : "text-foreground"
-              }`}
+              className="cursor-pointer gap-2 rounded-md px-2 py-1.5 text-sm leading-normal font-normal text-foreground"
               onSelect={() => {
                 onValueChange(option.value);
                 setOpen(false);
