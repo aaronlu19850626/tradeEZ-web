@@ -20,7 +20,7 @@ const zh = {
   resultLoss: "亏损",
 
   presetAll: "全部",
-  presetAllDates: "全部日期",
+  presetAllDates: "全量日期",
   presetToday: "今天",
   presetThisWeek: "本周",
   presetThisMonth: "本月",
