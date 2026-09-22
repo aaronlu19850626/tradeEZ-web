@@ -1,15 +1,7 @@
 "use client";
 
-import { useState } from "react";
-
 import { ChevronsDown, ChevronsUp, Columns3 } from "lucide-react";
 
-import {
-  type SelectConditionGroup,
-  SelectMultiConditionControl,
-  type SelectOption,
-  SelectSingleControl,
-} from "@/components/filters";
 import {
   AccountScopeMenu,
   RangeControl,
@@ -76,28 +68,6 @@ export function Toolbar({
   selectedAccountIds: string[];
   onAccountsChange: (accountIds: string[]) => void;
 }) {
-  const [product, setProduct] = useState("MT5");
-  const [leftProduct, setLeftProduct] = useState<string | null>(null);
-  const [multiValue, setMultiValue] = useState<Record<string, string[]>>({});
-  const productOptions: SelectOption[] = [
-    { value: "MT5", label: "MT5" },
-    { value: "MT4", label: "MT4" },
-    { value: "cTrader", label: "cTrader" },
-    { value: "ATAS", label: "ATAS" },
-    { value: "CTP", label: "CTP" },
-  ];
-  const conditionGroups: SelectConditionGroup[] = [
-    { id: "platform", label: "平台", mode: "single", options: productOptions },
-    {
-      id: "status",
-      label: "状态",
-      mode: "multiple",
-      options: [
-        { value: "open", label: "未平仓" },
-        { value: "closed", label: "已平仓" },
-      ],
-    },
-  ];
   const views: { key: ViewMode; label: string }[] = [
     { key: "day", label: t.viewDay },
     { key: "week", label: t.viewWeek },
@@ -127,13 +97,6 @@ export function Toolbar({
       </ToggleGroup>
 
       <div className="flex flex-wrap items-center gap-2 xl:flex-nowrap">
-        <SelectSingleControl
-          value={leftProduct}
-          options={productOptions}
-          placeholder="产品"
-          onValueChange={setLeftProduct}
-          align="start"
-        />
         <Tooltip>
           <TooltipTrigger asChild>
             <Button variant="outline" size="icon" aria-label={t.columns} onClick={onOpenColumns}>
@@ -176,14 +139,6 @@ export function Toolbar({
         <RangeControl range={range} onRange={onRange} latestDay={latestDay} earliestDay={earliestDay} />
 
         <AccountScopeMenu accounts={accounts} selectedIds={selectedAccountIds} onApply={onAccountsChange} />
-        <SelectSingleControl
-          value={product}
-          options={productOptions}
-          placeholder="产品"
-          onValueChange={setProduct}
-          align="end"
-        />
-        <SelectMultiConditionControl value={multiValue} groups={conditionGroups} onChange={setMultiValue} align="end" />
       </div>
     </div>
   );
