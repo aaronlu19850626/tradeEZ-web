@@ -225,6 +225,16 @@ export function RangeControl({
     { label: t.presetThisQuarter, range: { from: quarterStart(latestDay), to: latestDay } },
     { label: t.presetYtd, range: { from: `${latestDay.slice(0, 4)}-01-01`, to: latestDay } },
   ];
+  const recentMonths: { label: string; range: { from: string; to: string } }[] = Array.from(
+    { length: 12 },
+    (_, index) => {
+      const key = monthKeyShift(latestDay.slice(0, 7), -index);
+      return {
+        label: formatMonthLabel(key, locale),
+        range: { from: `${key}-01`, to: monthEnd(key) },
+      };
+    },
+  );
 
   return (
     <Popover
@@ -303,6 +313,23 @@ export function RangeControl({
                   onClick={() => setDraft(preset.range)}
                 >
                   {preset.label}
+                </Button>
+              ))}
+            </div>
+          </div>
+          <div className="border-t pt-3">
+            <p className="text-sm font-semibold text-foreground">{t.filterRecentMonths}</p>
+            <div className="mt-2 grid grid-cols-3 gap-1">
+              {recentMonths.map((month) => (
+                <Button
+                  key={month.label}
+                  type="button"
+                  variant={draft.from === month.range.from && draft.to === month.range.to ? "secondary" : "ghost"}
+                  size="sm"
+                  className="h-8 justify-start px-2 text-sm font-normal"
+                  onClick={() => setDraft(month.range)}
+                >
+                  {month.label}
                 </Button>
               ))}
             </div>
