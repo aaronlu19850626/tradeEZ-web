@@ -13,8 +13,8 @@ import {
 } from "lightweight-charts";
 
 import { DialogBody, DialogContent } from "@/components/dialogs/dialog-content";
-import { useMarketColorProfile } from "@/components/shared/market-color-provider";
 import { useDisplayCurrency } from "@/components/shared/display-currency-provider";
+import { useMarketColorProfile } from "@/components/shared/market-color-provider";
 import { Dialog, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { formatMoney } from "@/lib/format-numbers";
 import type { Locale } from "@/lib/i18n";

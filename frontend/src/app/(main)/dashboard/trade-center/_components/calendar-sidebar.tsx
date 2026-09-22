@@ -7,10 +7,10 @@ import type { DayButton } from "react-day-picker";
 import { enUS, zhCN } from "react-day-picker/locale";
 
 import { formatMonthLabel, monthKeyShift } from "@/components/filters/trade-filter-controls";
+import { useDisplayCurrency } from "@/components/shared/display-currency-provider";
 import { Button } from "@/components/ui/button";
 import { Calendar, CalendarDayButton } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useDisplayCurrency } from "@/components/shared/display-currency-provider";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type { Locale } from "@/lib/i18n";
 import { type TradeListParams, tradeCenterApi } from "@/lib/tradesync/trade-center";

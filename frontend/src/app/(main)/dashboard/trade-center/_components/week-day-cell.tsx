@@ -2,8 +2,8 @@
 
 import { TrendingDown, TrendingUp } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
 import { useDisplayCurrency } from "@/components/shared/display-currency-provider";
+import { Button } from "@/components/ui/button";
 import type { Locale } from "@/lib/i18n";
 import type { TradeCenterText } from "@/lib/tradesync/trade-center-i18n";
 

@@ -5,7 +5,7 @@ import { useState } from "react";
 import type { ResultFilter, SideFilter } from "@/components/filters/trade-filter-controls";
 import type { MarketProfile } from "@/lib/tradesync/trade-center";
 
-import { type ColumnKey, type ViewMode } from "../_lib/trade-center-model";
+import type { ColumnKey, ViewMode } from "../_lib/trade-center-model";
 
 export function useTradeViewState() {
   const [view, setView] = useState<ViewMode>("day");

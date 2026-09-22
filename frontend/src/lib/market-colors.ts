@@ -10,13 +10,7 @@ export function resolveMarketProfile(values: (MarketProfile | null | undefined)[
 }
 
 export function readMarketColor(
-  variable:
-    | "--profit"
-    | "--profit-strong"
-    | "--profit-soft"
-    | "--loss"
-    | "--loss-strong"
-    | "--loss-soft",
+  variable: "--profit" | "--profit-strong" | "--profit-soft" | "--loss" | "--loss-strong" | "--loss-soft",
   fallback: string,
 ): string {
   if (typeof window === "undefined") return fallback;

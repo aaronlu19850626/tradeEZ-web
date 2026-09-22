@@ -2,8 +2,8 @@
 
 import type { ReactNode } from "react";
 
-import { InfoTip } from "@/components/shared/info-tip";
 import { useDisplayCurrency } from "@/components/shared/display-currency-provider";
+import { InfoTip } from "@/components/shared/info-tip";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCount } from "@/lib/format-numbers";
 import type { Locale } from "@/lib/i18n";

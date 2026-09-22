@@ -12,8 +12,8 @@ import {
   YAxis,
 } from "recharts";
 
-import type { Locale } from "@/lib/i18n";
 import { useDisplayCurrency } from "@/components/shared/display-currency-provider";
+import type { Locale } from "@/lib/i18n";
 
 import {
   CHART_LEFT_MARGIN,

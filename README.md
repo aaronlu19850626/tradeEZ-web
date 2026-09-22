@@ -101,10 +101,15 @@ http://127.0.0.1:8000/health          健康检查
 ## 自检
 
 ```bash
-pytest -q                                  # 后端测试（在 backend/ 下执行）
-python backend/scripts/v2_smoke_test.py    # EA 接口冒烟（需独立测试库）
-npx tsc --noEmit                           # 前端类型检查（在 frontend/ 下执行）
-npx biome check src                        # 前端静态检查（在 frontend/ 下执行）
+./scripts/quality/check.sh
+```
+
+统一检查会依次执行后端测试、前端 TypeScript、Biome、生产构建和 Playwright。Playwright 需要本地 `3000` 前端和 `8000` 后端已经启动；只做静态门禁时可执行 `SKIP_E2E=1 ./scripts/quality/check.sh`。
+
+单独运行 EA 接口冒烟：
+
+```bash
+python backend/scripts/v2_smoke_test.py
 ```
 
 `v2_smoke_test.py` 使用独立的 `tradesync_smoke` PostgreSQL 数据库（会清空该库的 public schema），覆盖 HMAC 成功/失败、防重放时间窗、403 账号不匹配、成交幂等、同秒边界、两阶段提交、409 游标保护、1000/1001 批次限制、品种、快照和心跳。

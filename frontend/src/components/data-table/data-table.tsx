@@ -46,6 +46,7 @@ export function DataTable<TData extends object>({
 }) {
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   useEffect(() => {
+    void selectionResetKey;
     setRowSelection({});
   }, [selectionResetKey]);
   useEffect(() => {

@@ -136,9 +136,7 @@ export function ConsistencyHeatmap({
                       <TooltipContent>
                         <div className="flex flex-col gap-0.5 text-xs">
                           <span>{day}</span>
-                          <span className={tone(cell?.net ?? 0)}>
-                            {money(cell?.net ?? 0, locale, currency)}
-                          </span>
+                          <span className={tone(cell?.net ?? 0)}>{money(cell?.net ?? 0, locale, currency)}</span>
                           <span>{fill(t.consistencyTrades, { count: cell?.count ?? 0 })}</span>
                           <span className="text-muted-foreground">{t.consistencyChecklistOff}</span>
                         </div>

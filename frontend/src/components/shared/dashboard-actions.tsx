@@ -5,8 +5,7 @@ import { forwardRef, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 
 const panelActionClass = "px-3 font-semibold text-primary hover:text-primary";
-const panelIconActionClass =
-  "text-primary hover:text-primary";
+const panelIconActionClass = "text-primary hover:text-primary";
 
 export function PanelAction({ children, href, onClick }: { children: ReactNode; href?: string; onClick?: () => void }) {
   if (href) {

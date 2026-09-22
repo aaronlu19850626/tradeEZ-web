@@ -39,6 +39,7 @@
       "!.next",
       "!dist",
       "!out",
+      "!public/platforms",
       "!src/components/ui",
       "!src/components/calendar"
     ]

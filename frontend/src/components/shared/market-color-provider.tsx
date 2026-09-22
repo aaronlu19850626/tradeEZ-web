@@ -6,13 +6,7 @@ import type { ResolvedMarketProfile } from "@/lib/market-colors";
 
 const MarketColorContext = createContext<ResolvedMarketProfile>("fx");
 
-export function MarketColorProvider({
-  profile,
-  children,
-}: {
-  profile: ResolvedMarketProfile;
-  children: ReactNode;
-}) {
+export function MarketColorProvider({ profile, children }: { profile: ResolvedMarketProfile; children: ReactNode }) {
   useLayoutEffect(() => {
     const root = document.documentElement;
     const previous = root.dataset.marketProfile;

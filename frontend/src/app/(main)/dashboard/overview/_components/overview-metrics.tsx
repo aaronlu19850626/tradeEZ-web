@@ -1,7 +1,7 @@
 "use client";
 
-import type { Locale } from "@/lib/i18n";
 import { useDisplayCurrency } from "@/components/shared/display-currency-provider";
+import type { Locale } from "@/lib/i18n";
 import type { DashboardText } from "@/lib/tradesync/dashboard-i18n";
 
 import type { OverviewStats } from "../_lib/overview-data";
