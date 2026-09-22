@@ -36,6 +36,12 @@ import {
   toneClass,
 } from "../_lib/trade-center-model";
 
+function formatCount(value: number, locale: Locale): string {
+  return value >= 10000
+    ? `${(value / 1000).toLocaleString(locale, { maximumFractionDigits: 1 })}K`
+    : value.toLocaleString(locale);
+}
+
 export function MetricCard({
   t,
   title,
@@ -75,7 +81,7 @@ export function StatGrid({ stats, t, locale }: { stats: TradeStats; t: TradeCent
       value: <span className={toneClass(stats.gross)}>{formatStatMoney(stats.gross, locale)}</span>,
       tip: t.tipGrossPnl,
     },
-    { label: t.winnersLosers, value: `${stats.winners} / ${stats.losers}` },
+    { label: t.winnersLosers, value: `${formatCount(stats.winners, locale)} / ${formatCount(stats.losers, locale)}` },
     {
       label: t.swaps,
       value: <span className={toneClass(stats.swap)}>{formatStatMoney(stats.swap, locale)}</span>,
@@ -244,21 +250,25 @@ export function WinRateStats({ stats, t, locale }: { stats: TradeStats; t: Trade
         <TooltipContent>
           <div className="flex flex-col gap-0.5">
             <span>
-              {t.resultWin} {stats.winners}
+              {t.resultWin} {formatCount(stats.winners, locale)}
             </span>
             <span>
-              {t.resultFlat} {stats.breakeven}
+              {t.resultFlat} {formatCount(stats.breakeven, locale)}
             </span>
             <span>
-              {t.resultLoss} {stats.losers}
+              {t.resultLoss} {formatCount(stats.losers, locale)}
             </span>
           </div>
         </TooltipContent>
       </Tooltip>
       <div className="flex items-center gap-1.5 text-xs font-medium">
-        <span className="rounded-full bg-profit-soft px-2 py-0.5 text-profit">{stats.winners}</span>
-        <span className="rounded-full bg-muted px-2 py-0.5 text-muted-foreground">{stats.breakeven}</span>
-        <span className="rounded-full bg-loss-soft px-2 py-0.5 text-loss">{stats.losers}</span>
+        <span className="rounded-full bg-profit-soft px-2 py-0.5 text-profit">
+          {formatCount(stats.winners, locale)}
+        </span>
+        <span className="rounded-full bg-muted px-2 py-0.5 text-muted-foreground">
+          {formatCount(stats.breakeven, locale)}
+        </span>
+        <span className="rounded-full bg-loss-soft px-2 py-0.5 text-loss">{formatCount(stats.losers, locale)}</span>
       </div>
     </div>
   );
