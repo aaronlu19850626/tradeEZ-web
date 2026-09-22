@@ -42,7 +42,7 @@ export function SelectSingleControl({
         <Button
           variant="outline"
           size="sm"
-          className={`h-8 w-auto gap-2 px-2.5 font-normal ${
+          className={`h-8 w-auto gap-2 px-2.5 text-sm leading-none font-normal ${
             selected ? "font-semibold text-foreground" : "text-muted-foreground"
           } ${className ?? ""}`}
         >
@@ -57,7 +57,7 @@ export function SelectSingleControl({
           return (
             <DropdownMenuItem
               key={option.value}
-              className={`cursor-pointer gap-2 rounded-md px-2 py-1.5 font-normal ${
+              className={`cursor-pointer gap-2 rounded-md px-2 py-2 text-sm leading-none font-normal ${
                 isSelected ? "bg-accent text-accent-foreground" : "text-foreground"
               }`}
               onSelect={() => {

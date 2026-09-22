@@ -72,6 +72,7 @@ export function Toolbar({
   onAccountsChange: (accountIds: string[]) => void;
 }) {
   const [product, setProduct] = useState("MT5");
+  const [leftProduct, setLeftProduct] = useState<string | null>(null);
   const productOptions: SelectOption[] = [
     { value: "MT5", label: "MT5" },
     { value: "MT4", label: "MT4" },
@@ -108,6 +109,13 @@ export function Toolbar({
       </ToggleGroup>
 
       <div className="flex flex-wrap items-center gap-2 xl:flex-nowrap">
+        <SelectSingleControl
+          value={leftProduct}
+          options={productOptions}
+          placeholder="产品"
+          onValueChange={setLeftProduct}
+          align="start"
+        />
         <Tooltip>
           <TooltipTrigger asChild>
             <Button variant="outline" size="icon" aria-label={t.columns} onClick={onOpenColumns}>
