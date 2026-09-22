@@ -202,6 +202,23 @@ def test_summary_stats(client, db):
     assert body["series"][-1]["value"] == 115.0
 
 
+def test_zero_stop_loss_is_not_counted_as_r_multiple(client, db):
+    headers = web_headers(db, "trade-summary-no-r@example.com")
+    account = create_account(client, headers, 922001)
+    _add_symbol(db, 922001)
+    _ingest(
+        client,
+        account["sync_key"],
+        922001,
+        _closed_trade(account, 921019, "2026-09-14", "2026-09-15", profit=100.0, sl_price=0.0),
+    )
+
+    trade = client.get("/api/v1/trades", headers=headers).json()["items"][0]
+    summary = client.get("/api/v1/trades/summary", headers=headers).json()
+    assert trade["rMultiple"] is None
+    assert summary["stats"]["avgR"] is None
+
+
 def test_overview_aggregates_server_side(client, db):
     headers = web_headers(db, "trade-overview@example.com")
     account = create_account(client, headers, 921030)
@@ -223,6 +240,55 @@ def test_overview_aggregates_server_side(client, db):
     assert body["drawdown"]["maxDrawdown"] == 25.0
     assert len(body["consistency"]["weeks"]) == 13
     assert len(body["timeEntry"]) == 3 and len(body["timeExit"]) == 3 and len(body["duration"]) == 3
+
+
+def test_overview_scatter_sampling_caps_large_result(client, db):
+    headers = web_headers(db, "trade-overview-sampling@example.com")
+    account = create_account(client, headers, 922002)
+    base_epoch = bj_epoch("2026-09-01", 9)
+    rows = [
+        (
+            account["mt5_login"] * 10000 + index,
+            account["mt5_login"],
+            account["id"],
+            account["mt5_login"] * 10000 + index,
+            "XAUUSD",
+            0,
+            0.1,
+            2010.0,
+            1990.0,
+            2020.0,
+            float(index % 21 - 10),
+            0.0,
+            -1.0,
+            920717,
+            "sample",
+            base_epoch,
+            base_epoch + index,
+            2000.0,
+            0.01,
+            100.0,
+        )
+        for index in range(1, 1101)
+    ]
+    db.executemany(
+        """
+        INSERT INTO closed_trades (
+            ticket, account_login, account_id, position_id, symbol, type, volume,
+            close_price, sl_price, tp_price, profit, swap, commission, magic, comment,
+            open_time, deal_time, open_price, point, contract_size
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        rows,
+    )
+    db.commit()
+
+    body = client.get("/api/v1/trades/overview", headers=headers).json()
+    assert body["stats"]["count"] == 1100
+    assert 0 < len(body["timeEntry"]) <= 1002
+    assert 0 < len(body["timeExit"]) <= 1002
+    assert 0 < len(body["duration"]) <= 1002
+    assert len(body["recent"]) == 8
 
 
 def test_overview_scatter_downsampling_caps_points():

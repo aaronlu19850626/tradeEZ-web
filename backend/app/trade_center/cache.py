@@ -9,7 +9,7 @@ from .schemas import TradeFilter
 
 _CACHE: dict[tuple, tuple[float, object]] = {}
 _MAX_ENTRIES = 512
-_TTL_SECONDS = 3.0
+_TTL_SECONDS = 30.0
 
 
 def _key(user_id: int, flt: TradeFilter, variant: str = "full") -> tuple:
@@ -33,6 +33,24 @@ def get_cached_items(user_id: int, flt: TradeFilter, variant: str = "full") -> l
 
 
 def put_cached_items(user_id: int, flt: TradeFilter, value: list, variant: str = "full") -> None:
+    if len(_CACHE) >= _MAX_ENTRIES:
+        _CACHE.pop(next(iter(_CACHE)))
+    _CACHE[_key(user_id, flt, variant)] = (time.monotonic(), value)
+
+
+def get_cached_object(user_id: int, flt: TradeFilter, variant: str) -> object | None:
+    key = _key(user_id, flt, variant)
+    entry = _CACHE.get(key)
+    if entry is None:
+        return None
+    cached_at, value = entry
+    if time.monotonic() - cached_at > _TTL_SECONDS:
+        _CACHE.pop(key, None)
+        return None
+    return value
+
+
+def put_cached_object(user_id: int, flt: TradeFilter, value: object, variant: str) -> None:
     if len(_CACHE) >= _MAX_ENTRIES:
         _CACHE.pop(next(iter(_CACHE)))
     _CACHE[_key(user_id, flt, variant)] = (time.monotonic(), value)

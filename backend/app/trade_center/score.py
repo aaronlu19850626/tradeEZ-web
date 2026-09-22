@@ -57,39 +57,27 @@ def _daily_net(items: list[TradeItem]) -> list[float]:
     return list(buckets.values())
 
 
-def composite_score(items: list[TradeItem]) -> CompositeScoreOut:
-    r_trades = [item for item in items if item.rMultiple is not None]
-    r_values = [float(item.rMultiple) for item in r_trades]
-    wins = [item for item in items if item.netPnl > 0]
-    win_r = [value for value in r_values if value > 0]
-    loss_r = [value for value in r_values if value < 0]
-
-    ordered = sorted(items, key=lambda item: (item.closeTime, item.id))
-    money_curve = []
-    running = 0.0
-    for item in ordered:
-        running += item.netPnl
-        money_curve.append(running)
-    r_curve = []
-    running_r = 0.0
-    for item in sorted(r_trades, key=lambda item: (item.closeTime, item.id)):
-        running_r += float(item.rMultiple)
-        r_curve.append(running_r)
-
-    net_pnl = sum(item.netPnl for item in items)
-    money_drawdown = _max_drawdown(money_curve)
-    drawdown_r = _max_drawdown(r_curve)
-    worst_r = min(r_values) if r_values else 0.0
-    expectancy = _mean(r_values) if r_values else None
-    payoff = _mean(win_r) / abs(_mean(loss_r)) if win_r and loss_r else None
+def composite_score_from_metrics(
+    *,
+    sample_trades: int,
+    valid_r: int,
+    net_pnl: float,
+    money_drawdown: float,
+    drawdown_r: float,
+    worst_r: float,
+    expectancy: float | None,
+    avg_win_r: float | None,
+    avg_loss_r: float | None,
+    win_rate: float,
+    day_values: list[float],
+) -> CompositeScoreOut:
+    payoff = avg_win_r / abs(avg_loss_r) if avg_win_r is not None and avg_loss_r not in (None, 0) else None
     recovery = 0.0
     if money_drawdown > 0:
         recovery = net_pnl / money_drawdown
     elif net_pnl > 0:
         recovery = 3.0
-    win_rate = len(wins) / len(items) if items else 0.0
 
-    day_values = _daily_net(items)
     win_day_rate = (
         sum(1 for value in day_values if value > 0) / len(day_values) if day_values else 0.0
     )
@@ -143,7 +131,7 @@ def composite_score(items: list[TradeItem]) -> CompositeScoreOut:
     ]
     for dimension in dimensions:
         dimension.score = _round(dimension.score, 1)
-    insufficient = len(items) < 30 or len(r_values) < 20
+    insufficient = sample_trades < 30 or valid_r < 20
     total = (
         None
         if insufficient
@@ -152,9 +140,43 @@ def composite_score(items: list[TradeItem]) -> CompositeScoreOut:
     weakest = [dimension.key for dimension in sorted(dimensions, key=lambda item: item.score / 100.0)[:2]]
     return CompositeScoreOut(
         insufficient=insufficient,
-        sampleTrades=len(items),
-        validR=len(r_values),
+        sampleTrades=sample_trades,
+        validR=valid_r,
         total=total,
         dimensions=dimensions,
         weakest=weakest,
+    )
+
+
+def composite_score(items: list[TradeItem]) -> CompositeScoreOut:
+    r_trades = [item for item in items if item.rMultiple is not None]
+    r_values = [float(item.rMultiple) for item in r_trades]
+    wins = [item for item in items if item.netPnl > 0]
+    win_r = [value for value in r_values if value > 0]
+    loss_r = [value for value in r_values if value < 0]
+
+    ordered = sorted(items, key=lambda item: (item.closeTime, item.id))
+    money_curve = []
+    running = 0.0
+    for item in ordered:
+        running += item.netPnl
+        money_curve.append(running)
+    r_curve = []
+    running_r = 0.0
+    for item in sorted(r_trades, key=lambda item: (item.closeTime, item.id)):
+        running_r += float(item.rMultiple)
+        r_curve.append(running_r)
+
+    return composite_score_from_metrics(
+        sample_trades=len(items),
+        valid_r=len(r_values),
+        net_pnl=sum(item.netPnl for item in items),
+        money_drawdown=_max_drawdown(money_curve),
+        drawdown_r=_max_drawdown(r_curve),
+        worst_r=min(r_values) if r_values else 0.0,
+        expectancy=_mean(r_values) if r_values else None,
+        avg_win_r=_mean(win_r) if win_r else None,
+        avg_loss_r=_mean(loss_r) if loss_r else None,
+        win_rate=len(wins) / len(items) if items else 0.0,
+        day_values=_daily_net(items),
     )

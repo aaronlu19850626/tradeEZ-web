@@ -8,7 +8,7 @@ from fastapi import HTTPException, status
 from app.db import DBConnection, DBRow
 
 from . import repository
-from .cache import get_cached_items, put_cached_items
+from .cache import get_cached_items, get_cached_object, put_cached_items, put_cached_object
 from .schemas import (
     CalendarDayOut,
     ConsistencyCellOut,
@@ -34,7 +34,7 @@ from .schemas import (
     beijing_week_start,
     day_bounds,
 )
-from .score import composite_score
+from .score import composite_score, composite_score_from_metrics
 
 SORT_FIELDS = {
     "closeTime",
@@ -143,6 +143,7 @@ def _to_light_item(row: DBRow) -> LightTrade:
     volume = float(row["volume"] or 0)
     close_price = float(row["close_price"] or 0)
     open_price = float(row["open_price"]) if row["open_price"] is not None else None
+    sl_price = float(row["sl_price"]) if (row["sl_price"] or 0) > 0 else None
     profit = float(row["profit"] or 0)
     swap = float(row["swap"] or 0)
     commission = float(row["commission"] or 0)
@@ -150,8 +151,8 @@ def _to_light_item(row: DBRow) -> LightTrade:
     gross_pnl = _round(profit + swap)
     net_pnl = _round(profit + swap + commission)
     r_multiple: float | None = None
-    if open_price is not None and row["sl_price"] is not None and contract_size:
-        initial_risk = abs(open_price - float(row["sl_price"])) * contract_size * volume
+    if open_price is not None and sl_price is not None and contract_size:
+        initial_risk = abs(open_price - sl_price) * contract_size * volume
         if initial_risk > 0:
             r_multiple = _round(net_pnl / initial_risk, 4)
     account_login = str(row["account_login"])
@@ -250,6 +251,34 @@ def compute_stats(items: list[TradeItem]) -> StatsOut:
     )
 
 
+def _stats_from_sql(row: dict) -> StatsOut:
+    count = int(row.get("count") or 0)
+    winners = int(row.get("winners") or 0)
+    losers = int(row.get("losers") or 0)
+    win_sum = float(row.get("win_sum") or 0)
+    loss_sum = float(row.get("loss_sum") or 0)
+    return StatsOut(
+        count=count,
+        gross=_round(float(row.get("gross") or 0)),
+        net=_round(float(row.get("net") or 0)),
+        commission=_round(float(row.get("commission") or 0)),
+        swap=_round(float(row.get("swap") or 0)),
+        winners=winners,
+        losers=losers,
+        breakeven=int(row.get("breakeven") or 0),
+        winRate=(winners / count) if count else 0.0,
+        volume=_round(float(row.get("volume") or 0)),
+        profitFactor=_round(win_sum / loss_sum) if loss_sum > 0 else None,
+        avgWin=_round(win_sum / winners) if winners > 0 else None,
+        avgLoss=_round(loss_sum / losers) if losers > 0 else None,
+        winSum=_round(win_sum),
+        lossSum=_round(loss_sum),
+        avgR=_round(float(row["avg_r"])) if row.get("avg_r") is not None else None,
+        netPeak=_round(float(row.get("net_peak") or 0)),
+        netTrough=_round(float(row.get("net_trough") or 0)),
+    )
+
+
 def cumulative_series(items: list[TradeItem]) -> list[SeriesPoint]:
     ordered = sorted(items, key=lambda item: (item.closeTime, item.id))
     running = 0.0
@@ -339,8 +368,36 @@ def list_trades(db: DBConnection, user: DBRow, flt: TradeFilter, sort: str, orde
 
 
 def summary(db: DBConnection, user: DBRow, flt: TradeFilter) -> SummaryOut:
-    items = _load_items(db, user, flt, light=True)
-    return SummaryOut(stats=compute_stats(items), series=_sampled_cumulative_series(items))
+    user_id = int(user["id"])
+    cached = get_cached_object(user_id, flt, "summary")
+    if isinstance(cached, SummaryOut):
+        return cached
+    logins = _resolve_logins(db, user, flt.account_id_list())
+    if not logins:
+        result = SummaryOut(stats=compute_stats([]), series=[SeriesPoint(index=0, value=0.0)])
+        put_cached_object(user_id, flt, result, "summary")
+        return result
+    from_epoch, to_epoch = day_bounds(flt.from_day, flt.to_day)
+    row, series_rows = repository.fetch_trade_summary_sql(
+        db,
+        user_id=user_id,
+        logins=logins,
+        from_epoch=from_epoch,
+        to_epoch=to_epoch,
+        side=flt.side,
+        result=flt.result,
+        currency=flt.currency,
+        market_profile=flt.market_profile,
+        symbol=flt.symbol,
+    )
+    series = [SeriesPoint(index=0, value=0.0)]
+    series.extend(
+        SeriesPoint(index=int(item["index"]), value=_round(float(item["value"] or 0)))
+        for item in series_rows
+    )
+    result = SummaryOut(stats=_stats_from_sql(row), series=series)
+    put_cached_object(user_id, flt, result, "summary")
+    return result
 
 
 def groups(
@@ -352,14 +409,30 @@ def groups(
     limit: int | None = None,
     offset: int = 0,
 ) -> list[GroupOut]:
-    items = _load_items(db, user, flt, light=True)
-    key_of = beijing_day if view == "day" else beijing_week_start
-    keys: set[str] = set()
-    for item in items:
-        keys.add(key_of(item.closeTime))
-
-    selected_keys = sorted(keys, reverse=True)[offset : (offset + limit) if limit else None]
+    user_id = int(user["id"])
+    cache_variant = f"groups:{view}:{limit}:{offset}"
+    cached = get_cached_object(user_id, flt, cache_variant)
+    if isinstance(cached, list):
+        return cached
     logins = _resolve_logins(db, user, flt.account_id_list())
+    if not logins:
+        put_cached_object(user_id, flt, [], cache_variant)
+        return []
+    from_epoch, to_epoch = day_bounds(flt.from_day, flt.to_day)
+    keys = repository.fetch_group_keys_sql(
+        db,
+        user_id=user_id,
+        logins=logins,
+        from_epoch=from_epoch,
+        to_epoch=to_epoch,
+        side=flt.side,
+        result=flt.result,
+        currency=flt.currency,
+        market_profile=flt.market_profile,
+        symbol=flt.symbol,
+        view=view,
+    )
+    selected_keys = keys[offset : (offset + limit) if limit else None]
 
     result: list[GroupOut] = []
     for key in selected_keys:
@@ -385,6 +458,7 @@ def groups(
                 trades=trades,
             ),
         )
+    put_cached_object(user_id, flt, result, cache_variant)
     return result
 
 
@@ -476,6 +550,42 @@ def _overview_stats(items: list[TradeItem], days: list[DayStatOut]) -> OverviewS
     )
 
 
+def _overview_days_from_sql(rows: list[dict]) -> list[DayStatOut]:
+    return [
+        DayStatOut(
+            day=str(row["day"]),
+            net=_round(float(row["net"] or 0)),
+            count=int(row["count"] or 0),
+            wins=int(row["wins"] or 0),
+        )
+        for row in rows
+    ]
+
+
+def _overview_stats_from_sql(row: dict, days: list[DayStatOut]) -> OverviewStatsOut:
+    count = int(row.get("count") or 0)
+    winners = int(row.get("winners") or 0)
+    losers = int(row.get("losers") or 0)
+    win_sum = float(row.get("win_sum") or 0)
+    loss_sum = float(row.get("loss_sum") or 0)
+    return OverviewStatsOut(
+        count=count,
+        net=_round(float(row.get("net") or 0)),
+        winners=winners,
+        losers=losers,
+        breakEven=int(row.get("breakeven") or 0),
+        winRate=(winners / count) if count else 0.0,
+        profitFactor=_round(win_sum / loss_sum) if loss_sum > 0 else None,
+        avgWin=_round(win_sum / winners) if winners > 0 else None,
+        avgLoss=_round(loss_sum / losers) if losers > 0 else None,
+        winDays=sum(1 for day in days if day.net > 0),
+        flatDays=sum(1 for day in days if day.net == 0),
+        lossDays=sum(1 for day in days if day.net < 0),
+        dayWinRate=(sum(1 for day in days if day.net > 0) / len(days)) if days else 0.0,
+        days=days,
+    )
+
+
 def _cumulative_points(items: list[TradeItem]) -> list[DatePointOut]:
     daily: dict[str, float] = {}
     for item in items:
@@ -491,16 +601,36 @@ def _cumulative_points(items: list[TradeItem]) -> list[DatePointOut]:
     return points
 
 
-def _drawdown_points(items: list[TradeItem]) -> DrawdownOut:
+def _cumulative_points_from_days(days: list[DayStatOut]) -> list[DatePointOut]:
+    running = 0.0
+    points: list[DatePointOut] = []
+    for day in sorted(days, key=lambda item: item.day):
+        running = _round(running + day.net)
+        year, month, date_part = day.day.split("-")
+        points.append(
+            DatePointOut(
+                date=day.day,
+                label=f"{month}/{date_part}/{year[2:]}",
+                value=running,
+            )
+        )
+    return points
+
+
+def _drawdown_points_from_cumulative(points: list[DatePointOut]) -> DrawdownOut:
     peak = 0.0
     worst = 0.0
-    points = []
-    for point in _cumulative_points(items):
+    result: list[DatePointOut] = []
+    for point in points:
         peak = max(peak, point.value)
         value = _round(point.value - peak)
         worst = min(worst, value)
-        points.append(DatePointOut(date=point.date, label=point.label, value=value))
-    return DrawdownOut(points=points, maxDrawdown=abs(worst))
+        result.append(DatePointOut(date=point.date, label=point.label, value=value))
+    return DrawdownOut(points=result, maxDrawdown=abs(worst))
+
+
+def _drawdown_points(items: list[TradeItem]) -> DrawdownOut:
+    return _drawdown_points_from_cumulative(_cumulative_points(items))
 
 
 def _consistency(days: list[DayStatOut], latest_day: str | None) -> ConsistencyOut:
@@ -597,33 +727,115 @@ def _sampled_cumulative_series(items: list[TradeItem], limit: int = 1000) -> lis
 
 
 def overview(db: DBConnection, user: DBRow, flt: TradeFilter) -> OverviewOut:
-    items = _load_items(db, user, flt, light=True)
-    days = _overview_days(items)
-    latest_day = beijing_day(max(item.closeTime for item in items)) if items else None
+    user_id = int(user["id"])
+    cached = get_cached_object(user_id, flt, "overview")
+    if isinstance(cached, OverviewOut):
+        return cached
+    logins = _resolve_logins(db, user, flt.account_id_list())
+    if not logins:
+        result = OverviewOut(
+            stats=_overview_stats_from_sql({}, []),
+            score=composite_score([]),
+            cumulative=[],
+            cumulativeRecent=[],
+            drawdown=DrawdownOut(points=[], maxDrawdown=0.0),
+            recent=[],
+            consistency=ConsistencyOut(cells=[], weeks=[]),
+            timeEntry=[],
+            timeExit=[],
+            duration=[],
+        )
+        put_cached_object(user_id, flt, result, "overview")
+        return result
+
+    from_epoch, to_epoch = day_bounds(flt.from_day, flt.to_day)
+    row, day_rows, recent_rows = repository.fetch_trade_overview_sql(
+        db,
+        user_id=user_id,
+        logins=logins,
+        from_epoch=from_epoch,
+        to_epoch=to_epoch,
+        side=flt.side,
+        result=flt.result,
+        currency=flt.currency,
+        market_profile=flt.market_profile,
+        symbol=flt.symbol,
+    )
+    scatter_rows = repository.fetch_trade_overview_scatter_sql(
+        db,
+        user_id=user_id,
+        logins=logins,
+        from_epoch=from_epoch,
+        to_epoch=to_epoch,
+        side=flt.side,
+        result=flt.result,
+        currency=flt.currency,
+        market_profile=flt.market_profile,
+        symbol=flt.symbol,
+        sample_step=max(1, (int(row.get("count") or 0) + 999) // 1000),
+        limit=1000,
+    )
+    days = _overview_days_from_sql(day_rows)
+    latest_day = days[0].day if days else None
     recent_start = _add_days(latest_day, -29) if latest_day else None
-    recent_items = [item for item in items if recent_start and beijing_day(item.closeTime) >= recent_start]
+    recent_days = [day for day in days if recent_start and day.day >= recent_start]
     recent = [
         OverviewRecentOut(
-            id=item.id,
-            closeTime=item.closeTime,
-            symbol=item.symbol,
-            side=item.side,
-            netPnl=item.netPnl,
+            id=f"{row['account_login']}-{row['ticket']}",
+            closeTime=int(row["deal_time"]),
+            symbol=str(row["symbol"] or ""),
+            side="buy" if int(row["type"]) == 0 else "sell",
+            netPnl=_round(float(row["net"] or 0)),
         )
-        for item in sorted(items, key=lambda item: (item.closeTime, item.id), reverse=True)[:8]
+        for row in recent_rows
     ]
-    return OverviewOut(
-        stats=_overview_stats(items, days),
-        score=composite_score(items),
-        cumulative=_cumulative_points(items),
-        cumulativeRecent=_cumulative_points(recent_items),
-        drawdown=_drawdown_points(items),
+    cumulative = _cumulative_points_from_days(days)
+    count = int(row.get("count") or 0)
+    scatter: dict[str, list[ScatterPointOut]] = {
+        "timeEntry": [],
+        "timeExit": [],
+        "duration": [],
+    }
+    for point in scatter_rows:
+        kind = str(point["kind"])
+        if kind in scatter:
+            scatter[kind].append(
+                ScatterPointOut(
+                    x=float(point["x"] or 0),
+                    y=_round(float(point["y"] or 0)),
+                )
+            )
+    valid_r = int(row.get("valid_r") or 0)
+    average_r = float(row["expectancy"]) if row.get("expectancy") is not None else None
+    average_win_r = float(row["avg_win_r"]) if row.get("avg_win_r") is not None else None
+    average_loss_r = float(row["avg_loss_r"]) if row.get("avg_loss_r") is not None else None
+    score = composite_score_from_metrics(
+        sample_trades=count,
+        valid_r=valid_r,
+        net_pnl=float(row.get("net") or 0),
+        money_drawdown=float(row.get("money_drawdown") or 0),
+        drawdown_r=float(row.get("drawdown_r") or 0),
+        worst_r=float(row["worst_r"]) if row.get("worst_r") is not None else 0.0,
+        expectancy=average_r if valid_r else None,
+        avg_win_r=average_win_r,
+        avg_loss_r=average_loss_r,
+        win_rate=(int(row.get("winners") or 0) / count) if count else 0.0,
+        day_values=[day.net for day in days],
+    )
+    result = OverviewOut(
+        stats=_overview_stats_from_sql(row, days),
+        score=score,
+        cumulative=cumulative,
+        cumulativeRecent=_cumulative_points_from_days(recent_days),
+        drawdown=_drawdown_points_from_cumulative(cumulative),
         recent=recent,
         consistency=_consistency(days, latest_day),
-        timeEntry=_sample_scatter_values([(_beijing_hour(item.openTime), item.netPnl) for item in items]),
-        timeExit=_sample_scatter_values([(_beijing_hour(item.closeTime), item.netPnl) for item in items]),
-        duration=_sample_scatter_values([(max(0.1, float(item.durationSec)), item.netPnl) for item in items]),
+        timeEntry=scatter["timeEntry"],
+        timeExit=scatter["timeExit"],
+        duration=scatter["duration"],
     )
+    put_cached_object(user_id, flt, result, "overview")
+    return result
 
 
 def symbols(db: DBConnection, user: DBRow, flt: TradeFilter) -> list[str]:
