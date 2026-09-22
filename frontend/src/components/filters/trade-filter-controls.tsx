@@ -255,7 +255,7 @@ export function RangeControl({
             variant="outline"
             size="sm"
             className={`h-8 gap-2 px-2.5 text-sm leading-none ${
-              range.from ? "font-semibold text-foreground" : "font-normal text-muted-foreground"
+              range.from ? "font-semibold text-foreground" : "font-semibold text-muted-foreground"
             }`}
           >
             <CalendarDays className="size-4 text-muted-foreground" />
