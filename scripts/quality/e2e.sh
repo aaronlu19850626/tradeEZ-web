@@ -3,10 +3,13 @@
 set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 PYTHON_BIN="${PYTHON_BIN:-${ROOT_DIR}/backend/.venv/bin/python}"
+if [[ "$PYTHON_BIN" != */* ]]; then
+  PYTHON_BIN="$(command -v "$PYTHON_BIN" || true)"
+fi
 export TRADEEZ_BASE_URL="${TRADEEZ_BASE_URL:-http://127.0.0.1:${TRADEEZ_FRONTEND_PORT:-3311}}"
 export TRADEEZ_API_URL="${TRADEEZ_API_URL:-http://127.0.0.1:${TRADEEZ_BACKEND_PORT:-8311}/api/v1/}"
 : "${TRADEEZ_E2E_DATABASE_URL:?Set a new dedicated tradeez_e2e_* database URL}"
-if [[ ! -x "$PYTHON_BIN" ]]; then echo "Missing PYTHON_BIN: $PYTHON_BIN" >&2; exit 1; fi
+if [[ -z "$PYTHON_BIN" || ! -x "$PYTHON_BIN" ]]; then echo "Missing executable PYTHON_BIN" >&2; exit 1; fi
 cd "$ROOT_DIR"
 "$PYTHON_BIN" - <<'PY'
 import os, socket
