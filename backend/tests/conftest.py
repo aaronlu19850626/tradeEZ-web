@@ -8,14 +8,24 @@ from urllib.parse import parse_qsl, quote, urlencode, urlsplit, urlunsplit
 
 import psycopg
 import pytest
-from dotenv import load_dotenv
 
 BACKEND_ROOT = Path(__file__).resolve().parents[1]
 if str(BACKEND_ROOT) not in sys.path:
     sys.path.insert(0, str(BACKEND_ROOT))
 
-load_dotenv(BACKEND_ROOT / ".env", override=False)
 
+# Set before importing app modules: do not inherit real providers from .env.
+os.environ.update({
+    "TRADESYNC_ENVIRONMENT": "test",
+    "TRADESYNC_EMAIL_PROVIDER": "console",
+    "TRADESYNC_SMS_PROVIDER": "disabled",
+    "TRADESYNC_AUTH_SECRET": "unit-test-auth-secret",
+    "TRADESYNC_SYNC_KEY_ENCRYPTION_SECRET": "unit-test-encryption-secret",
+    "TRADESYNC_AUTH_TEST_MODE": "false",
+    "TRADESYNC_DEV_FIXED_LOGIN_CODE": "",
+    "TRADESYNC_INTERNAL_API_TOKEN": "",
+    "TRADESYNC_HEARTBEAT_HISTORY_AUTO_PRUNE": "false",
+})
 TEST_SCHEMA = "tradesync_test"
 
 
@@ -28,12 +38,12 @@ def _replace_schema(url: str, schema: str) -> str:
 
 def test_database_url() -> str:
     explicit = os.getenv("TRADESYNC_TEST_DATABASE_URL", "").strip()
-    if explicit:
-        return explicit
-    source = os.getenv("TRADESYNC_DATABASE_URL", "").strip()
-    if not source:
-        raise RuntimeError("TRADESYNC_DATABASE_URL is required to provision the isolated test schema")
-    return _replace_schema(source, TEST_SCHEMA)
+    if not explicit:
+        raise RuntimeError("Set TRADESYNC_TEST_DATABASE_URL to a dedicated tradeez_test_* database")
+    parts = urlsplit(explicit)
+    if not parts.path.lstrip("/").startswith("tradeez_test_"):
+        raise RuntimeError("Tests require a dedicated database named tradeez_test_*")
+    return _replace_schema(explicit, TEST_SCHEMA)
 
 
 def reset_test_schema(url: str) -> None:
@@ -50,7 +60,7 @@ def pg_client():
         os.environ["TRADESYNC_DATABASE_URL"] = url
         reset_test_schema(url)
     except (psycopg.Error, OSError, RuntimeError) as exc:
-        pytest.skip(f"PostgreSQL test schema is unavailable: {exc}")
+        pytest.fail(f"Isolated PostgreSQL test database unavailable ({type(exc).__name__}); check local connection settings", pytrace=False)
 
     from app.config import get_settings
     from app.main import app

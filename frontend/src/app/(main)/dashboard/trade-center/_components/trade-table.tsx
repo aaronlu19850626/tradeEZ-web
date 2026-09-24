@@ -15,7 +15,6 @@ import type { TradeCenterText } from "@/lib/tradesync/trade-center-i18n";
 import { type MockTrade, shanghaiDayKey } from "@/lib/tradesync/trades-mock";
 
 import {
-  ALL_TABLE_MAX_HEIGHT,
   alignClass,
   COLUMN_META,
   type ColumnKey,
@@ -158,14 +157,14 @@ export function TradeTable({
 
   const scrollable = compact === true || stickyHeader === true;
   const rootClassName = stickyHeader
-    ? `${ALL_TABLE_MAX_HEIGHT} rounded-none border-0`
+    ? "h-full max-h-full rounded-none border-0"
     : compact
       ? "max-h-[400px] rounded-none border-0"
       : "rounded-none border-0";
   const containerClassName = stickyHeader
-    ? `${ALL_TABLE_MAX_HEIGHT} overflow-y-auto overscroll-contain [scrollbar-gutter:stable]`
+    ? "h-full max-h-full overflow-y-auto overscroll-y-auto [scrollbar-gutter:stable]"
     : compact
-      ? "max-h-[400px] overflow-y-auto overscroll-contain [scrollbar-gutter:stable]"
+      ? "max-h-[400px] overflow-y-auto overscroll-y-auto [scrollbar-gutter:stable]"
       : undefined;
 
   return (

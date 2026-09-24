@@ -89,7 +89,7 @@ export function RecentTrades({ t, trades, locale }: { t: DashboardText; trades: 
       getRowId={(trade) => trade.id}
       emptyMessage={t.na}
       className="h-full max-h-full"
-      containerClassName="h-full overflow-y-auto overscroll-contain [scrollbar-gutter:stable]"
+      containerClassName="h-full overflow-y-auto overscroll-y-auto [scrollbar-gutter:stable]"
     />
   );
 }

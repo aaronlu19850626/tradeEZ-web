@@ -90,8 +90,9 @@ export function OverviewToolbar({
   return (
     <div
       ref={toolbarRef}
-      className={`sticky -top-4 z-30 -mx-4 bg-background px-4 py-3 md:-top-6 md:-mx-6 md:px-6 lg:-mx-10 lg:px-10 xl:-mx-12 xl:px-12 ${
-        toolbarStuck ? "border-b border-border/60" : ""
+      data-stuck={toolbarStuck}
+      className={`sticky top-[73px] z-30 -mx-4 bg-background px-4 md:-mx-10 md:px-10 ${
+        toolbarStuck ? "-mb-5 border-b border-foreground/35 pb-5" : ""
       }`}
     >
       <div

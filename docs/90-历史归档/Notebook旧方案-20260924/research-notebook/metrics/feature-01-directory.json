@@ -1,0 +1,174 @@
+{
+  "viewport": [
+    1920,
+    1112
+  ],
+  "shell": {
+    "rect": [
+      276,
+      246,
+      300,
+      801
+    ],
+    "display": "block",
+    "position": "static",
+    "gap": "normal",
+    "padding": "0px 8px",
+    "fontSize": "16px",
+    "fontWeight": "400",
+    "lineHeight": "normal",
+    "color": "rgb(38, 50, 56)",
+    "bg": "rgba(0, 0, 0, 0)",
+    "border": "0px none rgb(38, 50, 56)",
+    "radius": "0px",
+    "testid": "notebook-directory-list-folders",
+    "text": "All notes65Favorites0Trade Notes50XAU : Sep 17, 202611 hours ago-$57UntitledSep 23, 2026XAU : Sep 09, 202613 hours ago-$"
+  },
+  "folderAll": {
+    "rect": [
+      284,
+      246,
+      284,
+      38
+    ],
+    "display": "flex",
+    "position": "static",
+    "gap": "normal",
+    "padding": "0px 0px 2px",
+    "fontSize": "16px",
+    "fontWeight": "400",
+    "lineHeight": "normal",
+    "color": "rgb(38, 50, 56)",
+    "bg": "rgb(245, 245, 245)",
+    "border": "0px none rgb(38, 50, 56)",
+    "radius": "0px",
+    "testid": "expandable-folder-header-row-all",
+    "text": "All notes65"
+  },
+  "folderFavorites": {
+    "rect": [
+      284,
+      288,
+      284,
+      38
+    ],
+    "display": "flex",
+    "position": "static",
+    "gap": "normal",
+    "padding": "0px 0px 2px",
+    "fontSize": "16px",
+    "fontWeight": "400",
+    "lineHeight": "normal",
+    "color": "rgb(38, 50, 56)",
+    "bg": "rgb(245, 245, 245)",
+    "border": "0px none rgb(38, 50, 56)",
+    "radius": "0px",
+    "testid": "expandable-folder-header-row-favorites",
+    "text": "Favorites0"
+  },
+  "folderTrade": {
+    "rect": [
+      284,
+      330,
+      284,
+      38
+    ],
+    "display": "flex",
+    "position": "sticky",
+    "gap": "normal",
+    "padding": "0px 0px 2px",
+    "fontSize": "16px",
+    "fontWeight": "400",
+    "lineHeight": "normal",
+    "color": "rgb(38, 50, 56)",
+    "bg": "rgb(245, 245, 245)",
+    "border": "0px none rgb(38, 50, 56)",
+    "radius": "0px",
+    "testid": "expandable-folder-header-row-5271736",
+    "text": "Trade Notes50"
+  },
+  "folderDaily": {
+    "rect": [
+      284,
+      844,
+      284,
+      38
+    ],
+    "display": "flex",
+    "position": "sticky",
+    "gap": "normal",
+    "padding": "0px 0px 2px",
+    "fontSize": "16px",
+    "fontWeight": "400",
+    "lineHeight": "normal",
+    "color": "rgb(38, 50, 56)",
+    "bg": "rgb(245, 245, 245)",
+    "border": "0px none rgb(38, 50, 56)",
+    "radius": "0px",
+    "testid": "expandable-folder-header-row-5271732",
+    "text": "Daily Journal10"
+  },
+  "folderSessions": {
+    "rect": [
+      284,
+      1358,
+      284,
+      38
+    ],
+    "display": "flex",
+    "position": "static",
+    "gap": "normal",
+    "padding": "0px 0px 2px",
+    "fontSize": "16px",
+    "fontWeight": "400",
+    "lineHeight": "normal",
+    "color": "rgb(38, 50, 56)",
+    "bg": "rgb(245, 245, 245)",
+    "border": "0px none rgb(38, 50, 56)",
+    "radius": "0px",
+    "testid": "expandable-folder-header-row-5271733",
+    "text": "Sessions Recap0"
+  },
+  "folderCustom": {
+    "rect": [
+      284,
+      1413,
+      284,
+      38
+    ],
+    "display": "flex",
+    "position": "static",
+    "gap": "normal",
+    "padding": "0px 0px 2px",
+    "fontSize": "16px",
+    "fontWeight": "400",
+    "lineHeight": "normal",
+    "color": "rgb(38, 50, 56)",
+    "bg": "rgb(245, 245, 245)",
+    "border": "0px none rgb(38, 50, 56)",
+    "radius": "0px",
+    "testid": "expandable-folder-header-row-5758556",
+    "text": "2221"
+  },
+  "search": {
+    "rect": [
+      322,
+      198,
+      202,
+      32
+    ],
+    "display": "block",
+    "position": "static",
+    "gap": "normal",
+    "padding": "6px 12px 6px 0px",
+    "fontSize": "14px",
+    "fontWeight": "400",
+    "lineHeight": "20px",
+    "color": "rgb(38, 50, 56)",
+    "bg": "rgba(0, 0, 0, 0)",
+    "border": "0px none rgb(38, 50, 56)",
+    "radius": "0px",
+    "testid": null,
+    "text": ""
+  }
+}

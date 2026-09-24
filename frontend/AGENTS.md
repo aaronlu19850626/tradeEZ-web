@@ -62,7 +62,10 @@ npm run check:fix
 npm run generate:presets
 ```
 
-There is currently no automated test command. Run build, lint, check, or other validation commands only when the user explicitly requests that validation.
+Every change must pass the repository quality gates before it is submitted. From the repository root, run
+`./scripts/quality/static.sh` with an explicit isolated `TRADESYNC_TEST_DATABASE_URL`. Run
+`./scripts/quality/e2e.sh` for page, interaction, data-flow, navigation, authentication, or responsive changes.
+Never point either command at a shared development or production database.
 
 ## Co-location-based structure
 

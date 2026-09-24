@@ -1,0 +1,882 @@
+.lexical-editor-shell {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 520px;
+  overflow: hidden;
+  background: var(--card);
+}
+
+.lexical-editor-shell .editor-shell > .toolbar:not(.lexical-custom-toolbar) {
+  display: none !important;
+}
+
+.lexical-editor-shell > .editor-shell > .lexical-custom-toolbar-stack {
+  position: absolute !important;
+  top: 0 !important;
+  right: 0 !important;
+  left: 0 !important;
+  z-index: 30 !important;
+  background: var(--background);
+}
+
+.lexical-editor-shell .lexical-custom-toolbar-stack > .lexical-custom-toolbar {
+  position: relative !important;
+  top: auto !important;
+}
+
+.lexical-editor-shell .lexical-custom-tag-strip {
+  display: flex;
+  min-height: 40px;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  border-bottom: 1px solid var(--border);
+  background: var(--background);
+  padding: 6px 12px;
+}
+
+.lexical-editor-shell:has(.lexical-custom-tag-strip) .editor-container {
+  padding-top: 88px;
+}
+
+.lexical-editor-shell:fullscreen {
+  width: 100vw;
+  height: 100vh;
+  background: var(--background);
+}
+
+.lexical-editor-shell .editor-shell {
+  height: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
+
+.lexical-editor-shell .editor-container {
+  box-sizing: border-box;
+  height: calc(100% - 48px);
+  min-height: 0;
+  overflow: hidden;
+  background: var(--background);
+  padding-top: 48px;
+}
+
+.lexical-editor-shell .editor-scroller {
+  height: 100%;
+  overflow-y: auto;
+}
+
+.lexical-editor-shell .editor {
+  min-height: 100%;
+  padding: 20px 28px 64px;
+}
+
+.lexical-editor-shell .toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 48px;
+  border-bottom: 1px solid var(--border);
+  background: var(--background);
+  padding: 4px;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.lexical-editor-shell .toolbar > .divider {
+  display: none;
+}
+
+.lexical-editor-shell .toolbar > .font-family,
+.lexical-editor-shell .toolbar > .font-decrement,
+.lexical-editor-shell .toolbar > .font-size-input,
+.lexical-editor-shell .toolbar > .font-increment,
+.lexical-editor-shell .toolbar > button.spaced[aria-label="Undo"],
+.lexical-editor-shell .toolbar > button[aria-label="Redo"]:not([data-tradezella-redo="true"]),
+.lexical-editor-shell .toolbar > button.spaced[aria-label="Insert link"] {
+  display: none !important;
+}
+
+.lexical-editor-shell .tradezella-toolbar-divider {
+  flex: 0 0 auto;
+  width: 1px;
+  height: 40px;
+  margin: 0 4px;
+  background: var(--border);
+}
+
+.lexical-editor-shell .toolbar > button,
+.lexical-editor-shell .toolbar > input {
+  flex: 0 0 auto;
+}
+
+.lexical-editor-shell .toolbar > [class*="toolbar-item"] {
+  width: 32px;
+  min-width: 32px;
+  height: 32px;
+  min-height: 32px;
+  padding: 6px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted-foreground);
+}
+
+.lexical-editor-shell .toolbar > [class*="toolbar-item"]:hover,
+.lexical-editor-shell .toolbar > [class*="toolbar-item"][aria-expanded="true"] {
+  background: color-mix(in oklab, var(--foreground) 7%, transparent);
+  color: var(--foreground);
+}
+
+.lexical-editor-shell .toolbar > [class*="toolbar-item"]:focus,
+.lexical-editor-shell .toolbar > [class*="toolbar-item"]:focus-visible {
+  border-color: var(--border) !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.lexical-editor-shell .toolbar > .toolbar-icon-button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+}
+
+.lexical-editor-shell .toolbar > .toolbar-icon-button::before {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 32px;
+  height: 32px;
+  border-radius: 9999px;
+  background: transparent;
+  content: "";
+  transform: translate(-50%, -50%);
+  transition: background-color 120ms ease;
+  pointer-events: none;
+}
+
+.lexical-editor-shell .toolbar > .toolbar-icon-button:hover,
+.lexical-editor-shell .toolbar > .toolbar-icon-button[aria-expanded="true"] {
+  background: transparent;
+}
+
+.lexical-editor-shell .toolbar > .toolbar-icon-button:hover::before,
+.lexical-editor-shell .toolbar > .toolbar-icon-button:focus-visible::before,
+.lexical-editor-shell .toolbar > .toolbar-icon-button[aria-expanded="true"]::before {
+  background: var(--muted);
+}
+
+.lexical-editor-shell .toolbar > .toolbar-icon-button > svg,
+.lexical-editor-shell .toolbar > .toolbar-icon-button > img {
+  position: relative;
+  z-index: 1;
+  width: 20px !important;
+  height: 20px !important;
+}
+
+.lexical-editor-shell .toolbar > [class*="toolbar-item"] > svg,
+.lexical-editor-shell .toolbar > [class*="toolbar-item"] > img {
+  width: 16px;
+  height: 16px;
+}
+
+.lexical-editor-shell .toolbar > [aria-label="Formatting options for text style"] {
+  display: none !important;
+}
+
+.lexical-editor-shell .toolbar > [data-tradezella-text-style="true"] {
+  width: 50px;
+  min-width: 50px;
+  padding: 0 6px;
+  border: 1px solid var(--border);
+  background: color-mix(in oklab, var(--foreground) 4%, transparent);
+  color: var(--muted-foreground);
+  gap: 4px;
+}
+
+.lexical-editor-shell .toolbar > [data-tradezella-text-style="true"] > svg:first-child {
+  width: 18px !important;
+  min-width: 18px;
+  height: 18px !important;
+}
+
+.lexical-editor-shell .toolbar > [aria-label="Formatting options for font family"] {
+  width: 82px;
+  min-width: 82px;
+  padding: 0 6px;
+  border: 1px solid var(--border);
+  background: color-mix(in oklab, var(--foreground) 4%, transparent);
+  color: var(--muted-foreground);
+  gap: 4px;
+}
+
+.lexical-editor-shell .toolbar > [data-tradezella-font-family="true"] {
+  width: 82px;
+  min-width: 82px;
+  padding: 0 6px;
+  border: 1px solid var(--border);
+  background: color-mix(in oklab, var(--foreground) 4%, transparent);
+  color: var(--muted-foreground);
+  gap: 4px;
+}
+
+.lexical-editor-shell .toolbar > .font-decrement,
+.lexical-editor-shell .toolbar > .font-increment {
+  width: 32px;
+  min-width: 32px;
+  height: 32px;
+  padding: 6px;
+}
+
+.lexical-editor-shell .toolbar > .font-size-input {
+  width: 40px;
+  min-width: 40px;
+  height: 32px;
+  padding: 4px;
+  border: 0;
+  background: transparent;
+  color: var(--foreground);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+  text-align: center;
+}
+
+.lexical-editor-shell .toolbar > [data-tradezella-font-size="true"] {
+  display: flex;
+  width: 92px;
+  min-width: 92px;
+  height: 32px;
+  align-items: center;
+  gap: 2px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.lexical-editor-shell .toolbar > [data-tradezella-font-size="true"] > button {
+  display: flex;
+  width: 32px;
+  min-width: 32px;
+  height: 32px;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted-foreground);
+}
+
+.lexical-editor-shell .toolbar > [data-tradezella-font-size="true"] > input {
+  width: 24px;
+  min-width: 24px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--foreground);
+  font-size: 14px;
+  line-height: 20px;
+  text-align: center;
+}
+
+.lexical-editor-shell .toolbar > [data-tradezella-font-size="true"] > button:hover {
+  background: color-mix(in oklab, var(--foreground) 7%, transparent);
+  color: var(--foreground);
+}
+
+.lexical-editor-shell .toolbar > [data-tradezella-code-language="true"] {
+  width: auto;
+  min-width: 96px;
+  padding: 0 8px;
+  border: 1px solid var(--border);
+  background: color-mix(in oklab, var(--foreground) 4%, transparent);
+  color: var(--muted-foreground);
+  gap: 4px;
+}
+
+.lexical-editor-shell .toolbar > [aria-label="Format text as bold. Shortcut: ⌘+B"] {
+  order: 30;
+}
+
+.lexical-editor-shell .toolbar > [aria-label="Format text as italics. Shortcut: ⌘+I"] {
+  order: 31;
+}
+
+.lexical-editor-shell .toolbar > [aria-label="Format text to underlined. Shortcut: ⌘+U"] {
+  order: 32;
+}
+
+.lexical-editor-shell .toolbar > [aria-label="Insert link"] {
+}
+
+.lexical-editor-shell .toolbar > [data-tradezella-link="true"] {
+}
+
+.lexical-editor-shell .toolbar > [aria-label="Formatting options for additional text styles"] {
+  order: 32;
+}
+
+.lexical-editor-shell .toolbar > [aria-label="Format text as bold. Shortcut: ⌘+B"],
+.lexical-editor-shell .toolbar > [aria-label="Format text as italics. Shortcut: ⌘+I"],
+.lexical-editor-shell .toolbar > [aria-label="Format text to underlined. Shortcut: ⌘+U"],
+.lexical-editor-shell .toolbar > [aria-label="Formatting options for additional text styles"] {
+  display: none !important;
+}
+
+.lexical-editor-shell .toolbar > [aria-label="格式"],
+.lexical-editor-shell .toolbar > [aria-label="Format"] {
+  width: 54px;
+  min-width: 54px;
+  height: 32px;
+  padding: 0 6px;
+  border: 1px solid var(--border);
+  background: color-mix(in oklab, var(--foreground) 4%, transparent);
+  color: var(--muted-foreground);
+  gap: 4px;
+}
+
+.lexical-editor-shell .toolbar > [data-tradezella-format="true"] > svg:first-child {
+  width: 18px !important;
+  min-width: 18px;
+  height: 18px !important;
+}
+
+.lexical-editor-shell .toolbar > [aria-label="清除格式"],
+.lexical-editor-shell .toolbar > [aria-label="Clear formatting"] {
+}
+
+.lexical-editor-shell .toolbar > [aria-label="Formatting text color"] {
+  display: none !important;
+}
+
+.lexical-editor-shell .toolbar > [aria-label="Formatting background color"] {
+  display: none !important;
+}
+
+.lexical-editor-shell .toolbar > [aria-label="Formatting options for text alignment"] {
+  display: none !important;
+}
+
+.lexical-editor-shell .toolbar > [data-tradezella-color-picker="text"] {
+}
+
+.lexical-editor-shell .toolbar > [data-tradezella-color-picker="background"] {
+}
+
+.lexical-editor-shell .toolbar > [data-tradezella-alignment="true"] {
+  width: 50px;
+  min-width: 50px;
+  padding: 0 6px;
+  border: 1px solid var(--border);
+  background: color-mix(in oklab, var(--foreground) 4%, transparent);
+  color: var(--muted-foreground);
+  gap: 4px;
+}
+
+.lexical-editor-shell .toolbar > [aria-label="Insert specialized editor node"] {
+  display: none !important;
+}
+
+.lexical-editor-shell .toolbar > [data-tradezella-insert="true"] {
+  width: 32px;
+  min-width: 32px;
+  padding: 6px;
+}
+
+.lexical-editor-shell .toolbar > [aria-label="Undo"] {
+  margin-left: auto;
+}
+
+.lexical-editor-shell .toolbar > [data-tradezella-undo="true"] {
+  margin-left: auto;
+}
+
+.lexical-editor-shell .toolbar > [aria-label="Redo"] {
+}
+
+.lexical-editor-shell .toolbar > [data-tradezella-redo="true"] {
+}
+
+.lexical-editor-shell .toolbar > [aria-label="历史版本"] {
+}
+
+.lexical-editor-shell .toolbar > [aria-label="全屏"] {
+}
+
+.lexical-editor-shell .toolbar > [aria-label="Undo"],
+.lexical-editor-shell .toolbar > [aria-label="Redo"] {
+  width: 32px;
+  min-width: 32px;
+  height: 32px;
+  padding: 6px;
+}
+
+.lexical-editor-shell .floating-text-format-popup {
+  display: none !important;
+}
+
+.lexical-editor-shell .ContentEditable__root {
+  color: var(--foreground);
+}
+
+.lexical-editor-shell .tradezella-image-node:not(.is-inline) {
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+.lexical-editor-shell .tradezella-image-node[data-image-alignment="left"] {
+  margin-right: auto !important;
+  margin-left: 0 !important;
+}
+
+.lexical-editor-shell .tradezella-image-node[data-image-alignment="center"] {
+  margin-right: auto !important;
+  margin-left: auto !important;
+}
+
+.lexical-editor-shell .tradezella-image-node[data-image-alignment="right"] {
+  margin-right: 0 !important;
+  margin-left: auto !important;
+}
+
+@media (min-width: 1026px) {
+  .lexical-editor-shell .ContentEditable__placeholder {
+    left: 74px;
+  }
+}
+
+.lexical-editor-shell .PlaygroundEditorTheme__h1 {
+  margin: 24px 0 12px;
+  color: var(--foreground);
+  font-size: 32px;
+  font-weight: 600;
+  line-height: 40px;
+}
+
+.lexical-editor-shell .PlaygroundEditorTheme__h2 {
+  margin: 20px 0 10px;
+  color: var(--foreground);
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 32px;
+  text-transform: none;
+}
+
+.lexical-editor-shell .PlaygroundEditorTheme__h3 {
+  margin: 16px 0 8px;
+  color: var(--foreground);
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 28px;
+  text-transform: none;
+}
+
+.lexical-editor-shell .PlaygroundEditorTheme__ul,
+.lexical-editor-shell .PlaygroundEditorTheme__ol1,
+.lexical-editor-shell .PlaygroundEditorTheme__ol2,
+.lexical-editor-shell .PlaygroundEditorTheme__ol3,
+.lexical-editor-shell .PlaygroundEditorTheme__ol4,
+.lexical-editor-shell .PlaygroundEditorTheme__ol5 {
+  margin: 8px 0;
+  padding-left: 28px;
+  list-style-position: outside;
+}
+
+.lexical-editor-shell .PlaygroundEditorTheme__ul {
+  list-style-type: disc;
+}
+
+.lexical-editor-shell .PlaygroundEditorTheme__ol1 {
+  list-style-type: decimal;
+}
+
+.lexical-editor-shell .PlaygroundEditorTheme__checklist {
+  margin-left: 0;
+  padding-left: 0;
+}
+
+.lexical-editor-shell .PlaygroundEditorTheme__listItem {
+  margin: 2px 0;
+  padding-left: 4px;
+}
+
+.lexical-editor-shell .PlaygroundEditorTheme__listItemUnchecked,
+.lexical-editor-shell .PlaygroundEditorTheme__listItemChecked,
+.lexical-editor-shell .PlaygroundEditorTheme__checklist > .PlaygroundEditorTheme__listItem,
+.lexical-editor-shell li[role="checkbox"] {
+  position: relative;
+  margin: 4px 0;
+  padding-left: 28px;
+  list-style: none;
+}
+
+.lexical-editor-shell .PlaygroundEditorTheme__listItemUnchecked::before,
+.lexical-editor-shell .PlaygroundEditorTheme__listItemChecked::before,
+.lexical-editor-shell .PlaygroundEditorTheme__checklist > .PlaygroundEditorTheme__listItem::before,
+.lexical-editor-shell li[role="checkbox"]::before {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 16px;
+  height: 16px;
+  box-sizing: border-box;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--background);
+  content: "";
+  margin-block: auto;
+}
+
+.lexical-editor-shell .PlaygroundEditorTheme__listItemUnchecked:hover::before,
+.lexical-editor-shell
+  .PlaygroundEditorTheme__checklist
+  > .PlaygroundEditorTheme__listItem[aria-checked="false"]:hover::before,
+.lexical-editor-shell li[role="checkbox"][aria-checked="false"]:hover::before {
+  background: var(--muted);
+}
+
+.lexical-editor-shell .PlaygroundEditorTheme__listItemChecked::before,
+.lexical-editor-shell .PlaygroundEditorTheme__checklist > .PlaygroundEditorTheme__listItem[aria-checked="true"]::before,
+.lexical-editor-shell li[role="checkbox"][aria-checked="true"]::before {
+  border-color: var(--primary);
+  background: var(--primary);
+}
+
+.lexical-editor-shell .PlaygroundEditorTheme__listItemChecked::after,
+.lexical-editor-shell .PlaygroundEditorTheme__checklist > .PlaygroundEditorTheme__listItem[aria-checked="true"]::after,
+.lexical-editor-shell li[role="checkbox"][aria-checked="true"]::after {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 5px;
+  width: 5px;
+  height: 9px;
+  border-right: 2px solid var(--primary-foreground);
+  border-bottom: 2px solid var(--primary-foreground);
+  content: "";
+  margin-block: auto;
+  transform: rotate(45deg);
+}
+
+.lexical-editor-shell .PlaygroundEditorTheme__quote {
+  margin: 12px 0;
+  border-left: 3px solid var(--border);
+  padding-left: 16px;
+  color: var(--muted-foreground);
+  font-size: 15px;
+  line-height: 24px;
+}
+
+.lexical-editor-shell .PlaygroundEditorTheme__code {
+  margin: 12px 0;
+  padding: 12px 16px 12px 64px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: color-mix(in oklab, var(--muted) 45%, transparent);
+  color: var(--foreground);
+  font-family: "SFMono-Regular", Menlo, Consolas, Monaco, monospace;
+  font-size: 13px;
+  line-height: 21px;
+}
+
+.lexical-editor-shell .PlaygroundEditorTheme__code::before {
+  width: 44px;
+  min-width: 44px;
+  padding: 12px 8px;
+  border-right: 1px solid var(--border);
+  background: color-mix(in oklab, var(--muted) 70%, transparent);
+  color: var(--muted-foreground);
+  font-size: 12px;
+  line-height: 21px;
+  text-align: right;
+}
+
+.lexical-editor-shell .PlaygroundEditorTheme__tableCell {
+  border: 0;
+  border-right: 1px solid color-mix(in oklab, var(--foreground) 22%, var(--background));
+  border-bottom: 1px solid color-mix(in oklab, var(--foreground) 22%, var(--background));
+  background: var(--background);
+}
+
+.lexical-editor-shell .PlaygroundEditorTheme__table {
+  border: 1px solid color-mix(in oklab, var(--foreground) 26%, var(--background));
+  border-collapse: separate;
+  border-spacing: 0;
+  border-radius: 8px;
+  box-shadow: 0 1px 2px color-mix(in oklab, var(--foreground) 8%, transparent);
+  overflow: hidden;
+}
+
+.lexical-editor-shell .PlaygroundEditorTheme__tableCell:last-child {
+  border-right: 0;
+}
+
+.lexical-editor-shell .PlaygroundEditorTheme__table tr:last-child > .PlaygroundEditorTheme__tableCell {
+  border-bottom: 0;
+}
+
+.lexical-editor-shell .PlaygroundEditorTheme__tableCellHeader {
+  background: color-mix(in oklab, var(--primary) 16%, var(--background));
+  color: var(--foreground);
+  font-weight: 600;
+}
+
+.lexical-editor-shell .PlaygroundEditorTheme__table tr:not(:first-child) > .PlaygroundEditorTheme__tableCellHeader {
+  background: color-mix(in oklab, var(--primary) 8%, var(--background));
+}
+
+.lexical-editor-shell
+  .PlaygroundEditorTheme__table
+  tr:first-child
+  > .PlaygroundEditorTheme__tableCellHeader:first-child {
+  background: color-mix(in oklab, var(--primary) 22%, var(--background));
+}
+
+body:has(.lexical-editor-shell) .PlaygroundEditorTheme__tableAddRows,
+body:has(.lexical-editor-shell) .PlaygroundEditorTheme__tableAddColumns {
+  border: 1px solid color-mix(in oklab, var(--foreground) 18%, var(--background));
+  border-radius: 4px;
+  background: color-mix(in oklab, var(--muted) 74%, var(--background));
+  color: var(--muted-foreground);
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease;
+}
+
+body:has(.lexical-editor-shell) .PlaygroundEditorTheme__tableAddRows {
+  width: 100%;
+}
+
+body:has(.lexical-editor-shell) .PlaygroundEditorTheme__tableAddRows:hover,
+body:has(.lexical-editor-shell) .PlaygroundEditorTheme__tableAddColumns:hover {
+  border-color: color-mix(in oklab, var(--primary) 46%, var(--border));
+  background: color-mix(in oklab, var(--primary) 16%, var(--background));
+}
+
+body:has(.lexical-editor-shell) .table-cell-action-button {
+  top: 4px;
+  right: 4px;
+  z-index: 50;
+  display: inline-flex;
+  width: 20px;
+  height: 20px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background: transparent;
+  color: var(--muted-foreground);
+  transition:
+    background-color 120ms ease,
+    color 120ms ease;
+}
+
+body:has(.lexical-editor-shell) .table-cell-action-button-container {
+  z-index: 50;
+}
+
+body:has(.lexical-editor-shell) .TableCellResizer__resizer {
+  z-index: 5;
+}
+
+body:has(.lexical-editor-shell) .table-cell-action-button:hover,
+body:has(.lexical-editor-shell) .table-cell-action-button:focus-visible {
+  background: color-mix(in oklab, var(--primary) 14%, var(--background));
+  color: var(--primary);
+  outline: none;
+}
+
+body:has(.lexical-editor-shell) .table-cell-action-button i.chevron-down {
+  width: 12px;
+  height: 12px;
+  background-size: 12px 12px;
+  opacity: 1;
+}
+
+.lexical-editor-shell .tradezella-image-toolbar {
+  z-index: 30;
+}
+
+.lexical-editor-shell .tradezella-image-content {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.lexical-editor-shell .tradezella-image-content.is-cropped {
+  position: absolute;
+  inset: 0;
+}
+
+.lexical-editor-shell .tradezella-image-edit-trigger {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.lexical-editor-shell .tradezella-image-node.is-editing .tradezella-image-content {
+  box-shadow: 0 0 0 2px color-mix(in oklab, var(--primary) 28%, transparent);
+}
+
+.lexical-editor-shell .tradezella-image-toolbar::after {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  left: 0;
+  height: 14px;
+  content: "";
+}
+
+.lexical-editor-shell .tradezella-image-resize-handle {
+  position: absolute;
+  right: -11px;
+  bottom: -11px;
+  display: inline-flex;
+  width: 22px;
+  height: 22px;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--background);
+  border-radius: 7px;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  box-shadow: 0 1px 3px color-mix(in oklab, var(--foreground) 28%, transparent);
+  cursor: nwse-resize;
+  opacity: 0.82;
+  touch-action: none;
+  transition: opacity 120ms ease;
+  z-index: 6;
+}
+
+.lexical-editor-shell .tradezella-image-resize-handle.is-horizontal {
+  top: 25%;
+  right: -11px;
+  bottom: auto;
+  width: 24px;
+  height: 20px;
+  transform: translateY(-50%);
+  cursor: ew-resize;
+}
+
+.lexical-editor-shell .tradezella-image-resize-handle.is-vertical {
+  right: auto;
+  bottom: -11px;
+  left: 25%;
+  width: 20px;
+  height: 24px;
+  transform: translateX(-50%);
+  cursor: ns-resize;
+}
+
+.lexical-editor-shell .tradezella-image-resize-icon {
+  width: 13px;
+  height: 13px;
+  stroke-width: 2.5;
+}
+
+.lexical-editor-shell .tradezella-image-resize-handle:hover,
+.lexical-editor-shell .tradezella-image-resize-handle:focus-visible {
+  opacity: 1;
+  outline: none;
+}
+
+.lexical-editor-shell .tradezella-image-crop-handle {
+  position: absolute;
+  z-index: 7;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid color-mix(in oklab, var(--primary) 48%, var(--border));
+  border-radius: 7px;
+  background: color-mix(in oklab, var(--popover) 94%, var(--primary));
+  color: var(--primary);
+  box-shadow: 0 1px 3px color-mix(in oklab, var(--foreground) 22%, transparent);
+  opacity: 0.9;
+  touch-action: none;
+  transition: opacity 120ms ease;
+}
+
+.lexical-editor-shell .tradezella-image-crop-handle.is-top,
+.lexical-editor-shell .tradezella-image-crop-handle.is-bottom {
+  left: 75%;
+  width: 24px;
+  height: 24px;
+  transform: translateX(-50%);
+  cursor: ns-resize;
+}
+
+.lexical-editor-shell .tradezella-image-crop-handle.is-top {
+  top: -12px;
+}
+
+.lexical-editor-shell .tradezella-image-crop-handle.is-bottom {
+  bottom: -12px;
+}
+
+.lexical-editor-shell .tradezella-image-crop-handle.is-left,
+.lexical-editor-shell .tradezella-image-crop-handle.is-right {
+  top: 75%;
+  width: 24px;
+  height: 24px;
+  transform: translateY(-50%);
+  cursor: ew-resize;
+}
+
+.lexical-editor-shell .tradezella-image-crop-handle.is-left {
+  left: -12px;
+}
+
+.lexical-editor-shell .tradezella-image-crop-handle.is-right {
+  right: -12px;
+}
+
+.lexical-editor-shell .tradezella-image-crop-icon {
+  width: 14px;
+  height: 14px;
+  stroke-width: 2.25;
+}
+
+.lexical-editor-shell .tradezella-image-crop-handle.is-top .tradezella-image-crop-icon {
+  transform: rotate(90deg);
+}
+
+.lexical-editor-shell .tradezella-image-crop-handle.is-right .tradezella-image-crop-icon {
+  transform: rotate(180deg);
+}
+
+.lexical-editor-shell .tradezella-image-crop-handle.is-bottom .tradezella-image-crop-icon {
+  transform: rotate(-90deg);
+}
+
+.lexical-editor-shell .tradezella-image-crop-handle.is-left .tradezella-image-crop-icon {
+  transform: rotate(0deg);
+}
+
+.lexical-editor-shell .tradezella-image-crop-handle:hover,
+.lexical-editor-shell .tradezella-image-crop-handle:focus-visible {
+  opacity: 1;
+  outline: none;
+}
+
+.lexical-editor-readonly {
+  pointer-events: none;
+}
+
+.lexical-editor-readonly .toolbar {
+  display: none;
+}

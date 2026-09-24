@@ -1,0 +1,1262 @@
+[
+  {
+    "name": "shell.menu",
+    "label": "menu-burger",
+    "source": {
+      "page": "tradezella:notebook",
+      "testid": "MenuOutlinedIcon",
+      "viewBox": "0 0 24 24",
+      "defaultWidth": 20,
+      "defaultHeight": 20
+    },
+    "svg": "<svg class=\"MuiSvgIcon-root MuiSvgIcon-fontSizeMedium css-q7mezt\" focusable=\"false\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" data-testid=\"MenuOutlinedIcon\"><path d=\"M3 18h18v-2H3zm0-5h18v-2H3zm0-7v2h18V6z\"></path></svg>"
+  },
+  {
+    "name": "legacy.notifications",
+    "label": "Notifications",
+    "source": {
+      "page": "tradezella:notebook",
+      "testid": null,
+      "viewBox": "0 0 20 20",
+      "defaultWidth": 20,
+      "defaultHeight": 20
+    },
+    "svg": "<svg width=\"20\" height=\"20\" viewBox=\"0 0 20 20\" xmlns=\"http://www.w3.org/2000/svg\" alt=\"Notification Icon\"><path d=\"M15.4743 12.4621L15.4743 12.4621L15.4763 12.4654C15.6818 12.8025 15.7165 13.1944 15.5816 13.5523C15.4424 13.9217 15.1602 14.194 14.7993 14.3126L14.7993 14.3125L14.7952 14.3139C13.2581 14.8289 11.6388 15.0834 10.0168 15.0834C8.39479 15.0834 6.77672 14.8289 5.24167 14.3067L5.24016 14.3062C4.80792 14.1602 4.52632 13.8759 4.41452 13.5638L4.41454 13.5638L4.41238 13.5579C4.29097 13.2277 4.32159 12.8471 4.55141 12.4612C4.55174 12.4607 4.55208 12.4601 4.55241 12.4595L5.39187 11.0715L5.39196 11.0716L5.39795 11.0613C5.53146 10.8324 5.63575 10.5422 5.70613 10.2833C5.77637 10.025 5.83345 9.72215 5.83345 9.45842V7.35008C5.83345 5.7153 6.78462 4.29281 8.16748 3.60492L8.37497 3.50171L8.48807 3.29944C8.79072 2.75816 9.35893 2.41675 9.99178 2.41675C10.6394 2.41675 11.1892 2.74735 11.4889 3.27746L11.6052 3.48335L11.8187 3.58525C13.2274 4.25775 14.2001 5.69298 14.2001 7.35008V9.45842C14.2001 9.72215 14.2572 10.0249 14.3272 10.2835C14.3977 10.5439 14.5011 10.8327 14.6312 11.062L14.636 11.0704L14.641 11.0788L15.4743 12.4621Z\" stroke-width=\"1.5\"></path><path d=\"M12.3582 16.6751C12.0082 17.6417 11.0832 18.3334 9.9999 18.3334C9.34157 18.3334 8.69157 18.0667 8.23324 17.5917C7.96657 17.3417 7.76657 17.0084 7.6499 16.6667C7.75824 16.6834 7.86657 16.6917 7.98324 16.7084C8.1749 16.7334 8.3749 16.7584 8.5749 16.7751C9.0499 16.8167 9.53324 16.8417 10.0166 16.8417C10.4916 16.8417 10.9666 16.8167 11.4332 16.7751C11.6082 16.7584 11.7832 16.7501 11.9499 16.7251C12.0832 16.7084 12.2166 16.6917 12.3582 16.6751Z\"></path></svg>"
+  },
+  {
+    "name": "shell.profile",
+    "label": "Open profile menu",
+    "source": {
+      "page": "tradezella:notebook",
+      "testid": "PersonIcon",
+      "viewBox": "0 0 24 24",
+      "defaultWidth": 20,
+      "defaultHeight": 20
+    },
+    "svg": "<svg class=\"MuiSvgIcon-root MuiSvgIcon-fontSizeMedium css-q7mezt\" focusable=\"false\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" data-testid=\"PersonIcon\"><path d=\"M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4m0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4\"></path></svg>"
+  },
+  {
+    "name": "nav.home",
+    "label": "Home",
+    "source": {
+      "page": "tradezella:notebook",
+      "testid": "HomeOutlinedIcon",
+      "viewBox": "0 0 24 24",
+      "defaultWidth": 20,
+      "defaultHeight": 20
+    },
+    "svg": "<svg class=\"MuiSvgIcon-root MuiSvgIcon-fontSizeMedium css-q7mezt\" focusable=\"false\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" data-testid=\"HomeOutlinedIcon\"><path d=\"m12 5.69 5 4.5V18h-2v-6H9v6H7v-7.81zM12 3 2 12h3v8h6v-6h2v6h6v-8h3z\"></path></svg>"
+  },
+  {
+    "name": "nav.home-filled",
+    "label": "Home",
+    "source": {
+      "page": "tradezella:notebook",
+      "testid": "HomeIcon",
+      "viewBox": "0 0 24 24",
+      "defaultWidth": null,
+      "defaultHeight": null
+    },
+    "svg": "<svg class=\"MuiSvgIcon-root MuiSvgIcon-fontSizeMedium css-q7mezt\" focusable=\"false\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" data-testid=\"HomeIcon\"><path d=\"M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z\"></path></svg>"
+  },
+  {
+    "name": "nav.journal",
+    "label": "Journal",
+    "source": {
+      "page": "tradezella:notebook",
+      "testid": "DriveFileRenameOutlineOutlinedIcon",
+      "viewBox": "0 0 24 24",
+      "defaultWidth": null,
+      "defaultHeight": null
+    },
+    "svg": "<svg class=\"MuiSvgIcon-root MuiSvgIcon-fontSizeMedium css-q7mezt\" focusable=\"false\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" data-testid=\"DriveFileRenameOutlineOutlinedIcon\"><path d=\"m15 16-4 4h10v-4zm-2.94-8.81L3 16.25V20h3.75l9.06-9.06zM5.92 18H5v-.92l7.06-7.06.92.92zm12.79-9.96c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.2-.2-.45-.29-.71-.29-.25 0-.51.1-.7.29l-1.83 1.83 3.75 3.75z\"></path></svg>"
+  },
+  {
+    "name": "nav.journal-filled",
+    "label": "Journal",
+    "source": {
+      "page": "tradezella:notebook",
+      "testid": "DriveFileRenameOutlineIcon",
+      "viewBox": "0 0 24 24",
+      "defaultWidth": 20,
+      "defaultHeight": 20
+    },
+    "svg": "<svg class=\"MuiSvgIcon-root MuiSvgIcon-fontSizeMedium css-q7mezt\" focusable=\"false\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" data-testid=\"DriveFileRenameOutlineIcon\"><path d=\"M18.41 5.8 17.2 4.59c-.78-.78-2.05-.78-2.83 0l-2.68 2.68L3 15.96V20h4.04l8.74-8.74 2.63-2.63c.79-.78.79-2.05 0-2.83M6.21 18H5v-1.21l8.66-8.66 1.21 1.21zM11 20l4-4h6v4z\"></path></svg>"
+  },
+  {
+    "name": "nav.backtesting",
+    "label": "Backtesting",
+    "source": {
+      "page": "tradezella:notebook",
+      "testid": "ReplyOutlinedIcon",
+      "viewBox": "0 0 24 24",
+      "defaultWidth": 20,
+      "defaultHeight": 20
+    },
+    "svg": "<svg class=\"MuiSvgIcon-root MuiSvgIcon-fontSizeMedium css-q7mezt\" focusable=\"false\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" data-testid=\"ReplyOutlinedIcon\"><path d=\"M10 9V5l-7 7 7 7v-4.1c5 0 8.5 1.6 11 5.1-1-5-4-10-11-11\"></path></svg>"
+  },
+  {
+    "name": "nav.backtesting-filled",
+    "label": "Backtesting",
+    "source": {
+      "page": "tradezella:notebook",
+      "testid": "ReplyIcon",
+      "viewBox": "0 0 24 24",
+      "defaultWidth": null,
+      "defaultHeight": null
+    },
+    "svg": "<svg class=\"MuiSvgIcon-root MuiSvgIcon-fontSizeMedium css-q7mezt\" focusable=\"false\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" data-testid=\"ReplyIcon\"><path d=\"M10 9V5l-7 7 7 7v-4.1c5 0 8.5 1.6 11 5.1-1-5-4-10-11-11\"></path></svg>"
+  },
+  {
+    "name": "nav.agents",
+    "label": "Agents",
+    "source": {
+      "page": "tradezella:notebook",
+      "testid": "SmartToyOutlinedIcon",
+      "viewBox": "0 0 24 24",
+      "defaultWidth": 20,
+      "defaultHeight": 20
+    },
+    "svg": "<svg class=\"MuiSvgIcon-root MuiSvgIcon-fontSizeMedium css-q7mezt\" focusable=\"false\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" data-testid=\"SmartToyOutlinedIcon\"><path d=\"M20 9V7c0-1.1-.9-2-2-2h-3c0-1.66-1.34-3-3-3S9 3.34 9 5H6c-1.1 0-2 .9-2 2v2c-1.66 0-3 1.34-3 3s1.34 3 3 3v4c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-4c1.66 0 3-1.34 3-3s-1.34-3-3-3m-2 10H6V7h12zm-9-6c-.83 0-1.5-.67-1.5-1.5S8.17 10 9 10s1.5.67 1.5 1.5S9.83 13 9 13m7.5-1.5c0 .83-.67 1.5-1.5 1.5s-1.5-.67-1.5-1.5.67-1.5 1.5-1.5 1.5.67 1.5 1.5M8 15h8v2H8z\"></path></svg>"
+  },
+  {
+    "name": "nav.agents-filled",
+    "label": "Agents",
+    "source": {
+      "page": "tradezella:notebook",
+      "testid": "SmartToyIcon",
+      "viewBox": "0 0 24 24",
+      "defaultWidth": null,
+      "defaultHeight": null
+    },
+    "svg": "<svg class=\"MuiSvgIcon-root MuiSvgIcon-fontSizeMedium css-q7mezt\" focusable=\"false\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" data-testid=\"SmartToyIcon\"><path d=\"M20 9V7c0-1.1-.9-2-2-2h-3c0-1.66-1.34-3-3-3S9 3.34 9 5H6c-1.1 0-2 .9-2 2v2c-1.66 0-3 1.34-3 3s1.34 3 3 3v4c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-4c1.66 0 3-1.34 3-3s-1.34-3-3-3M7.5 11.5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5S9.83 13 9 13s-1.5-.67-1.5-1.5M16 17H8v-2h8zm-1-4c-.83 0-1.5-.67-1.5-1.5S14.17 10 15 10s1.5.67 1.5 1.5S15.83 13 15 13\"></path></svg>"
+  },
+  {
+    "name": "nav.mentor-mode",
+    "label": "Mentor Mode",
+    "source": {
+      "page": "tradezella:notebook",
+      "testid": "SupervisedUserCircleOutlinedIcon",
+      "viewBox": "0 0 24 24",
+      "defaultWidth": 20,
+      "defaultHeight": 20
+    },
+    "svg": "<svg class=\"MuiSvgIcon-root MuiSvgIcon-fontSizeMedium css-q7mezt\" focusable=\"false\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" data-testid=\"SupervisedUserCircleOutlinedIcon\"><path d=\"M12.5 10c0-1.65-1.35-3-3-3s-3 1.35-3 3 1.35 3 3 3 3-1.35 3-3m-3 1c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1m6.5 2c1.11 0 2-.89 2-2s-.89-2-2-2-2.01.89-2 2c0 1.11.89 2 2 2M11.99 2.01c-5.52 0-10 4.48-10 10s4.48 10 10 10 10-4.48 10-10-4.48-10-10-10M5.84 17.12c.68-.54 2.27-1.11 3.66-1.11.07 0 .15.01.23.01.24-.64.67-1.29 1.3-1.86-.56-.1-1.09-.16-1.53-.16-1.3 0-3.39.45-4.73 1.43-.5-1.04-.78-2.2-.78-3.43 0-4.41 3.59-8 8-8s8 3.59 8 8c0 1.2-.27 2.34-.75 3.37-1-.59-2.36-.87-3.24-.87-1.52 0-4.5.81-4.5 2.7v2.78c-2.27-.13-4.29-1.21-5.66-2.86\"></path></svg>"
+  },
+  {
+    "name": "nav.mentor-mode-filled",
+    "label": "Mentor Mode",
+    "source": {
+      "page": "tradezella:notebook",
+      "testid": "SupervisedUserCircleIcon",
+      "viewBox": "0 0 24 24",
+      "defaultWidth": null,
+      "defaultHeight": null
+    },
+    "svg": "<svg class=\"MuiSvgIcon-root MuiSvgIcon-fontSizeMedium css-q7mezt\" focusable=\"false\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" data-testid=\"SupervisedUserCircleIcon\"><path d=\"M11.99 2c-5.52 0-10 4.48-10 10s4.48 10 10 10 10-4.48 10-10-4.48-10-10-10m3.61 6.34c1.07 0 1.93.86 1.93 1.93s-.86 1.93-1.93 1.93-1.93-.86-1.93-1.93c-.01-1.07.86-1.93 1.93-1.93m-6-1.58c1.3 0 2.36 1.06 2.36 2.36s-1.06 2.36-2.36 2.36-2.36-1.06-2.36-2.36c0-1.31 1.05-2.36 2.36-2.36m0 9.13v3.75c-2.4-.75-4.3-2.6-5.14-4.96 1.05-1.12 3.67-1.69 5.14-1.69.53 0 1.2.08 1.9.22-1.64.87-1.9 2.02-1.9 2.68M11.99 20c-.27 0-.53-.01-.79-.04v-4.07c0-1.42 2.94-2.13 4.4-2.13 1.07 0 2.92.39 3.84 1.15-1.17 2.97-4.06 5.09-7.45 5.09\"></path></svg>"
+  },
+  {
+    "name": "nav.prop-firm-sync",
+    "label": "PropFirm Sync",
+    "source": {
+      "page": "tradezella:notebook",
+      "testid": "EmergencyOutlinedIcon",
+      "viewBox": "0 0 24 24",
+      "defaultWidth": 20,
+      "defaultHeight": 20
+    },
+    "svg": "<svg class=\"MuiSvgIcon-root MuiSvgIcon-fontSizeMedium css-q7mezt\" focusable=\"false\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" data-testid=\"EmergencyOutlinedIcon\"><path d=\"M21.29 13.9 18 12l3.29-1.9c.48-.28.64-.89.37-1.37l-2-3.46c-.28-.48-.89-.64-1.37-.37L15 6.8V3c0-.55-.45-1-1-1h-4c-.55 0-1 .45-1 1v3.8L5.71 4.9c-.48-.27-1.09-.11-1.37.37l-2 3.46c-.28.48-.11 1.09.37 1.37L6 12l-3.29 1.9c-.48.28-.64.89-.37 1.37l2 3.46c.28.48.89.64 1.37.37L9 17.2V21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-3.8l3.29 1.9c.48.28 1.09.11 1.37-.37l2-3.46c.28-.48.11-1.09-.37-1.37m-2.86 2.97-4.68-2.7c-.33-.2-.75.04-.75.43V20h-2v-5.4c0-.38-.42-.63-.75-.43l-4.68 2.7-1-1.73 4.68-2.7c.33-.19.33-.67 0-.87l-4.68-2.7 1-1.73 4.68 2.7c.33.19.75-.05.75-.44V4h2v5.4c0 .38.42.63.75.43l4.68-2.7 1 1.73-4.68 2.7c-.33.19-.33.67 0 .87l4.68 2.7z\"></path></svg>"
+  },
+  {
+    "name": "nav.prop-firm-sync-filled",
+    "label": "PropFirm Sync",
+    "source": {
+      "page": "tradezella:notebook",
+      "testid": "EmergencyIcon",
+      "viewBox": "0 0 24 24",
+      "defaultWidth": null,
+      "defaultHeight": null
+    },
+    "svg": "<svg class=\"MuiSvgIcon-root MuiSvgIcon-fontSizeMedium css-q7mezt\" focusable=\"false\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" data-testid=\"EmergencyIcon\"><path d=\"m20.79 9.23-2-3.46L14 8.54V3h-4v5.54L5.21 5.77l-2 3.46L8 12l-4.79 2.77 2 3.46L10 15.46V21h4v-5.54l4.79 2.77 2-3.46L16 12z\"></path></svg>"
+  },
+  {
+    "name": "nav.contact",
+    "label": "Contact us",
+    "source": {
+      "page": "tradezella:notebook",
+      "testid": "HelpOutlineOutlinedIcon",
+      "viewBox": "0 0 24 24",
+      "defaultWidth": 20,
+      "defaultHeight": 20
+    },
+    "svg": "<svg class=\"MuiSvgIcon-root MuiSvgIcon-fontSizeMedium css-q7mezt\" focusable=\"false\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" data-testid=\"HelpOutlineOutlinedIcon\"><path d=\"M11 18h2v-2h-2zm1-16C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2m0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8m0-14c-2.21 0-4 1.79-4 4h2c0-1.1.9-2 2-2s2 .9 2 2c0 2-3 1.75-3 5h2c0-2.25 3-2.5 3-5 0-2.21-1.79-4-4-4\"></path></svg>"
+  },
+  {
+    "name": "nav.contact-filled",
+    "label": "Contact us",
+    "source": {
+      "page": "tradezella:notebook",
+      "testid": "HelpOutlineIcon",
+      "viewBox": "0 0 24 24",
+      "defaultWidth": null,
+      "defaultHeight": null
+    },
+    "svg": "<svg class=\"MuiSvgIcon-root MuiSvgIcon-fontSizeMedium css-q7mezt\" focusable=\"false\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" data-testid=\"HelpOutlineIcon\"><path d=\"M11 18h2v-2h-2zm1-16C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2m0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8m0-14c-2.21 0-4 1.79-4 4h2c0-1.1.9-2 2-2s2 .9 2 2c0 2-3 1.75-3 5h2c0-2.25 3-2.5 3-5 0-2.21-1.79-4-4-4\"></path></svg>"
+  },
+  {
+    "name": "nav.university",
+    "label": "Zella University",
+    "source": {
+      "page": "tradezella:notebook",
+      "testid": "SchoolOutlinedIcon",
+      "viewBox": "0 0 24 24",
+      "defaultWidth": 20,
+      "defaultHeight": 20
+    },
+    "svg": "<svg class=\"MuiSvgIcon-root MuiSvgIcon-fontSizeMedium css-q7mezt\" focusable=\"false\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" data-testid=\"SchoolOutlinedIcon\"><path d=\"M12 3 1 9l4 2.18v6L12 21l7-3.82v-6l2-1.09V17h2V9zm6.82 6L12 12.72 5.18 9 12 5.28zM17 15.99l-5 2.73-5-2.73v-3.72L12 15l5-2.73z\"></path></svg>"
+  },
+  {
+    "name": "nav.university-filled",
+    "label": "Zella University",
+    "source": {
+      "page": "tradezella:notebook",
+      "testid": "SchoolIcon",
+      "viewBox": "0 0 24 24",
+      "defaultWidth": null,
+      "defaultHeight": null
+    },
+    "svg": "<svg class=\"MuiSvgIcon-root MuiSvgIcon-fontSizeMedium css-q7mezt\" focusable=\"false\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" data-testid=\"SchoolIcon\"><path d=\"M5 13.18v4L12 21l7-3.82v-4L12 17zM12 3 1 9l11 6 9-4.91V17h2V9z\"></path></svg>"
+  },
+  {
+    "name": "nav.referral",
+    "label": "Referral Program",
+    "source": {
+      "page": "tradezella:notebook",
+      "testid": "RedeemOutlinedIcon",
+      "viewBox": "0 0 24 24",
+      "defaultWidth": 20,
+      "defaultHeight": 20
+    },
+    "svg": "<svg class=\"MuiSvgIcon-root MuiSvgIcon-fontSizeMedium css-q7mezt\" focusable=\"false\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" data-testid=\"RedeemOutlinedIcon\"><path d=\"M20 6h-2.18c.11-.31.18-.65.18-1 0-1.66-1.34-3-3-3-1.05 0-1.96.54-2.5 1.35l-.5.67-.5-.68C10.96 2.54 10.05 2 9 2 7.34 2 6 3.34 6 5c0 .35.07.69.18 1H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2m-5-2c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1M9 4c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1m11 15H4v-2h16zm0-5H4V8h5.08L7 10.83 8.62 12 11 8.76l1-1.36 1 1.36L15.38 12 17 10.83 14.92 8H20z\"></path></svg>"
+  },
+  {
+    "name": "nav.referral-filled",
+    "label": "Referral Program",
+    "source": {
+      "page": "tradezella:notebook",
+      "testid": "RedeemIcon",
+      "viewBox": "0 0 24 24",
+      "defaultWidth": null,
+      "defaultHeight": null
+    },
+    "svg": "<svg class=\"MuiSvgIcon-root MuiSvgIcon-fontSizeMedium css-q7mezt\" focusable=\"false\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" data-testid=\"RedeemIcon\"><path d=\"M20 6h-2.18c.11-.31.18-.65.18-1 0-1.66-1.34-3-3-3-1.05 0-1.96.54-2.5 1.35l-.5.67-.5-.68C10.96 2.54 10.05 2 9 2 7.34 2 6 3.34 6 5c0 .35.07.69.18 1H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2m-5-2c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1M9 4c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1m11 15H4v-2h16zm0-5H4V8h5.08L7 10.83 8.62 12 11 8.76l1-1.36 1 1.36L15.38 12 17 10.83 14.92 8H20z\"></path></svg>"
+  },
+  {
+    "name": "action.add",
+    "label": "Add Trade",
+    "source": {
+      "page": "tradezella:notebook",
+      "testid": "AddOutlinedIcon",
+      "viewBox": "0 0 24 24",
+      "defaultWidth": 20,
+      "defaultHeight": 20
+    },
+    "svg": "<svg class=\"MuiSvgIcon-root MuiSvgIcon-fontSizeMedium c61 css-q7mezt\" focusable=\"false\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" data-testid=\"AddOutlinedIcon\"><path d=\"M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6z\"></path></svg>"
+  },
+  {
+    "name": "nav.dashboard",
+    "label": "Dashboard",
+    "source": {
+      "page": "tradezella:notebook",
+      "testid": "SpaceDashboardOutlinedIcon",
+      "viewBox": "0 0 24 24",
+      "defaultWidth": 20,
+      "defaultHeight": 20
+    },
+    "svg": "<svg class=\"MuiSvgIcon-root MuiSvgIcon-fontSizeMedium c55 css-q7mezt\" focusable=\"false\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" data-testid=\"SpaceDashboardOutlinedIcon\"><path d=\"M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2M5 19V5h6v14zm14 0h-6v-7h6zm0-9h-6V5h6z\"></path></svg>"
+  },
+  {
+    "name": "nav.trades",
+    "label": "Trades",
+    "source": {
+      "page": "tradezella:notebook",
+      "testid": "TodayOutlinedIcon",
+      "viewBox": "0 0 24 24",
+      "defaultWidth": 20,
+      "defaultHeight": 20
+    },
+    "svg": "<svg class=\"MuiSvgIcon-root MuiSvgIcon-fontSizeMedium c55 css-q7mezt\" focusable=\"false\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" data-testid=\"TodayOutlinedIcon\"><path d=\"M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2m0 16H5V9h14zm0-12H5V5h14zM7 11h5v5H7z\"></path></svg>"
+  },
+  {
+    "name": "nav.notebook",
+    "label": "Notebook",
+    "source": {
+      "page": "tradezella:notebook",
+      "testid": "StickyNote2Icon",
+      "viewBox": "0 0 24 24",
+      "defaultWidth": 20,
+      "defaultHeight": 20
+    },
+    "svg": "<svg class=\"MuiSvgIcon-root MuiSvgIcon-fontSizeMedium c55 css-q7mezt\" focusable=\"false\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" data-testid=\"StickyNote2Icon\"><path d=\"M19 3H4.99C3.89 3 3 3.9 3 5l.01 14c0 1.1.89 2 1.99 2h10l6-6V5c0-1.1-.9-2-2-2M7 8h10v2H7zm5 6H7v-2h5zm2 5.5V14h5.5z\"></path></svg>"
+  },
+  {
+    "name": "nav.reports",
+    "label": "Reports",
+    "source": {
+      "page": "tradezella:notebook",
+      "testid": "AssessmentOutlinedIcon",
+      "viewBox": "0 0 24 24",
+      "defaultWidth": 20,
+      "defaultHeight": 20
+    },
+    "svg": "<svg class=\"MuiSvgIcon-root MuiSvgIcon-fontSizeMedium c55 css-q7mezt\" focusable=\"false\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" data-testid=\"AssessmentOutlinedIcon\"><path d=\"M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2m0 16H5V5h14zM7 10h2v7H7zm4-3h2v10h-2zm4 6h2v4h-2z\"></path></svg>"
+  },
+  {
+    "name": "nav.strategies",
+    "label": "Playbooks/Strategies",
+    "source": {
+      "page": "tradezella:notebook",
+      "testid": "PlayLessonOutlinedIcon",
+      "viewBox": "0 0 24 24",
+      "defaultWidth": 20,
+      "defaultHeight": 20
+    },
+    "svg": "<svg class=\"MuiSvgIcon-root MuiSvgIcon-fontSizeMedium c55 css-q7mezt\" focusable=\"false\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" data-testid=\"PlayLessonOutlinedIcon\"><path d=\"M5 20V4h2v7l2.5-1.5L12 11V4h5v7.08c.33-.05.66-.08 1-.08s.67.03 1 .08V4c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h7.26c-.42-.6-.75-1.28-.97-2zm13-7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5m-1.25 7.5v-5l4 2.5z\"></path></svg>"
+  },
+  {
+    "name": "nav.replay",
+    "label": "Trade Replay",
+    "source": {
+      "page": "tradezella:notebook",
+      "testid": "PlayCircleOutlinedIcon",
+      "viewBox": "0 0 24 24",
+      "defaultWidth": 20,
+      "defaultHeight": 20
+    },
+    "svg": "<svg class=\"MuiSvgIcon-root MuiSvgIcon-fontSizeMedium c55 css-q7mezt\" focusable=\"false\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" data-testid=\"PlayCircleOutlinedIcon\"><path d=\"M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2m0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8m-2.5-3.5 7-4.5-7-4.5z\"></path></svg>"
+  },
+  {
+    "name": "nav.progress",
+    "label": "Progress Tracker",
+    "source": {
+      "page": "tradezella:notebook",
+      "testid": "QueryStatsOutlinedIcon",
+      "viewBox": "0 0 24 24",
+      "defaultWidth": 20,
+      "defaultHeight": 20
+    },
+    "svg": "<svg class=\"MuiSvgIcon-root MuiSvgIcon-fontSizeMedium c55 css-q7mezt\" focusable=\"false\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" data-testid=\"QueryStatsOutlinedIcon\"><path d=\"M19.88 18.47c.44-.7.7-1.51.7-2.39 0-2.49-2.01-4.5-4.5-4.5s-4.5 2.01-4.5 4.5 2.01 4.5 4.49 4.5c.88 0 1.7-.26 2.39-.7L21.58 23 23 21.58zm-3.8.11c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5m-.36-8.5c-.74.02-1.45.18-2.1.45l-.55-.83-3.8 6.18-3.01-3.52-3.63 5.81L1 17l5-8 3 3.5L13 6zm2.59.5c-.64-.28-1.33-.45-2.05-.49L21.38 2 23 3.18z\"></path></svg>"
+  },
+  {
+    "name": "nav.resources",
+    "label": "Resources",
+    "source": {
+      "page": "tradezella:notebook",
+      "testid": "FolderOutlinedIcon",
+      "viewBox": "0 0 24 24",
+      "defaultWidth": 20,
+      "defaultHeight": 20
+    },
+    "svg": "<svg class=\"MuiSvgIcon-root MuiSvgIcon-fontSizeMedium c55 css-q7mezt\" focusable=\"false\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" data-testid=\"FolderOutlinedIcon\"><path d=\"m9.17 6 2 2H20v10H4V6zM10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8z\"></path></svg>"
+  },
+  {
+    "name": "control.dropdown-filled",
+    "label": "All accounts",
+    "source": {
+      "page": "tradezella:notebook",
+      "testid": "ArrowDropDownIcon",
+      "viewBox": "0 0 24 24",
+      "defaultWidth": 16,
+      "defaultHeight": 16
+    },
+    "svg": "<svg class=\"MuiSvgIcon-root MuiSvgIcon-fontSizeMedium c130 css-q7mezt\" focusable=\"false\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" data-testid=\"ArrowDropDownIcon\"><path d=\"m7 10 5 5 5-5z\"></path></svg>"
+  },
+  {
+    "name": "control.collapse",
+    "label": "Collapse",
+    "source": {
+      "page": "tradezella:notebook",
+      "testid": "ChevronLeftOutlinedIcon",
+      "viewBox": "0 0 24 24",
+      "defaultWidth": 20,
+      "defaultHeight": 20
+    },
+    "svg": "<svg class=\"MuiSvgIcon-root MuiSvgIcon-fontSizeSmall css-vh810p\" focusable=\"false\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" data-testid=\"ChevronLeftOutlinedIcon\"><path d=\"M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12z\"></path></svg>"
+  },
+  {
+    "name": "legacy.custom-33",
+    "label": null,
+    "source": {
+      "page": "tradezella:notebook",
+      "testid": null,
+      "viewBox": "0 0 20 20",
+      "defaultWidth": 20,
+      "defaultHeight": 20
+    },
+    "svg": "<svg width=\"20\" height=\"20\" viewBox=\"0 0 20 20\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\" class=\"css-1hb41nl\"><path d=\"M9.58329 18.1248C4.87496 18.1248 1.04163 14.2915 1.04163 9.58317C1.04163 4.87484 4.87496 1.0415 9.58329 1.0415C14.2916 1.0415 18.125 4.87484 18.125 9.58317C18.125 14.2915 14.2916 18.1248 9.58329 18.1248ZM9.58329 2.2915C5.55829 2.2915 2.29163 5.5665 2.29163 9.58317C2.29163 13.5998 5.55829 16.8748 9.58329 16.8748C13.6083 16.8748 16.875 13.5998 16.875 9.58317C16.875 5.5665 13.6083 2.2915 9.58329 2.2915Z\" fill=\"#797984\"></path><path d=\"M18.3333 18.9585C18.175 18.9585 18.0166 18.9002 17.8916 18.7752L16.225 17.1085C15.9833 16.8669 15.9833 16.4669 16.225 16.2252C16.4666 15.9835 16.8666 15.9835 17.1083 16.2252L18.775 17.8919C19.0166 18.1335 19.0166 18.5335 18.775 18.7752C18.65 18.9002 18.4916 18.9585 18.3333 18.9585Z\" fill=\"#797984\"></path></svg>"
+  },
+  {
+    "name": "control.filter",
+    "label": "Filters",
+    "source": {
+      "page": "tradezella:notebook",
+      "testid": "FilterListOutlinedIcon",
+      "viewBox": "0 0 24 24",
+      "defaultWidth": 20,
+      "defaultHeight": 20
+    },
+    "svg": "<svg class=\"MuiSvgIcon-root MuiSvgIcon-fontSizeSmall css-vh810p\" focusable=\"false\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" data-testid=\"FilterListOutlinedIcon\"><path d=\"M10 18h4v-2h-4zM3 6v2h18V6zm3 7h12v-2H6z\"></path></svg>"
+  },
+  {
+    "name": "control.chevron-right",
+    "label": "ChevronRightIcon",
+    "source": {
+      "page": "tradezella:notebook",
+      "testid": "ChevronRightIcon",
+      "viewBox": "0 0 24 24",
+      "defaultWidth": 16,
+      "defaultHeight": 16
+    },
+    "svg": "<svg class=\"MuiSvgIcon-root MuiSvgIcon-fontSizeSmall css-vh810p\" focusable=\"false\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" data-testid=\"ChevronRightIcon\"><path d=\"M10 6 8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z\"></path></svg>"
+  },
+  {
+    "name": "notebook.page",
+    "label": "DescriptionOutlinedIcon",
+    "source": {
+      "page": "tradezella:notebook",
+      "testid": "DescriptionOutlinedIcon",
+      "viewBox": "0 0 24 24",
+      "defaultWidth": 18,
+      "defaultHeight": 18
+    },
+    "svg": "<svg class=\"MuiSvgIcon-root MuiSvgIcon-fontSizeMedium css-q7mezt\" focusable=\"false\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" data-testid=\"DescriptionOutlinedIcon\"><path d=\"M8 16h8v2H8zm0-4h8v2H8zm6-10H6c-1.1 0-2 .9-2 2v16c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8zm4 18H6V4h7v5h5z\"></path></svg>"
+  },
+  {
+    "name": "notebook.favorite",
+    "label": "StarRoundedIcon",
+    "source": {
+      "page": "tradezella:notebook",
+      "testid": "StarRoundedIcon",
+      "viewBox": "0 0 24 24",
+      "defaultWidth": 18,
+      "defaultHeight": 18
+    },
+    "svg": "<svg class=\"MuiSvgIcon-root MuiSvgIcon-fontSizeMedium css-q7mezt\" focusable=\"false\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" data-testid=\"StarRoundedIcon\"><path d=\"m12 17.27 4.15 2.51c.76.46 1.69-.22 1.49-1.08l-1.1-4.72 3.67-3.18c.67-.58.31-1.68-.57-1.75l-4.83-.41-1.89-4.46c-.34-.81-1.5-.81-1.84 0L9.19 8.63l-4.83.41c-.88.07-1.24 1.17-.57 1.75l3.67 3.18-1.1 4.72c-.2.86.73 1.54 1.49 1.08z\"></path></svg>"
+  },
+  {
+    "name": "notebook.stats",
+    "label": "BarChartOutlinedIcon",
+    "source": {
+      "page": "tradezella:notebook",
+      "testid": "BarChartOutlinedIcon",
+      "viewBox": "0 0 24 24",
+      "defaultWidth": 18,
+      "defaultHeight": 18
+    },
+    "svg": "<svg class=\"MuiSvgIcon-root MuiSvgIcon-fontSizeMedium css-q7mezt\" focusable=\"false\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" data-testid=\"BarChartOutlinedIcon\"><path d=\"M4 9h4v11H4zm12 4h4v7h-4zm-6-9h4v16h-4z\"></path></svg>"
+  },
+  {
+    "name": "action.add-39",
+    "label": "New note",
+    "source": {
+      "page": "tradezella:notebook",
+      "testid": "AddOutlinedIcon",
+      "viewBox": "0 0 24 24",
+      "defaultWidth": 20,
+      "defaultHeight": 20
+    },
+    "svg": "<svg class=\"MuiSvgIcon-root MuiSvgIcon-fontSizeSmall css-vh810p\" focusable=\"false\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" data-testid=\"AddOutlinedIcon\"><path d=\"M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6z\"></path></svg>"
+  },
+  {
+    "name": "control.more-horizontal",
+    "label": "More options",
+    "source": {
+      "page": "tradezella:notebook",
+      "testid": "MoreHorizIcon",
+      "viewBox": "0 0 24 24",
+      "defaultWidth": 20,
+      "defaultHeight": 20
+    },
+    "svg": "<svg class=\"MuiSvgIcon-root MuiSvgIcon-fontSizeSmall css-vh810p\" focusable=\"false\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" data-testid=\"MoreHorizIcon\"><path d=\"M6 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2m12 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2m-6 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2\"></path></svg>"
+  },
+  {
+    "name": "date.calendar-today",
+    "label": "CalendarTodayOutlinedIcon",
+    "source": {
+      "page": "tradezella:notebook",
+      "testid": "CalendarTodayOutlinedIcon",
+      "viewBox": "0 0 24 24",
+      "defaultWidth": 18,
+      "defaultHeight": 18
+    },
+    "svg": "<svg class=\"MuiSvgIcon-root MuiSvgIcon-fontSizeMedium css-q7mezt\" focusable=\"false\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" data-testid=\"CalendarTodayOutlinedIcon\"><path d=\"M20 3h-1V1h-2v2H7V1H5v2H4c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2m0 18H4V10h16zm0-13H4V5h16z\"></path></svg>"
+  },
+  {
+    "name": "control.checkbox",
+    "label": "CheckBoxOutlineBlankIcon",
+    "source": {
+      "page": "tradezella:notebook",
+      "testid": "CheckBoxOutlineBlankIcon",
+      "viewBox": "0 0 24 24",
+      "defaultWidth": 20,
+      "defaultHeight": 20
+    },
+    "svg": "<svg class=\"MuiSvgIcon-root MuiSvgIcon-fontSizeSmall css-vh810p\" focusable=\"false\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" data-testid=\"CheckBoxOutlineBlankIcon\"><path d=\"M19 5v14H5V5h14m0-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z\"></path></svg>"
+  },
+  {
+    "name": "legacy.custom-43",
+    "label": null,
+    "source": {
+      "page": "tradezella:notebook",
+      "testid": null,
+      "viewBox": "0 0 24 24",
+      "defaultWidth": 24,
+      "defaultHeight": 24
+    },
+    "svg": "<svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M15.0003 20.6695C14.8103 20.6695 14.6203 20.5995 14.4703 20.4495L7.95027 13.9295C6.89027 12.8695 6.89027 11.1295 7.95027 10.0695L14.4703 3.54953C14.7603 3.25953 15.2403 3.25953 15.5303 3.54953C15.8203 3.83953 15.8203 4.31953 15.5303 4.60953L9.01027 11.1295C8.53027 11.6095 8.53027 12.3895 9.01027 12.8695L15.5303 19.3895C15.8203 19.6795 15.8203 20.1595 15.5303 20.4495C15.3803 20.5895 15.1903 20.6695 15.0003 20.6695Z\" fill=\"currentColor\"></path></svg>"
+  },
+  {
+    "name": "control.drag-indicator",
+    "label": "DragIndicatorIcon",
+    "source": {
+      "page": "tradezella:notebook",
+      "testid": "DragIndicatorIcon",
+      "viewBox": "0 0 24 24",
+      "defaultWidth": 16,
+      "defaultHeight": 16
+    },
+    "svg": "<svg class=\"MuiSvgIcon-root MuiSvgIcon-fontSizeMedium css-q7mezt\" focusable=\"false\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" data-testid=\"DragIndicatorIcon\"><path d=\"M11 18c0 1.1-.9 2-2 2s-2-.9-2-2 .9-2 2-2 2 .9 2 2m-2-8c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2m0-6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2m6 4c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2m0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2m0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2\"></path></svg>"
+  },
+  {
+    "name": "notebook.trade-note",
+    "label": "PsychologyOutlinedIcon",
+    "source": {
+      "page": "tradezella:notebook",
+      "testid": "PsychologyOutlinedIcon",
+      "viewBox": "0 0 24 24",
+      "defaultWidth": 18,
+      "defaultHeight": 18
+    },
+    "svg": "<svg class=\"MuiSvgIcon-root MuiSvgIcon-fontSizeMedium css-q7mezt\" focusable=\"false\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" data-testid=\"PsychologyOutlinedIcon\"><path d=\"m15.82 7.22-1 .4c-.21-.16-.43-.29-.67-.39L14 6.17c-.02-.1-.1-.17-.2-.17h-1.6c-.1 0-.18.07-.19.17l-.15 1.06c-.24.1-.47.23-.67.39l-1-.4c-.09-.03-.2 0-.24.09l-.8 1.38c-.05.09-.03.2.05.26l.85.66c-.03.12-.05.26-.05.39q0 .195.03.39l-.84.66c-.08.06-.1.17-.05.25l.8 1.39c.05.09.15.12.25.09l.99-.4c.21.16.43.29.68.39l.14 1.06c.02.1.1.17.2.17h1.6c.1 0 .18-.07.2-.17l.15-1.06c.24-.1.47-.23.67-.39l.99.4c.09.04.2 0 .24-.09l.8-1.39c.05-.09.03-.19-.05-.25l-.83-.66q.03-.195.03-.39 0-.21-.03-.39l.85-.66c.08-.06.1-.17.05-.26l-.8-1.38c-.05-.09-.16-.12-.25-.09M13 11.43c-.79 0-1.43-.64-1.43-1.43s.64-1.43 1.43-1.43 1.43.64 1.43 1.43-.64 1.43-1.43 1.43\"></path><path d=\"M19.94 9.06c-.43-3.27-3.23-5.86-6.53-6.05C13.27 3 13.14 3 13 3 9.47 3 6.57 5.61 6.08 9l-1.93 3.48c-.41.66.07 1.52.85 1.52h1v2c0 1.1.9 2 2 2h1v3h7v-4.68c2.62-1.25 4.35-4.08 3.94-7.26m-5.05 5.57-.89.42V19h-3v-3H8v-4H6.7l1.33-2.33C8.21 7.06 10.35 5 13 5c2.76 0 5 2.24 5 5 0 2.09-1.29 3.88-3.11 4.63\"></path></svg>"
+  },
+  {
+    "name": "nav.resources-46",
+    "label": "FolderOutlinedIcon",
+    "source": {
+      "page": "tradezella:notebook",
+      "testid": "FolderOutlinedIcon",
+      "viewBox": "0 0 24 24",
+      "defaultWidth": 18,
+      "defaultHeight": 18
+    },
+    "svg": "<svg class=\"MuiSvgIcon-root MuiSvgIcon-fontSizeMedium css-q7mezt\" focusable=\"false\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" data-testid=\"FolderOutlinedIcon\"><path d=\"m9.17 6 2 2H20v10H4V6zM10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8z\"></path></svg>"
+  },
+  {
+    "name": "notebook.tags",
+    "label": "Tags",
+    "source": {
+      "page": "tradezella:notebook",
+      "testid": "LocalOfferOutlinedIcon",
+      "viewBox": "0 0 24 24",
+      "defaultWidth": 18,
+      "defaultHeight": 18
+    },
+    "svg": "<svg class=\"MuiSvgIcon-root MuiSvgIcon-fontSizeMedium css-q7mezt\" focusable=\"false\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" data-testid=\"LocalOfferOutlinedIcon\"><path d=\"m21.41 11.58-9-9C12.05 2.22 11.55 2 11 2H4c-1.1 0-2 .9-2 2v7c0 .55.22 1.05.59 1.42l9 9c.36.36.86.58 1.41.58s1.05-.22 1.41-.59l7-7c.37-.36.59-.86.59-1.41s-.23-1.06-.59-1.42M13 20.01 4 11V4h7v-.01l9 9z\"></path><circle cx=\"6.5\" cy=\"6.5\" r=\"1.5\"></circle></svg>"
+  },
+  {
+    "name": "action.delete",
+    "label": "DeleteOutlineOutlinedIcon",
+    "source": {
+      "page": "tradezella:notebook",
+      "testid": "DeleteOutlineOutlinedIcon",
+      "viewBox": "0 0 24 24",
+      "defaultWidth": 18,
+      "defaultHeight": 18
+    },
+    "svg": "<svg class=\"MuiSvgIcon-root MuiSvgIcon-fontSizeMedium css-q7mezt\" focusable=\"false\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" data-testid=\"DeleteOutlineOutlinedIcon\"><path d=\"M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6zM8 9h8v10H8zm7.5-5-1-1h-5l-1 1H5v2h14V4z\"></path></svg>"
+  },
+  {
+    "name": "notebook.daily-journal",
+    "label": "EventIcon",
+    "source": {
+      "page": "tradezella:notebook",
+      "testid": "EventIcon",
+      "viewBox": "0 0 24 24",
+      "defaultWidth": 24,
+      "defaultHeight": 24
+    },
+    "svg": "<svg class=\"MuiSvgIcon-root MuiSvgIcon-fontSizeMedium css-uij1e6\" focusable=\"false\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" data-testid=\"EventIcon\"><path d=\"M17 12h-5v5h5zM16 1v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1zm3 18H5V8h14z\"></path></svg>"
+  },
+  {
+    "name": "action.favorite",
+    "label": "Add to favorites",
+    "source": {
+      "page": "tradezella:notebook",
+      "testid": "StarBorderRoundedIcon",
+      "viewBox": "0 0 24 24",
+      "defaultWidth": 18,
+      "defaultHeight": 18
+    },
+    "svg": "<svg class=\"MuiSvgIcon-root MuiSvgIcon-fontSizeSmall css-vh810p\" focusable=\"false\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" data-testid=\"StarBorderRoundedIcon\"><path d=\"m19.65 9.04-4.84-.42-1.89-4.45c-.34-.81-1.5-.81-1.84 0L9.19 8.63l-4.83.41c-.88.07-1.24 1.17-.57 1.75l3.67 3.18-1.1 4.72c-.2.86.73 1.54 1.49 1.08l4.15-2.5 4.15 2.51c.76.46 1.69-.22 1.49-1.08l-1.1-4.73 3.67-3.18c.67-.58.32-1.68-.56-1.75M12 15.4l-3.76 2.27 1-4.28-3.32-2.88 4.38-.38L12 6.1l1.71 4.04 4.38.38-3.32 2.88 1 4.28z\"></path></svg>"
+  },
+  {
+    "name": "action.share",
+    "label": "Click to share note",
+    "source": {
+      "page": "tradezella:notebook",
+      "testid": "ShareOutlinedIcon",
+      "viewBox": "0 0 24 24",
+      "defaultWidth": 18,
+      "defaultHeight": 18
+    },
+    "svg": "<svg class=\"MuiSvgIcon-root MuiSvgIcon-fontSizeSmall css-vh810p\" focusable=\"false\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" data-testid=\"ShareOutlinedIcon\"><path d=\"M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92M18 4c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1M6 13c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1m12 7.02c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1\"></path></svg>"
+  },
+  {
+    "name": "status.success",
+    "label": "CheckCircleOutlineIcon",
+    "source": {
+      "page": "tradezella:notebook",
+      "testid": "CheckCircleOutlineIcon",
+      "viewBox": "0 0 24 24",
+      "defaultWidth": 16,
+      "defaultHeight": 16
+    },
+    "svg": "<svg class=\"MuiSvgIcon-root MuiSvgIcon-fontSizeMedium css-19z58ud\" focusable=\"false\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" data-testid=\"CheckCircleOutlineIcon\"><path d=\"M16.59 7.58 10 14.17l-3.59-3.58L5 12l5 5 8-8zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2m0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8\"></path></svg>"
+  },
+  {
+    "name": "editor.speech",
+    "label": "Enable speech to text",
+    "source": {
+      "page": "tradezella:notebook",
+      "testid": "MicOutlinedIcon",
+      "viewBox": "0 0 24 24",
+      "defaultWidth": 20,
+      "defaultHeight": 20
+    },
+    "svg": "<svg class=\"MuiSvgIcon-root MuiSvgIcon-fontSizeSmall css-vh810p\" focusable=\"false\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" data-testid=\"MicOutlinedIcon\"><path d=\"M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3\"></path><path d=\"M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92z\"></path></svg>"
+  },
+  {
+    "name": "editor.templates",
+    "label": "Templates",
+    "source": {
+      "page": "tradezella:notebook",
+      "testid": "DashboardCustomizeOutlinedIcon",
+      "viewBox": "0 0 24 24",
+      "defaultWidth": 20,
+      "defaultHeight": 20
+    },
+    "svg": "<svg class=\"MuiSvgIcon-root MuiSvgIcon-fontSizeSmall css-vh810p\" focusable=\"false\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" data-testid=\"DashboardCustomizeOutlinedIcon\"><path d=\"M3 11h8V3H3zm2-6h4v4H5zm8-2v8h8V3zm6 6h-4V5h4zM3 21h8v-8H3zm2-6h4v4H5zm13-2h-2v3h-3v2h3v3h2v-3h3v-2h-3z\"></path></svg>"
+  },
+  {
+    "name": "notebook.tags-55",
+    "label": "Tags",
+    "source": {
+      "page": "tradezella:notebook",
+      "testid": "LocalOfferOutlinedIcon",
+      "viewBox": "0 0 24 24",
+      "defaultWidth": 20,
+      "defaultHeight": 20
+    },
+    "svg": "<svg class=\"MuiSvgIcon-root MuiSvgIcon-fontSizeSmall css-vh810p\" focusable=\"false\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" data-testid=\"LocalOfferOutlinedIcon\"><path d=\"m21.41 11.58-9-9C12.05 2.22 11.55 2 11 2H4c-1.1 0-2 .9-2 2v7c0 .55.22 1.05.59 1.42l9 9c.36.36.86.58 1.41.58s1.05-.22 1.41-.59l7-7c.37-.36.59-.86.59-1.41s-.23-1.06-.59-1.42M13 20.01 4 11V4h7v-.01l9 9z\"></path><circle cx=\"6.5\" cy=\"6.5\" r=\"1.5\"></circle></svg>"
+  },
+  {
+    "name": "legacy.formatting-options-for-text-style",
+    "label": "Formatting options for text style",
+    "source": {
+      "page": "tradezella:notebook",
+      "testid": null,
+      "viewBox": "0 0 16 16",
+      "defaultWidth": 16,
+      "defaultHeight": 16
+    },
+    "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" class=\"icon\" viewBox=\"0 0 16 16\"><path d=\"m2.244 13.081.943-2.803H6.66l.944 2.803H8.86L5.54 3.75H4.322L1 13.081zm2.7-7.923L6.34 9.314H3.51l1.4-4.156zm9.146 7.027h.035v.896h1.128V8.125c0-1.51-1.114-2.345-2.646-2.345-1.736 0-2.59.916-2.666 2.174h1.108c.068-.718.595-1.19 1.517-1.19.971 0 1.518.52 1.518 1.464v.731H12.19c-1.647.007-2.522.8-2.522 2.058 0 1.319.957 2.18 2.345 2.18 1.06 0 1.716-.43 2.078-1.011zm-1.763.035c-.752 0-1.456-.397-1.456-1.244 0-.65.424-1.115 1.408-1.115h1.805v.834c0 .896-.752 1.525-1.757 1.525\"></path></svg>"
+  },
+  {
+    "name": "control.chevron-down",
+    "label": "Formatting options for text style",
+    "source": {
+      "page": "tradezella:notebook",
+      "testid": "KeyboardArrowDownOutlinedIcon",
+      "viewBox": "0 0 24 24",
+      "defaultWidth": 16,
+      "defaultHeight": 16
+    },
+    "svg": "<svg class=\"MuiSvgIcon-root MuiSvgIcon-fontSizeMedium css-195z77g\" focusable=\"false\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" data-testid=\"KeyboardArrowDownOutlinedIcon\"><path d=\"M7.41 8.59 12 13.17l4.59-4.58L18 10l-6 6-6-6z\"></path></svg>"
+  },
+  {
+    "name": "editor.font-family",
+    "label": "Formatting options for font family",
+    "source": {
+      "page": "tradezella:notebook",
+      "testid": "TextFieldsOutlinedIcon",
+      "viewBox": "0 0 24 24",
+      "defaultWidth": 16,
+      "defaultHeight": 16
+    },
+    "svg": "<svg class=\"MuiSvgIcon-root MuiSvgIcon-fontSizeMedium css-1s0hah4\" focusable=\"false\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" data-testid=\"TextFieldsOutlinedIcon\"><path d=\"M2.5 4v3h5v12h3V7h5V4zm19 5h-9v3h3v7h3v-7h3z\"></path></svg>"
+  },
+  {
+    "name": "editor.font-decrease",
+    "label": "Decrease font size",
+    "source": {
+      "page": "tradezella:notebook",
+      "testid": "RemoveOutlinedIcon",
+      "viewBox": "0 0 24 24",
+      "defaultWidth": 20,
+      "defaultHeight": 20
+    },
+    "svg": "<svg class=\"MuiSvgIcon-root MuiSvgIcon-fontSizeSmall css-vh810p\" focusable=\"false\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" data-testid=\"RemoveOutlinedIcon\"><path d=\"M19 13H5v-2h14z\"></path></svg>"
+  },
+  {
+    "name": "editor.bold",
+    "label": "Formatting options for inline text style",
+    "source": {
+      "page": "tradezella:notebook",
+      "testid": "FormatBoldIcon",
+      "viewBox": "0 0 24 24",
+      "defaultWidth": 20,
+      "defaultHeight": 20
+    },
+    "svg": "<svg class=\"MuiSvgIcon-root MuiSvgIcon-fontSizeSmall css-vh810p\" focusable=\"false\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" data-testid=\"FormatBoldIcon\"><path d=\"M15.6 10.79c.97-.67 1.65-1.77 1.65-2.79 0-2.26-1.75-4-4-4H7v14h7.04c2.09 0 3.71-1.7 3.71-3.79 0-1.52-.86-2.82-2.15-3.42M10 6.5h3c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5h-3zm3.5 9H10v-3h3.5c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5\"></path></svg>"
+  },
+  {
+    "name": "editor.link",
+    "label": "Insert link",
+    "source": {
+      "page": "tradezella:notebook",
+      "testid": "LinkOutlinedIcon",
+      "viewBox": "0 0 24 24",
+      "defaultWidth": 20,
+      "defaultHeight": 20
+    },
+    "svg": "<svg class=\"MuiSvgIcon-root MuiSvgIcon-fontSizeSmall css-vh810p\" focusable=\"false\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" data-testid=\"LinkOutlinedIcon\"><path d=\"M17 7h-4v2h4c1.65 0 3 1.35 3 3s-1.35 3-3 3h-4v2h4c2.76 0 5-2.24 5-5s-2.24-5-5-5m-6 8H7c-1.65 0-3-1.35-3-3s1.35-3 3-3h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4zm-3-4h8v2H8z\"></path></svg>"
+  },
+  {
+    "name": "editor.clear-format",
+    "label": "Clear text formatting",
+    "source": {
+      "page": "tradezella:notebook",
+      "testid": "FormatClearIcon",
+      "viewBox": "0 0 24 24",
+      "defaultWidth": 20,
+      "defaultHeight": 20
+    },
+    "svg": "<svg class=\"MuiSvgIcon-root MuiSvgIcon-fontSizeSmall css-vh810p\" focusable=\"false\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" data-testid=\"FormatClearIcon\"><path d=\"M3.27 5 2 6.27l6.97 6.97L6.5 19h3l1.57-3.66L16.73 21 18 19.73 3.55 5.27zM6 5v.18L8.82 8h2.4l-.72 1.68 2.1 2.1L14.21 8H20V5z\"></path></svg>"
+  },
+  {
+    "name": "editor.text-color",
+    "label": "Formatting text color",
+    "source": {
+      "page": "tradezella:notebook",
+      "testid": "FormatColorTextOutlinedIcon",
+      "viewBox": "0 0 24 24",
+      "defaultWidth": 20,
+      "defaultHeight": 20
+    },
+    "svg": "<svg class=\"MuiSvgIcon-root MuiSvgIcon-fontSizeSmall css-vh810p\" focusable=\"false\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" data-testid=\"FormatColorTextOutlinedIcon\"><path d=\"M2 20h20v4H2zm3.49-3h2.42l1.27-3.58h5.65L16.09 17h2.42L13.25 3h-2.5zm4.42-5.61 2.03-5.79h.12l2.03 5.79z\"></path></svg>"
+  },
+  {
+    "name": "editor.background-color",
+    "label": "Formatting background color",
+    "source": {
+      "page": "tradezella:notebook",
+      "testid": "FormatColorFillOutlinedIcon",
+      "viewBox": "0 0 24 24",
+      "defaultWidth": 20,
+      "defaultHeight": 20
+    },
+    "svg": "<svg class=\"MuiSvgIcon-root MuiSvgIcon-fontSizeSmall css-vh810p\" focusable=\"false\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" data-testid=\"FormatColorFillOutlinedIcon\"><path d=\"M16.56 8.94 7.62 0 6.21 1.41l2.38 2.38-5.15 5.15c-.59.59-.59 1.54 0 2.12l5.5 5.5c.29.29.68.44 1.06.44s.77-.15 1.06-.44l5.5-5.5c.59-.58.59-1.53 0-2.12M5.21 10 10 5.21 14.79 10zM19 11.5s-2 2.17-2 3.5c0 1.1.9 2 2 2s2-.9 2-2c0-1.33-2-3.5-2-3.5M2 20h20v4H2z\"></path></svg>"
+  },
+  {
+    "name": "legacy.formatting-options-for-text-alignment",
+    "label": "Formatting options for text alignment",
+    "source": {
+      "page": "tradezella:notebook",
+      "testid": null,
+      "viewBox": null,
+      "defaultWidth": 16,
+      "defaultHeight": 16
+    },
+    "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" class=\"format\"><path fill-rule=\"evenodd\" d=\"M2 12.5a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5zm0-3a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5zm0-3a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5zm0-3a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5z\"></path></svg>"
+  },
+  {
+    "name": "editor.undo",
+    "label": "Undo",
+    "source": {
+      "page": "tradezella:notebook",
+      "testid": "UndoOutlinedIcon",
+      "viewBox": "0 0 24 24",
+      "defaultWidth": 20,
+      "defaultHeight": 20
+    },
+    "svg": "<svg class=\"MuiSvgIcon-root MuiSvgIcon-fontSizeSmall css-vh810p\" focusable=\"false\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" data-testid=\"UndoOutlinedIcon\"><path d=\"M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8\"></path></svg>"
+  },
+  {
+    "name": "editor.redo",
+    "label": "Redo",
+    "source": {
+      "page": "tradezella:notebook",
+      "testid": "RedoOutlinedIcon",
+      "viewBox": "0 0 24 24",
+      "defaultWidth": 20,
+      "defaultHeight": 20
+    },
+    "svg": "<svg class=\"MuiSvgIcon-root MuiSvgIcon-fontSizeSmall css-vh810p\" focusable=\"false\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" data-testid=\"RedoOutlinedIcon\"><path d=\"M18.4 10.6C16.55 8.99 14.15 8 11.5 8c-4.65 0-8.58 3.03-9.96 7.22L3.9 16c1.05-3.19 4.05-5.5 7.6-5.5 1.95 0 3.73.72 5.12 1.88L13 16h9V7z\"></path></svg>"
+  },
+  {
+    "name": "editor.history",
+    "label": "Version history",
+    "source": {
+      "page": "tradezella:notebook",
+      "testid": "HistoryOutlinedIcon",
+      "viewBox": "0 0 24 24",
+      "defaultWidth": 20,
+      "defaultHeight": 20
+    },
+    "svg": "<svg class=\"MuiSvgIcon-root MuiSvgIcon-fontSizeSmall css-vh810p\" focusable=\"false\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" data-testid=\"HistoryOutlinedIcon\"><path d=\"M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9m-1 5v5l4.25 2.52.77-1.28-3.52-2.09V8z\"></path></svg>"
+  },
+  {
+    "name": "editor.fullscreen",
+    "label": "Enter Fullscreen",
+    "source": {
+      "page": "tradezella:notebook",
+      "testid": "FullscreenOutlinedIcon",
+      "viewBox": "0 0 24 24",
+      "defaultWidth": 20,
+      "defaultHeight": 20
+    },
+    "svg": "<svg class=\"MuiSvgIcon-root MuiSvgIcon-fontSizeSmall css-vh810p\" focusable=\"false\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" data-testid=\"FullscreenOutlinedIcon\"><path d=\"M7 14H5v5h5v-2H7zm-2-4h2V7h3V5H5zm12 7h-3v2h5v-5h-2zM14 5v2h3v3h2V5z\"></path></svg>"
+  },
+  {
+    "name": "legacy.click-to-add-below",
+    "label": "Click to add below",
+    "source": {
+      "page": "tradezella:notebook",
+      "testid": null,
+      "viewBox": "0 0 10 17",
+      "defaultWidth": 18,
+      "defaultHeight": 18
+    },
+    "svg": "<svg width=\"18\" height=\"18\" xmlns=\"http://www.w3.org/2000/svg\" fill=\"currentColor\" viewBox=\"0 0 10 17\" class=\"icon-plus\"><path d=\"M10 7H6V3H4v4H0v2h4v4h2V9h4z\"></path></svg>"
+  },
+  {
+    "name": "legacy.custom-71",
+    "label": null,
+    "source": {
+      "page": "tradezella:notebook",
+      "testid": null,
+      "viewBox": "0 0 24 24",
+      "defaultWidth": 20,
+      "defaultHeight": 20
+    },
+    "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" data-name=\"Layer 1\" viewBox=\"0 0 24 24\" fill=\"currentColor\" class=\"icon\"><path stroke=\"currentColor\" d=\"M8.5 10a2 2 0 1 0 2 2 2 2 0 0 0-2-2Zm0 7a2 2 0 1 0 2 2 2 2 0 0 0-2-2Zm7-10a2 2 0 1 0-2-2 2 2 0 0 0 2 2Zm-7-4a2 2 0 1 0 2 2 2 2 0 0 0-2-2Zm7 14a2 2 0 1 0 2 2 2 2 0 0 0-2-2Zm0-7a2 2 0 1 0 2 2 2 2 0 0 0-2-2Z\"></path></svg>"
+  },
+  {
+    "name": "notebook.full-width",
+    "label": "Full width",
+    "source": {
+      "page": "tradezella:notebook",
+      "testid": "AspectRatioIcon",
+      "viewBox": "0 0 24 24",
+      "defaultWidth": 15,
+      "defaultHeight": 11
+    },
+    "svg": "<svg class=\"MuiSvgIcon-root MuiSvgIcon-fontSizeSmall css-vh810p\" focusable=\"false\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" data-testid=\"AspectRatioIcon\"><path d=\"M19 12h-2v3h-3v2h5zM7 9h3V7H5v5h2zm14-6H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2m0 16.01H3V4.99h18z\"></path></svg>"
+  },
+  {
+    "name": "notebook.show-toolbar",
+    "label": "Show toolbar",
+    "source": {
+      "page": "tradezella:notebook",
+      "testid": "ViewHeadlineIcon",
+      "viewBox": "0 0 24 24",
+      "defaultWidth": 15,
+      "defaultHeight": 11
+    },
+    "svg": "<svg class=\"MuiSvgIcon-root MuiSvgIcon-fontSizeSmall css-vh810p\" focusable=\"false\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" data-testid=\"ViewHeadlineIcon\"><path d=\"M4 15h16v-2H4zm0 4h16v-2H4zm0-8h16V9H4zm0-6v2h16V5z\"></path></svg>"
+  },
+  {
+    "name": "notebook.recommended",
+    "label": "Daily Game Plan",
+    "source": {
+      "page": "tradezella:notebook",
+      "testid": "ThumbUpOffAltIcon",
+      "viewBox": "0 0 24 24",
+      "defaultWidth": 15,
+      "defaultHeight": 11
+    },
+    "svg": "<svg class=\"MuiSvgIcon-root MuiSvgIcon-fontSizeSmall css-vh810p\" focusable=\"false\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" data-testid=\"ThumbUpOffAltIcon\"><path d=\"m13.11 5.72-.57 2.89c-.12.59.04 1.2.42 1.66s.94.73 1.54.73H20v1.08L17.43 18H9.34c-.18 0-.34-.16-.34-.34V9.82zM14 2 7.59 8.41C7.21 8.79 7 9.3 7 9.83v7.83C7 18.95 8.05 20 9.34 20h8.1c.71 0 1.36-.37 1.72-.97l2.67-6.15c.11-.25.17-.52.17-.8V11c0-1.1-.9-2-2-2h-5.5l.92-4.65c.05-.22.02-.46-.08-.66-.23-.45-.52-.86-.88-1.22zM4 9H2v11h2c.55 0 1-.45 1-1v-9c0-.55-.45-1-1-1\"></path></svg>"
+  },
+  {
+    "name": "notebook.manage-templates",
+    "label": "Manage Templates",
+    "source": {
+      "page": "tradezella:notebook",
+      "testid": "SettingsOutlinedIcon",
+      "viewBox": "0 0 24 24",
+      "defaultWidth": 15,
+      "defaultHeight": 11
+    },
+    "svg": "<svg class=\"MuiSvgIcon-root MuiSvgIcon-fontSizeSmall css-vh810p\" focusable=\"false\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" data-testid=\"SettingsOutlinedIcon\"><path d=\"M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.09-.16-.26-.25-.44-.25-.06 0-.12.01-.17.03l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1q-.09-.03-.18-.03c-.17 0-.34.09-.43.25l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.09.16.26.25.44.25.06 0 .12-.01.17-.03l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1q.09.03.18.03c.17 0 .34-.09.43-.25l2-3.46c.12-.22.07-.49-.12-.64zm-1.98-1.71c.04.31.05.52.05.73s-.02.43-.05.73l-.14 1.13.89.7 1.08.84-.7 1.21-1.27-.51-1.04-.42-.9.68c-.43.32-.84.56-1.25.73l-1.06.43-.16 1.13-.2 1.35h-1.4l-.19-1.35-.16-1.13-1.06-.43c-.43-.18-.83-.41-1.23-.71l-.91-.7-1.06.43-1.27.51-.7-1.21 1.08-.84.89-.7-.14-1.13c-.03-.31-.05-.54-.05-.74s.02-.43.05-.73l.14-1.13-.89-.7-1.08-.84.7-1.21 1.27.51 1.04.42.9-.68c.43-.32.84-.56 1.25-.73l1.06-.43.16-1.13.2-1.35h1.39l.19 1.35.16 1.13 1.06.43c.43.18.83.41 1.23.71l.91.7 1.06-.43 1.27-.51.7 1.21-1.07.85-.89.7zM12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4m0 6c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2\"></path></svg>"
+  },
+  {
+    "name": "action.import",
+    "label": "Import",
+    "source": {
+      "page": "tradezella:notebook",
+      "testid": "FileDownloadOutlinedIcon",
+      "viewBox": "0 0 24 24",
+      "defaultWidth": 15,
+      "defaultHeight": 11
+    },
+    "svg": "<svg class=\"MuiSvgIcon-root MuiSvgIcon-fontSizeSmall css-vh810p\" focusable=\"false\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" data-testid=\"FileDownloadOutlinedIcon\"><path d=\"M18 15v3H6v-3H4v3c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-3zm-1-4-1.41-1.41L13 12.17V4h-2v8.17L8.41 9.59 7 11l5 5z\"></path></svg>"
+  },
+  {
+    "name": "action.export",
+    "label": "Export",
+    "source": {
+      "page": "tradezella:notebook",
+      "testid": "FileUploadOutlinedIcon",
+      "viewBox": "0 0 24 24",
+      "defaultWidth": 15,
+      "defaultHeight": 11
+    },
+    "svg": "<svg class=\"MuiSvgIcon-root MuiSvgIcon-fontSizeSmall css-vh810p\" focusable=\"false\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" data-testid=\"FileUploadOutlinedIcon\"><path d=\"M18 15v3H6v-3H4v3c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-3zM7 9l1.41 1.41L11 7.83V16h2V7.83l2.59 2.58L17 9l-5-5z\"></path></svg>"
+  },
+  {
+    "name": "action.delete-78",
+    "label": "Delete",
+    "source": {
+      "page": "tradezella:notebook",
+      "testid": "DeleteOutlineIcon",
+      "viewBox": "0 0 24 24",
+      "defaultWidth": 15,
+      "defaultHeight": 11
+    },
+    "svg": "<svg class=\"MuiSvgIcon-root MuiSvgIcon-fontSizeSmall css-vh810p\" focusable=\"false\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" data-testid=\"DeleteOutlineIcon\"><path d=\"M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6zM8 9h8v10H8zm7.5-5-1-1h-5l-1 1H5v2h14V4z\"></path></svg>"
+  },
+  {
+    "name": "editor.inline-image",
+    "label": "Inline image",
+    "source": {
+      "page": "tradezella:notebook/editor-insert",
+      "testid": null,
+      "viewBox": "0 0 16 16",
+      "defaultWidth": 16,
+      "defaultHeight": 16
+    },
+    "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" viewBox=\"0 0 16 16\"><path d=\"M8.002 5.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z\"></path><path d=\"M12 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2zM3 2a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v8l-2.083-2.083a.5.5 0 0 0-.76.063L8 11 5.835 9.7a.5.5 0 0 0-.611.076L3 12V2z\"></path></svg>"
+  },
+  {
+    "name": "editor.toggle",
+    "label": "Toggle",
+    "source": {
+      "page": "tradezella:notebook/editor-insert",
+      "testid": null,
+      "viewBox": "0 0 16 16",
+      "defaultWidth": 16,
+      "defaultHeight": 16
+    },
+    "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" viewBox=\"0 0 16 16\"><path d=\"m12.14 8.753-5.482 4.796c-.646.566-1.658.106-1.658-.753V3.204a1 1 0 0 1 1.659-.753l5.48 4.796a1 1 0 0 1 0 1.506z\"></path></svg>"
+  },
+  {
+    "name": "editor.timed-list",
+    "label": "Timed List",
+    "source": {
+      "page": "tradezella:notebook/editor-insert",
+      "testid": null,
+      "viewBox": "0 0 16 16",
+      "defaultWidth": 16,
+      "defaultHeight": 16
+    },
+    "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" viewBox=\"0 0 16 16\"><path fill-rule=\"evenodd\" d=\"M5 11.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zm-3 1a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm0 4a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm0 4a1 1 0 1 0 0-2 1 1 0 0 0 0 2z\"></path></svg>"
+  },
+  {
+    "name": "editor.collapsible",
+    "label": "Collapsible container",
+    "source": {
+      "page": "tradezella:notebook/editor-insert",
+      "testid": null,
+      "viewBox": "0 0 16 16",
+      "defaultWidth": 16,
+      "defaultHeight": 16
+    },
+    "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" viewBox=\"0 0 16 16\"><path d=\"m12.14 8.753-5.482 4.796c-.646.566-1.658.106-1.658-.753V3.204a1 1 0 0 1 1.659-.753l5.48 4.796a1 1 0 0 1 0 1.506z\"></path></svg>"
+  },
+  {
+    "name": "editor.x",
+    "label": "X(Tweet)",
+    "source": {
+      "page": "tradezella:notebook/editor-insert",
+      "testid": null,
+      "viewBox": "0 0 16 16",
+      "defaultWidth": 16,
+      "defaultHeight": 16
+    },
+    "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" viewBox=\"0 0 16 16\"><path d=\"M16 16L9.743 6.67491L9.75367 6.68364L15.3953 0H13.51L8.91418 5.44L5.26456 0H0.320142L6.16167 8.70618L6.16096 8.70545L0 16H1.88528L6.99475 9.94764L11.0556 16H16ZM4.51756 1.45455L13.2966 14.5455H11.8026L3.01645 1.45455H4.51756Z\"></path></svg>"
+  },
+  {
+    "name": "editor.youtube",
+    "label": "YouTube video",
+    "source": {
+      "page": "tradezella:notebook/editor-insert",
+      "testid": null,
+      "viewBox": "0 0 16 16",
+      "defaultWidth": 16,
+      "defaultHeight": 16
+    },
+    "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" viewBox=\"0 0 16 16\"><path d=\"M8.051 1.999h.089c.822.003 4.987.033 6.11.335a2.01 2.01 0 0 1 1.415 1.42c.101.38.172.883.22 1.402l.01.104.022.26.008.104c.065.914.073 1.77.074 1.957v.075c-.001.194-.01 1.108-.082 2.06l-.008.105-.009.104c-.05.572-.124 1.14-.235 1.558a2.007 2.007 0 0 1-1.415 1.42c-1.16.312-5.569.334-6.18.335h-.142c-.309 0-1.587-.006-2.927-.052l-.17-.006-.087-.004-.171-.007-.171-.007c-1.11-.049-2.167-.128-2.654-.26a2.007 2.007 0 0 1-1.415-1.419c-.111-.417-.185-.986-.235-1.558L.09 9.82l-.008-.104A31.4 31.4 0 0 1 0 7.68v-.123c.002-.215.01-.958.064-1.778l.007-.103.003-.052.008-.104.022-.26.01-.104c.048-.519.119-1.023.22-1.402a2.007 2.007 0 0 1 1.415-1.42c.487-.13 1.544-.21 2.654-.26l.17-.007.172-.006.086-.003.171-.007A99.788 99.788 0 0 1 7.858 2h.193zM6.4 5.209v4.818l4.157-2.408L6.4 5.209z\"></path></svg>"
+  },
+  {
+    "name": "editor.horizontal-rule",
+    "label": "Horizontal rule",
+    "source": {
+      "page": "tradezella:notebook/editor-insert",
+      "testid": null,
+      "viewBox": "0 0 16 16",
+      "defaultWidth": 16,
+      "defaultHeight": 16
+    },
+    "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" viewBox=\"0 0 16 16\"><path d=\"M0 10.5a.5.5 0 0 1 .5-.5h15a.5.5 0 0 1 0 1H.5a.5.5 0 0 1-.5-.5zM12 0H4a2 2 0 0 0-2 2v7h1V2a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v7h1V2a2 2 0 0 0-2-2zm2 12h-1v2a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-2H2v2a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-2z\"/></svg>"
+  },
+  {
+    "name": "editor.page-break",
+    "label": "Page break",
+    "source": {
+      "page": "tradezella:notebook/editor-insert",
+      "testid": null,
+      "viewBox": "0 0 16 16",
+      "defaultWidth": 16,
+      "defaultHeight": 16
+    },
+    "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" viewBox=\"0 0 16 16\"><path d=\"M3.5 3.5c-.614-.884-.074-1.962.858-2.5L8 7.226 11.642 1c.932.538 1.472 1.616.858 2.5L8.81 8.61l1.556 2.661a2.5 2.5 0 1 1-.794.637L8 9.73l-1.572 2.177a2.5 2.5 0 1 1-.794-.637L7.19 8.61 3.5 3.5zm2.5 10a1.5 1.5 0 1 0-3 0 1.5 1.5 0 0 0 3 0zm7 0a1.5 1.5 0 1 0-3 0 1.5 1.5 0 0 0 3 0z\"/></svg>"
+  },
+  {
+    "name": "editor.image",
+    "label": "Image",
+    "source": {
+      "page": "tradezella:notebook/editor-insert",
+      "testid": null,
+      "viewBox": "0 0 16 16",
+      "defaultWidth": 16,
+      "defaultHeight": 16
+    },
+    "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" viewBox=\"0 0 16 16\"><path d=\"M8.002 5.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z\"/><path d=\"M12 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2zM3 2a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v8l-2.083-2.083a.5.5 0 0 0-.76.063L8 11 5.835 9.7a.5.5 0 0 0-.611.076L3 12V2z\"/></svg>"
+  },
+  {
+    "name": "editor.table",
+    "label": "Table",
+    "source": {
+      "page": "tradezella:notebook/editor-insert",
+      "testid": null,
+      "viewBox": "0 0 16 16",
+      "defaultWidth": 16,
+      "defaultHeight": 16
+    },
+    "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" viewBox=\"0 0 16 16\"><path d=\"M0 2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V2zm15 2h-4v3h4V4zm0 4h-4v3h4V8zm0 4h-4v3h3a1 1 0 0 0 1-1v-2zm-5 3v-3H6v3h4zm-5 0v-3H1v2a1 1 0 0 0 1 1h3zm-4-4h4V8H1v3zm0-4h4V4H1v3zm5-3v3h4V4H6zm4 4H6v3h4V8z\"/></svg>"
+  },
+  {
+    "name": "editor.columns",
+    "label": "Columns layout",
+    "source": {
+      "page": "tradezella:notebook/editor-insert",
+      "testid": null,
+      "viewBox": "0 0 16 16",
+      "defaultWidth": 16,
+      "defaultHeight": 16
+    },
+    "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" viewBox=\"0 0 16 16\"><path d=\"M0 1.5A1.5 1.5 0 0 1 1.5 0h13A1.5 1.5 0 0 1 16 1.5v13a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 14.5v-13zM1.5 1a.5.5 0 0 0-.5.5v13a.5.5 0 0 0 .5.5H5V1H1.5zM10 15V1H6v14h4zm1 0h3.5a.5.5 0 0 0 .5-.5v-13a.5.5 0 0 0-.5-.5H11v14z\"/></svg>"
+  },
+  {
+    "name": "editor.equation",
+    "label": "Equation",
+    "source": {
+      "page": "tradezella:notebook/editor-insert",
+      "testid": null,
+      "viewBox": "0 0 16 16",
+      "defaultWidth": 16,
+      "defaultHeight": 16
+    },
+    "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" viewBox=\"0 0 16 16\"><path d=\"m1.854 14.854 13-13a.5.5 0 0 0-.708-.708l-13 13a.5.5 0 0 0 .708.708ZM4 1a.5.5 0 0 1 .5.5v2h2a.5.5 0 0 1 0 1h-2v2a.5.5 0 0 1-1 0v-2h-2a.5.5 0 0 1 0-1h2v-2A.5.5 0 0 1 4 1Zm5 11a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5A.5.5 0 0 1 9 12Z\"/></svg>"
+  },
+  {
+    "name": "editor.check-list",
+    "label": "Check list",
+    "source": {
+      "page": "tradezella:notebook/editor-insert",
+      "testid": null,
+      "viewBox": "0 0 16 16",
+      "defaultWidth": 16,
+      "defaultHeight": 16
+    },
+    "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" viewBox=\"0 0 16 16\"><path d=\"M14 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h12zM2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2z\"/><path d=\"M10.97 4.97a.75.75 0 0 1 1.071 1.05l-3.992 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.235.235 0 0 1 .02-.022z\"/></svg>"
+  },
+  {
+    "name": "editor.quote",
+    "label": "Quote",
+    "source": {
+      "page": "tradezella:notebook/editor-insert",
+      "testid": null,
+      "viewBox": "0 0 16 16",
+      "defaultWidth": 16,
+      "defaultHeight": 16
+    },
+    "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" viewBox=\"0 0 16 16\"><path d=\"M14 1a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1h-2.5a2 2 0 0 0-1.6.8L8 14.333 6.1 11.8a2 2 0 0 0-1.6-.8H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h12zM2 0a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2.5a1 1 0 0 1 .8.4l1.9 2.533a1 1 0 0 0 1.6 0l1.9-2.533a1 1 0 0 1 .8-.4H14a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2z\"/></svg>"
+  },
+  {
+    "name": "editor.code-block",
+    "label": "Code block",
+    "source": {
+      "page": "tradezella:notebook/editor-insert",
+      "testid": null,
+      "viewBox": "0 0 16 16",
+      "defaultWidth": 16,
+      "defaultHeight": 16
+    },
+    "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" viewBox=\"0 0 16 16\"><path d=\"M5.854 4.854a.5.5 0 1 0-.708-.708l-3.5 3.5a.5.5 0 0 0 0 .708l3.5 3.5a.5.5 0 0 0 .708-.708L2.707 8l3.147-3.146zm4.292 0a.5.5 0 0 1 .708-.708l3.5 3.5a.5.5 0 0 1 0 .708l-3.5 3.5a.5.5 0 0 1-.708-.708L13.293 8l-3.147-3.146z\"/></svg>"
+  },
+  {
+    "name": "editor.align-left",
+    "label": "align-left",
+    "source": {
+      "page": "tradezella:notebook/editor-alignment",
+      "testid": null,
+      "viewBox": "0 0 16 16",
+      "defaultWidth": 16,
+      "defaultHeight": 16
+    },
+    "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" viewBox=\"0 0 16 16\"><path fill-rule=\"evenodd\" d=\"M2 12.5a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5zm0-3a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5zm0-3a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5zm0-3a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5z\"/></svg>"
+  },
+  {
+    "name": "editor.align-center",
+    "label": "align-center",
+    "source": {
+      "page": "tradezella:notebook/editor-alignment",
+      "testid": null,
+      "viewBox": "0 0 16 16",
+      "defaultWidth": 16,
+      "defaultHeight": 16
+    },
+    "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" viewBox=\"0 0 16 16\"><path fill-rule=\"evenodd\" d=\"M4 12.5a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5zm-2-3a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5zm2-3a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5zm-2-3a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5z\"/></svg>"
+  },
+  {
+    "name": "editor.align-right",
+    "label": "align-right",
+    "source": {
+      "page": "tradezella:notebook/editor-alignment",
+      "testid": null,
+      "viewBox": "0 0 16 16",
+      "defaultWidth": 16,
+      "defaultHeight": 16
+    },
+    "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" viewBox=\"0 0 16 16\"><path fill-rule=\"evenodd\" d=\"M6 12.5a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5zm-4-3a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5zm4-3a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5zm-4-3a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5z\"/></svg>"
+  },
+  {
+    "name": "editor.align-justify",
+    "label": "align-justify",
+    "source": {
+      "page": "tradezella:notebook/editor-alignment",
+      "testid": null,
+      "viewBox": "0 0 16 16",
+      "defaultWidth": 16,
+      "defaultHeight": 16
+    },
+    "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" viewBox=\"0 0 16 16\"><path fill-rule=\"evenodd\" d=\"M2 12.5a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5zm0-3a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5zm0-3a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5zm0-3a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5z\"/></svg>"
+  },
+  {
+    "name": "editor.outdent",
+    "label": "outdent",
+    "source": {
+      "page": "tradezella:notebook/editor-alignment",
+      "testid": null,
+      "viewBox": "0 0 16 16",
+      "defaultWidth": 16,
+      "defaultHeight": 16
+    },
+    "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" viewBox=\"0 0 16 16\"><path fill-rule=\"evenodd\" d=\"M2 3.5a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5zm10.646 2.146a.5.5 0 0 1 .708.708L11.707 8l1.647 1.646a.5.5 0 0 1-.708.708l-2-2a.5.5 0 0 1 0-.708l2-2zM2 6.5a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 0 1h-6a.5.5 0 0 1-.5-.5zm0 3a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 0 1h-6a.5.5 0 0 1-.5-.5zm0 3a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5z\"/></svg>"
+  },
+  {
+    "name": "editor.indent",
+    "label": "indent",
+    "source": {
+      "page": "tradezella:notebook/editor-alignment",
+      "testid": null,
+      "viewBox": "0 0 16 16",
+      "defaultWidth": 16,
+      "defaultHeight": 16
+    },
+    "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" viewBox=\"0 0 16 16\"><path fill-rule=\"evenodd\" d=\"M2 3.5a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5zm.646 2.146a.5.5 0 0 1 .708 0l2 2a.5.5 0 0 1 0 .708l-2 2a.5.5 0 0 1-.708-.708L4.293 8 2.646 6.354a.5.5 0 0 1 0-.708zM7 6.5a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 0 1h-6a.5.5 0 0 1-.5-.5zm0 3a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 0 1h-6a.5.5 0 0 1-.5-.5zm-5 3a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5z\"/></svg>"
+  },
+  {
+    "name": "editor.align-start",
+    "label": "align-start",
+    "source": {
+      "page": "tradezella:notebook/editor-text-style",
+      "testid": null,
+      "viewBox": "0 0 16 16",
+      "defaultWidth": 16,
+      "defaultHeight": 16
+    },
+    "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" viewBox=\"0 0 16 16\"><path d=\"M2 12.5a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5zm0-3a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5zm0-3a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5zm0-3a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5z\"/></svg>"
+  },
+  {
+    "name": "editor.align-end",
+    "label": "align-end",
+    "source": {
+      "page": "tradezella:notebook/editor-text-style",
+      "testid": null,
+      "viewBox": "0 0 16 16",
+      "defaultWidth": 16,
+      "defaultHeight": 16
+    },
+    "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" viewBox=\"0 0 16 16\"><path d=\"M6 12.5a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5zm-4-3a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5zm4-3a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5zm-4-3a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5z\"/></svg>"
+  },
+  {
+    "name": "editor.text-normal",
+    "label": "text-normal",
+    "source": {
+      "page": "tradezella:notebook/editor-text-style",
+      "testid": null,
+      "viewBox": "0 0 16 16",
+      "defaultWidth": 16,
+      "defaultHeight": 16
+    },
+    "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" viewBox=\"0 0 16 16\"><path d=\"m2.244 13.081.943-2.803H6.66l.944 2.803H8.86L5.54 3.75H4.322L1 13.081zm2.7-7.923L6.34 9.314H3.51l1.4-4.156zm9.146 7.027h.035v.896h1.128V8.125c0-1.51-1.114-2.345-2.646-2.345-1.736 0-2.59.916-2.666 2.174h1.108c.068-.718.595-1.19 1.517-1.19.971 0 1.518.52 1.518 1.464v.731H12.19c-1.647.007-2.522.8-2.522 2.058 0 1.319.957 2.18 2.345 2.18 1.06 0 1.716-.43 2.078-1.011zm-1.763.035c-.752 0-1.456-.397-1.456-1.244 0-.65.424-1.115 1.408-1.115h1.805v.834c0 .896-.752 1.525-1.757 1.525\"/></svg>"
+  },
+  {
+    "name": "editor.text-h1",
+    "label": "text-h1",
+    "source": {
+      "page": "tradezella:notebook/editor-text-style",
+      "testid": null,
+      "viewBox": "0 0 16 16",
+      "defaultWidth": 16,
+      "defaultHeight": 16
+    },
+    "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" viewBox=\"0 0 16 16\"><path d=\"M4.637 13V3.669H3.379V7.62H-1.242V3.67H-2.5V13h1.258V8.728h4.62V13h1.259zm5.329 0V3.669h-1.244L6.5 5.316v1.265l2.16-1.565h.062V13h1.244z\" transform=\"translate(4, 0)\"/></svg>"
+  },
+  {
+    "name": "editor.text-h2",
+    "label": "text-h2",
+    "source": {
+      "page": "tradezella:notebook/editor-text-style",
+      "testid": null,
+      "viewBox": "0 0 16 16",
+      "defaultWidth": 16,
+      "defaultHeight": 16
+    },
+    "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" viewBox=\"0 0 16 16\"><path d=\"M3.638 13V3.669H2.38V7.62H-2.241V3.67H-3.5V13h1.258V8.728h4.62V13h1.259zm3.022-6.733v-.048c0-.889.63-1.668 1.716-1.668.957 0 1.675.608 1.675 1.572 0 .855-.554 1.504-1.067 2.085l-3.513 3.999V13H11.5v-1.094H7.255v-.075l2.481-2.844c.875-.998 1.586-1.784 1.586-2.953 0-1.463-1.155-2.556-2.919-2.556-1.941 0-2.966 1.326-2.966 2.74v.049h1.223z\" transform=\"translate(4, 0)\"/></svg>"
+  },
+  {
+    "name": "editor.text-h3",
+    "label": "text-h3",
+    "source": {
+      "page": "tradezella:notebook/editor-text-style",
+      "testid": null,
+      "viewBox": "0 0 16 16",
+      "defaultWidth": 16,
+      "defaultHeight": 16
+    },
+    "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" viewBox=\"0 0 16 16\"><path d=\"M3.637 13V3.669H2.379V7.62H-2.242V3.67H-3.5V13h1.258V8.728h4.62V13h1.259zm3.625-4.272h1.018c1.142 0 1.935.67 1.949 1.674.013 1.005-.78 1.737-2.01 1.73-1.08-.007-1.853-.588-1.935-1.32H5.108c.069 1.327 1.224 2.386 3.083 2.386 1.935 0 3.343-1.155 3.309-2.789-.027-1.51-1.251-2.16-2.037-2.249v-.068c.704-.123 1.764-.91 1.723-2.229-.035-1.353-1.176-2.4-2.954-2.385-1.873.006-2.857 1.162-2.898 2.358h1.196c.062-.69.711-1.299 1.696-1.299.998 0 1.695.622 1.695 1.525.007.922-.718 1.592-1.695 1.592h-.964v1.074z\" transform=\"translate(4, 0)\"/></svg>"
+  }
+]

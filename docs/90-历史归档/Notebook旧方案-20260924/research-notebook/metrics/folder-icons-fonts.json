@@ -1,0 +1,59 @@
+{
+  "rootFont": "\"PingFang SC\"",
+  "folders": [
+    {
+      "id": "all",
+      "rowText": "All notes66",
+      "icon": {
+        "svg": "<svg class=\"MuiSvgIcon-root MuiSvgIcon-fontSizeSmall css-vh810p\" focusable=\"false\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" data-testid=\"ChevronRightIcon\"><path d=\"M10 6 8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z\"></path></svg>",
+        "viewBox": "0 0 24 24",
+        "testid": "ChevronRightIcon",
+        "size": [
+          16,
+          16
+        ]
+      },
+      "label": {
+        "text": "66",
+        "css": {
+          "fontFamily": "-apple-system, \"system-ui\", \"Segoe UI\", Roboto, Oxygen, Ubuntu, Cantarell, \"Fira Sans\", \"Droid Sans\", \"Helvetica Neue\", sans-serif",
+          "fontSize": "12px",
+          "fontWeight": "400",
+          "lineHeight": "16px",
+          "color": "rgb(13, 13, 13)"
+        }
+      },
+      "count": null
+    },
+    {
+      "id": "favorites",
+      "rowText": "Favorites3",
+      "icon": {
+        "svg": "<svg class=\"MuiSvgIcon-root MuiSvgIcon-fontSizeSmall css-vh810p\" focusable=\"false\" aria-hidden=\"true\" viewBox=\"0 0 24 24\" data-testid=\"ChevronRightIcon\"><path d=\"M10 6 8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z\"></path></svg>",
+        "viewBox": "0 0 24 24",
+        "testid": "ChevronRightIcon",
+        "size": [
+          16,
+          16
+        ]
+      },
+      "label": {
+        "text": "3",
+        "css": {
+          "fontFamily": "-apple-system, \"system-ui\", \"Segoe UI\", Roboto, Oxygen, Ubuntu, Cantarell, \"Fira Sans\", \"Droid Sans\", \"Helvetica Neue\", sans-serif",
+          "fontSize": "12px",
+          "fontWeight": "400",
+          "lineHeight": "16px",
+          "color": "rgb(13, 13, 13)"
+        }
+      },
+      "count": null
+    }
+  ],
+  "search": {
+    "fontFamily": "Roboto, Helvetica, Arial, sans-serif",
+    "fontSize": "14px",
+    "color": "rgb(38, 50, 56)",
+    "placeholder": "Search notes"
+  }
+}

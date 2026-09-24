@@ -67,7 +67,8 @@ export const DEFAULT_OPTIONAL_BY_VIEW: Record<ViewMode, ColumnKey[]> = {
 };
 
 export const SORTABLE_COLUMNS: ColumnKey[] = COLUMN_ORDER.filter((key) => key !== "slTp" && key !== "strategy");
-export const ALL_TABLE_MAX_HEIGHT = "max-h-[50dvh]";
+export const ALL_TRADES_PAGE_SIZE = 100;
+export const ALL_TABLE_MAX_HEIGHT = "h-[820px] max-h-[820px]";
 
 // Palette approved from the tracking reference screenshots.
 export const PROFIT_TEXT = "var(--profit)";

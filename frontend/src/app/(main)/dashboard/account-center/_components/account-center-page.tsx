@@ -255,53 +255,55 @@ export default function AccountCenterPage() {
   };
 
   return (
-    <div className="mx-auto flex w-full max-w-screen-2xl flex-col gap-6">
+    <div className="account-page-shell flex min-h-0 w-full flex-col">
       <AccountHeader t={t} loading={loading} accountCount={accounts?.length ?? 0} onAdd={() => open("add")} />
 
-      <div className="grid gap-3 md:grid-cols-3">
-        <Metric
-          title={t.metricAccounts}
-          tip={t.metricAccountsTip}
-          value={accounts ? `${accounts.length} / 10` : "—"}
-          suffix={accounts ? t.metricAccountsSuffix : ""}
+      <div className="account-page-body flex flex-col gap-6 px-4 pb-5 pt-0 md:px-10">
+        <div className="grid gap-3 md:grid-cols-3">
+          <Metric
+            title={t.metricAccounts}
+            tip={t.metricAccountsTip}
+            value={accounts ? `${accounts.length} / 10` : "—"}
+            suffix={accounts ? t.metricAccountsSuffix : ""}
+          />
+          <Metric
+            title={t.metricSyncConnections}
+            tip={t.metricSyncConnectionsTip}
+            value={accounts ? `${healthy} / ${accounts.length}` : "—"}
+            suffix=""
+          />
+          <Metric
+            title={t.metricTrades}
+            tip={t.metricTradesTip}
+            value={accounts ? `${totalTrades}` : "—"}
+            suffix={accounts ? t.metricTradesSuffix : ""}
+          />
+        </div>
+
+        <AccountTableCard
+          t={t}
+          locale={locale}
+          accounts={accounts}
+          loading={loading}
+          error={error}
+          onReload={() => void load()}
+          onAdd={() => open("add")}
+          onRename={(account) => open("rename", account)}
+          onToggle={(account) => void toggleStatistics(account)}
+          onReport={() => toast.info(t.reportPlaceholder)}
+          onKey={(account) => void showKey(account)}
+          onImport={(account) => open("import", account)}
+          onRotate={(account) => open("rotate", account)}
+          onReset={(account) => open("reset", account)}
+          onDelete={(account) => open("delete", account)}
         />
-        <Metric
-          title={t.metricSyncConnections}
-          tip={t.metricSyncConnectionsTip}
-          value={accounts ? `${healthy} / ${accounts.length}` : "—"}
-          suffix=""
-        />
-        <Metric
-          title={t.metricTrades}
-          tip={t.metricTradesTip}
-          value={accounts ? `${totalTrades}` : "—"}
-          suffix={accounts ? t.metricTradesSuffix : ""}
-        />
+
+        {accounts && accounts.length > 0 && !accounts.some((account) => account.is_statistics) && (
+          <p role="status" className="text-sm text-muted-foreground">
+            {t.noStatisticsHint}
+          </p>
+        )}
       </div>
-
-      <AccountTableCard
-        t={t}
-        locale={locale}
-        accounts={accounts}
-        loading={loading}
-        error={error}
-        onReload={() => void load()}
-        onAdd={() => open("add")}
-        onRename={(account) => open("rename", account)}
-        onToggle={(account) => void toggleStatistics(account)}
-        onReport={() => toast.info(t.reportPlaceholder)}
-        onKey={(account) => void showKey(account)}
-        onImport={(account) => open("import", account)}
-        onRotate={(account) => open("rotate", account)}
-        onReset={(account) => open("reset", account)}
-        onDelete={(account) => open("delete", account)}
-      />
-
-      {accounts && accounts.length > 0 && !accounts.some((account) => account.is_statistics) && (
-        <p role="status" className="text-sm text-muted-foreground">
-          {t.noStatisticsHint}
-        </p>
-      )}
 
       <AddAccountDialog
         open={modal === "add"}

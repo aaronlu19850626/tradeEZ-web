@@ -6,7 +6,8 @@ test.describe("交易记录", () => {
   test("国内市场月历数字与盈亏线条颜色一致", async ({ page }) => {
     await gotoDashboard(page, "/dashboard/trade-center?currency=CNY&market=cn", "交易记录");
     const calendarDay = page
-      .locator('button[aria-label*="2026年9月"]')
+      .locator('button[aria-label] span[aria-hidden][style*="background"]')
+      .locator("..")
       .filter({ has: page.locator('span[aria-hidden][style*="background"]') })
       .first();
     await expect(calendarDay).toBeVisible();

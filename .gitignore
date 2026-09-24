@@ -36,6 +36,10 @@ backend/*.log
 # Local previews and database backups
 backups/
 frontend/preview*.log
+frontend/.playwright/
+frontend/playwright-report/
+frontend/test-results/
+frontend/test-results-*/
 
 # Environment files (keep .env.example files)
 .env
@@ -59,3 +63,6 @@ frontend/media/
 # Local agent tooling
 .agents/
 skills-lock.json
+
+# Task-owned service logs and local environment configuration
+.quality/

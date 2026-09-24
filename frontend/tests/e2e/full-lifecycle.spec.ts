@@ -11,8 +11,11 @@ import { gotoDashboard } from "./helpers";
 import { execFileSync } from "node:child_process";
 import { createHmac } from "node:crypto";
 
-const API_URL = "http://127.0.0.1:8000/api/v1/";
-const DATABASE_URL = "postgresql://aaron@127.0.0.1:5432/tradeez_dev";
+const API_URL = process.env.TRADEEZ_API_URL ?? "http://127.0.0.1:8000/api/v1/";
+const DATABASE_URL = process.env.TRADEEZ_E2E_DATABASE_URL ?? "";
+if (!DATABASE_URL || !new URL(DATABASE_URL).pathname.slice(1).startsWith("tradeez_e2e_")) {
+  throw new Error("Set TRADEEZ_E2E_DATABASE_URL to a dedicated tradeez_e2e_* database");
+}
 const TEST_LOGIN = "993000001";
 const TEST_NAME = "E2E 完整生命周期";
 const SYMBOL = "E2EUSD";
@@ -311,7 +314,7 @@ test.describe("MT5 完整生命周期", () => {
       await capture(page, testInfo, "07-reset-dialog");
       await resetDialog.getByRole("button", { name: "取消" }).click();
 
-      await resetAccount(page, account, "2026-09-01");
+      await resetAccount(page, account, new Date((now - 86400) * 1000).toISOString().slice(0, 10));
       expect(dbValue(`SELECT COUNT(*) FROM closed_trades WHERE account_login=${TEST_LOGIN}`)).toBe("0");
 
       const afterResetCursor = await signedPost(api, "sync/last_sync_time", initialKey, {

@@ -1,23 +1,17 @@
 import { expect, request as playwrightRequest, test as setup } from "@playwright/test";
 
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 
-const FRONTEND_URL = "http://127.0.0.1:3000";
-const API_URL = "http://127.0.0.1:8000/api/v1/";
-const AUTH_STATE_PATH = path.resolve(".playwright/auth.json");
-const TEST_EMAIL = "chentodd@qq.com";
+const FRONTEND_URL = process.env.TRADEEZ_BASE_URL ?? "http://127.0.0.1:3000";
+const API_URL = process.env.TRADEEZ_API_URL ?? "http://127.0.0.1:8000/api/v1/";
+const AUTH_STATE_PATH = path.resolve(process.env.PLAYWRIGHT_AUTH_STATE ?? ".playwright/auth.json");
+const TEST_EMAIL = "e2e@example.com";
 const TEST_CODE = "123456";
 
 async function obtainToken(): Promise<string> {
   const api = await playwrightRequest.newContext({ baseURL: API_URL });
   try {
-    const existing = await readExistingToken();
-    if (existing) {
-      const check = await api.get("users/me", { headers: { Authorization: `Bearer ${existing}` } });
-      if (check.ok()) return existing;
-    }
-
     const payload = { email: TEST_EMAIL, code: TEST_CODE };
     let response = await api.post("auth/verify-code", { data: payload });
     if (!response.ok()) {
@@ -40,17 +34,6 @@ async function obtainToken(): Promise<string> {
   }
 }
 
-async function readExistingToken(): Promise<string | null> {
-  try {
-    const state = JSON.parse(await readFile(AUTH_STATE_PATH, "utf8")) as {
-      origins?: { localStorage?: { name: string; value: string }[] }[];
-    };
-    return state.origins?.[0]?.localStorage?.find((item) => item.name === "tradesync-access-token")?.value ?? null;
-  } catch {
-    return null;
-  }
-}
-
 setup.setTimeout(90_000);
 
 setup("authenticate dashboard user", async () => {
@@ -64,7 +47,7 @@ setup("authenticate dashboard user", async () => {
           {
             name: "tradeez-session",
             value: token,
-            domain: "127.0.0.1",
+            domain: new URL(FRONTEND_URL).hostname,
             path: "/",
             expires: -1,
             httpOnly: false,
@@ -74,7 +57,7 @@ setup("authenticate dashboard user", async () => {
         ],
         origins: [
           {
-            origin: FRONTEND_URL,
+            origin: new URL(FRONTEND_URL).origin,
             localStorage: [{ name: "tradesync-access-token", value: token }],
           },
         ],

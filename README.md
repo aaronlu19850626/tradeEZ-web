@@ -1,6 +1,6 @@
 # TradeSync-Web / TradeEZ-web
 
-新电脑 / Codex 接手请先阅读 [文档入口](docs/README.md)、[迁移与接手指南](docs/00-项目总览/迁移与接手指南.md) 和 [项目文档索引](docs/00-项目总览/项目文档索引.md)。当前状态：交易账户模块与交易记录查询模块的前后端均已落地，下一步是真实数据联调、测试与后续模块开发。
+新电脑 / Codex 接手请先阅读 [文档入口](docs/README.md)、[迁移与接手指南](docs/00-项目总览/迁移与接手指南.md)、[新工作启动操作手册](docs/00-项目总览/新工作启动操作手册.md) 和 [项目文档索引](docs/00-项目总览/项目文档索引.md)。当前先建立可运行主干，再全面盘点 TradeZella 核心模块；一期方向和模块优先级尚未确认。
 
 TradeSync-Web 是 TradeEZ 的 MT5 交易数据同步 Web 服务。当前以 [SOP v1.03 新接口说明](<docs/50-连接器与EA/TradeEZ-SOP数据同步接口说明.md>) 为准：UTC 平仓成交时间游标、原始 body HMAC、先保存再提交游标。实现与验收边界见 [对齐记录](docs/50-连接器与EA/SOP契约验收.md)。
 
@@ -104,7 +104,15 @@ http://127.0.0.1:8000/health          健康检查
 ./scripts/quality/check.sh
 ```
 
-统一检查会依次执行后端测试、前端 TypeScript、Biome、生产构建和 Playwright。Playwright 需要本地 `3000` 前端和 `8000` 后端已经启动；只做静态门禁时可执行 `SKIP_E2E=1 ./scripts/quality/check.sh`。
+统一检查会依次执行后端测试、前端 TypeScript、Biome、生产构建和受管 Playwright 回归。先显式提供独立的 `tradeez_test_*` 和空的 `tradeez_e2e_*` 数据库：
+
+```bash
+export TRADESYNC_TEST_DATABASE_URL='postgresql://.../tradeez_test_<task>'
+export TRADEEZ_E2E_DATABASE_URL='postgresql://.../tradeez_e2e_<task>'
+./scripts/quality/check.sh
+```
+
+浏览器门禁会使用独立端口自启前后端并播种合成数据；不会复用开发数据库。只做静态门禁时执行 `./scripts/quality/static.sh`。
 
 单独运行 EA 接口冒烟：
 

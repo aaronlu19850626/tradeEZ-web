@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { DayButton } from "react-day-picker";
@@ -48,12 +48,14 @@ export function SideRail({
   onPickDay: (dayKey: string) => void;
   isFullRange: boolean;
 }) {
+  const asideRef = useRef<HTMLElement>(null);
   const targetMonth = range.from
     ? isFullRange
       ? range.to.slice(0, 7)
       : range.from.slice(0, 7)
     : latestDay.slice(0, 7);
   const [cursor, setCursor] = useState(targetMonth);
+  const [stuck, setStuck] = useState(false);
   const [hoveredWeek, setHoveredWeek] = useState<string | null>(null);
   useEffect(() => {
     setCursor(targetMonth);
@@ -76,8 +78,39 @@ export function SideRail({
   }, [cursor, query]);
   const calendarLocale = locale === "zh-CN" ? zhCN : enUS;
 
+  useEffect(() => {
+    const aside = asideRef.current;
+    const grid = aside?.parentElement;
+    if (!aside || !grid) return;
+    const scroller = aside.closest<HTMLElement>('[data-slot="dashboard-workspace"]');
+    let frame = 0;
+    const measure = () => {
+      frame = 0;
+      const gridTop = grid.getBoundingClientRect().top;
+      const containerTop = scroller?.getBoundingClientRect().top ?? 0;
+      const scrollOffset = scroller?.scrollTop ?? window.scrollY;
+      setStuck(scrollOffset > 0 && gridTop <= containerTop + 130);
+    };
+    const onScroll = () => {
+      if (!frame) frame = window.requestAnimationFrame(measure);
+    };
+    measure();
+    const target: EventTarget = scroller ?? window;
+    target.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      target.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+      if (frame) window.cancelAnimationFrame(frame);
+    };
+  }, []);
+
   return (
-    <aside className="flex flex-col gap-4 self-start xl:sticky xl:top-12">
+    <aside
+      ref={asideRef}
+      style={{ top: stuck ? 149 : 129 }}
+      className="flex flex-col gap-4 self-start xl:sticky xl:z-20"
+    >
       <Card className="gap-3 pt-4 pb-4">
         <CardHeader className="flex flex-row items-center justify-between py-0">
           <Button

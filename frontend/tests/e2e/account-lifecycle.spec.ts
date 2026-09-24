@@ -2,7 +2,7 @@ import { expect, request as playwrightRequest, test } from "@playwright/test";
 
 import { gotoDashboard } from "./helpers";
 
-const API_URL = "http://127.0.0.1:8000/api/v1/";
+const API_URL = process.env.TRADEEZ_API_URL ?? "http://127.0.0.1:8000/api/v1/";
 const TEST_LOGIN = "991000001";
 const TEST_NAME = "E2E 生命周期账户";
 const RENAMED_NAME = "E2E 已更名账户";

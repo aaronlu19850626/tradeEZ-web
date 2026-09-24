@@ -10,6 +10,7 @@ import { tradeCenterText } from "@/lib/tradesync/trade-center-i18n";
 import { addDays, computeStats, dayKeyToEpoch, shanghaiWeekStart } from "@/lib/tradesync/trades-mock";
 import { useTradeData } from "@/lib/tradesync/use-trade-data";
 
+import { StickyPageHeader } from "../../_components/sticky-page-header";
 import { useTradeCenterServerData } from "../_hooks/use-trade-center-server-data";
 import { useTradeColumns } from "../_hooks/use-trade-columns";
 import { useTradeFilters } from "../_hooks/use-trade-filters";
@@ -265,7 +266,8 @@ export default function TradeCenterPage() {
       const barBox = element.getBoundingClientRect();
       const barTop = barBox.top;
       const containerTop = scroller ? scroller.getBoundingClientRect().top : 0;
-      setToolbarStuck(barTop <= containerTop + 1);
+      const scrollOffset = scroller?.scrollTop ?? window.scrollY;
+      setToolbarStuck(scrollOffset > 0 && barTop <= containerTop + 74);
     };
     const onScroll = () => {
       if (!frame) frame = requestAnimationFrame(measure);
@@ -375,119 +377,121 @@ export default function TradeCenterPage() {
   return (
     <DisplayCurrencyProvider currency={currency}>
       <MarketColorProvider profile={marketProfile}>
-        <div className="mx-auto flex w-full max-w-screen-2xl flex-col gap-5">
-          <header>
-            <h1 className="font-semibold text-3xl tracking-tight">{t.title}</h1>
-          </header>
+        <div className="trade-center-page-shell flex min-h-0 w-full flex-col">
+          <StickyPageHeader flush showStuckBorder={false} className="trade-center-page-header">
+            <h1 className="text-2xl font-semibold tracking-tight">{t.title}</h1>
+          </StickyPageHeader>
 
-          {/* The view switch and filters stay pinned while the groups scroll. Negative
-          margins let the bar bleed to the workspace edge so nothing peeks around it. */}
-          <div
-            ref={toolbarRef}
-            className={`sticky -top-4 z-30 -mx-4 bg-background px-4 py-3 md:-top-6 md:-mx-6 md:px-6 lg:-mx-10 lg:px-10 xl:-mx-12 xl:px-12 ${
-              toolbarStuck ? "border-border/60 border-b" : ""
-            }`}
-          >
+          <div className="trade-center-page-body flex min-h-0 flex-col gap-5 px-4 pb-5 pt-0 md:px-10">
             <div
-              aria-busy={loading}
-              inert={loading ? true : undefined}
-              className={loading ? "pointer-events-none opacity-70 transition-opacity" : "transition-opacity"}
+              ref={toolbarRef}
+              data-testid="trade-center-toolbar"
+              data-stuck={toolbarStuck}
+              className={`sticky top-[73px] z-30 -mx-4 bg-background px-4 md:-mx-10 md:px-10 ${
+                toolbarStuck ? "-mb-5 border-b border-foreground/35 pb-5" : ""
+              }`}
             >
-              <Toolbar
-                t={t}
-                view={view}
-                onView={(next) => {
-                  setView(next);
-                  resetPage();
-                }}
-                range={range}
-                onRange={applyRange}
-                latestDay={latestDay}
-                earliestDay={earliestDay}
-                side={side}
-                onSide={(next) => {
-                  setSide(next);
-                  resetPage();
-                }}
-                result={result}
-                onResult={(next) => {
-                  setResult(next);
-                  resetPage();
-                }}
-                currency={currency}
-                currencies={currencies}
-                allowCurrencyAll={!currencyOptionsLocked}
-                marketProfile={marketProfile}
-                marketProfiles={marketProfiles}
-                allowMarketAll={!marketOptionsLocked}
-                onCurrency={(next) => {
-                  applyCurrency(next);
-                  resetPage();
-                }}
-                onMarketProfile={(next) => {
-                  setMarketProfile(next);
-                  resetPage();
-                }}
-                symbolsSelected={selectedSymbols}
-                symbolOptions={symbolOptions}
-                onSymbolsChange={(next) => {
-                  setSelectedSymbols(next);
-                  resetPage();
-                }}
-                onOpenColumns={() => setColumnOpen(true)}
-                tablesExpanded={tableCommand.value}
-                onToggleAllTables={toggleAllTables}
-                accounts={accounts}
-                selectedAccountIds={accountIds}
-                onAccountsChange={(ids) => {
-                  setAccountIds(ids.length > 0 ? ids : [...scopeDefaults]);
-                  resetPage();
-                }}
-              />
+              <div
+                aria-busy={loading}
+                inert={loading ? true : undefined}
+                className={loading ? "pointer-events-none opacity-70 transition-opacity" : "transition-opacity"}
+              >
+                <Toolbar
+                  t={t}
+                  view={view}
+                  onView={(next) => {
+                    setView(next);
+                    resetPage();
+                  }}
+                  range={range}
+                  onRange={applyRange}
+                  latestDay={latestDay}
+                  earliestDay={earliestDay}
+                  side={side}
+                  onSide={(next) => {
+                    setSide(next);
+                    resetPage();
+                  }}
+                  result={result}
+                  onResult={(next) => {
+                    setResult(next);
+                    resetPage();
+                  }}
+                  currency={currency}
+                  currencies={currencies}
+                  allowCurrencyAll={!currencyOptionsLocked}
+                  marketProfile={marketProfile}
+                  marketProfiles={marketProfiles}
+                  allowMarketAll={!marketOptionsLocked}
+                  onCurrency={(next) => {
+                    applyCurrency(next);
+                    resetPage();
+                  }}
+                  onMarketProfile={(next) => {
+                    setMarketProfile(next);
+                    resetPage();
+                  }}
+                  symbolsSelected={selectedSymbols}
+                  symbolOptions={symbolOptions}
+                  onSymbolsChange={(next) => {
+                    setSelectedSymbols(next);
+                    resetPage();
+                  }}
+                  onOpenColumns={() => setColumnOpen(true)}
+                  tablesExpanded={tableCommand.value}
+                  onToggleAllTables={toggleAllTables}
+                  accounts={accounts}
+                  selectedAccountIds={accountIds}
+                  onAccountsChange={(ids) => {
+                    setAccountIds(ids.length > 0 ? ids : [...scopeDefaults]);
+                    resetPage();
+                  }}
+                />
+              </div>
             </div>
-          </div>
 
-          {/* The All view drops the calendar rail so the table can use the full width. */}
-          <div
-            className={
-              view === "all"
-                ? "flex min-h-0 min-w-0 flex-col gap-4"
-                : "grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_320px]"
-            }
-          >
-            <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4">{body}</div>
-            {view !== "all" && latestDay !== "" && (
-              <SideRail
-                key={range.from}
-                t={t}
-                locale={locale}
-                range={range}
-                latestDay={latestDay}
-                query={calendarQuery}
-                view={view}
-                isFullRange={range.from === earliestDay && range.to === latestDay}
-                onPickDay={(dayKey) => {
-                  if (view === "week") {
-                    const start = shanghaiWeekStart(dayKeyToEpoch(dayKey));
-                    setRange({ from: start, to: addDays(start, 6) });
-                  } else {
-                    setRange({ from: dayKey, to: dayKey });
-                    setView("day");
-                  }
-                  resetPage();
-                }}
-              />
-            )}
-          </div>
+            {/* The All view drops the calendar rail so the table can use the full width. */}
+            <div
+              className={
+                view === "all"
+                  ? "flex min-h-0 min-w-0 flex-col gap-4"
+                  : "grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_320px]"
+              }
+            >
+              <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4">{body}</div>
+              {view !== "all" && latestDay !== "" && (
+                <SideRail
+                  key={range.from}
+                  t={t}
+                  locale={locale}
+                  range={range}
+                  latestDay={latestDay}
+                  query={calendarQuery}
+                  view={view}
+                  isFullRange={range.from === earliestDay && range.to === latestDay}
+                  onPickDay={(dayKey) => {
+                    if (view === "week") {
+                      const start = shanghaiWeekStart(dayKeyToEpoch(dayKey));
+                      setRange({ from: start, to: addDays(start, 6) });
+                    } else {
+                      setRange({ from: dayKey, to: dayKey });
+                      setView("day");
+                    }
+                    resetPage();
+                  }}
+                />
+              )}
+            </div>
 
-          <ColumnPickerDialog
-            t={t}
-            open={columnOpen}
-            columns={optionalColumns}
-            defaultColumns={DEFAULT_OPTIONAL_BY_VIEW[view]}
-            onOpenChange={setColumnOpen}
-            onApply={applyColumns}
-          />
+            <ColumnPickerDialog
+              t={t}
+              open={columnOpen}
+              columns={optionalColumns}
+              defaultColumns={DEFAULT_OPTIONAL_BY_VIEW[view]}
+              onOpenChange={setColumnOpen}
+              onApply={applyColumns}
+            />
+          </div>
         </div>
       </MarketColorProvider>
     </DisplayCurrencyProvider>

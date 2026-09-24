@@ -1,0 +1,69 @@
+.tradezella-slash-menu {
+  width: 264px;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--popover);
+  box-shadow: 0 12px 32px rgb(0 0 0 / 0.12);
+  color: var(--popover-foreground);
+  contain: layout paint style;
+  max-height: calc(100vh - 24px);
+  overflow-y: auto;
+}
+
+.tradezella-typeahead-anchor {
+  z-index: 80 !important;
+}
+
+.tradezella-slash-item {
+  display: grid;
+  width: 100%;
+  height: 40px;
+  grid-template-columns: 20px 1fr auto;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  padding: 7px 10px;
+  text-align: left;
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.tradezella-slash-item:hover,
+.tradezella-slash-item.is-selected {
+  background: var(--muted);
+}
+
+.tradezella-slash-icon {
+  display: inline-flex;
+  width: 20px;
+  height: 20px;
+  align-items: center;
+  justify-content: center;
+}
+
+.tradezella-slash-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tradezella-slash-shortcut {
+  color: var(--muted-foreground);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 20px;
+}
+
+.tradezella-slash-divider {
+  height: 1px;
+  margin: 4px -8px;
+  background: var(--border);
+}
+
+html.tradeez-custom-slash-menu .component-picker-menu {
+  display: none !important;
+}

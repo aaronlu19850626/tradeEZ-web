@@ -1,7 +1,8 @@
 import { defineConfig, devices } from "@playwright/test";
 
-const baseURL = "http://127.0.0.1:3000";
-const authState = ".playwright/auth.json";
+const baseURL = process.env.TRADEEZ_BASE_URL ?? "http://127.0.0.1:3000";
+const authState = process.env.PLAYWRIGHT_AUTH_STATE ?? ".playwright/auth.json";
+const browserChannel = process.env.PLAYWRIGHT_CHANNEL === "" ? undefined : (process.env.PLAYWRIGHT_CHANNEL ?? "chrome");
 
 export default defineConfig({
   testDir: "./tests/e2e",
@@ -19,7 +20,7 @@ export default defineConfig({
   ],
   use: {
     baseURL,
-    channel: "chrome",
+    channel: browserChannel,
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
     video: "off",
@@ -36,7 +37,7 @@ export default defineConfig({
       dependencies: ["setup"],
       use: {
         ...devices["Desktop Chrome"],
-        channel: "chrome",
+        channel: browserChannel,
         storageState: authState,
         viewport: { width: 1440, height: 960 },
       },
@@ -47,7 +48,7 @@ export default defineConfig({
       dependencies: ["setup"],
       use: {
         ...devices["Desktop Chrome"],
-        channel: "chrome",
+        channel: browserChannel,
         storageState: authState,
         viewport: { width: 1024, height: 900 },
       },
@@ -58,7 +59,7 @@ export default defineConfig({
       dependencies: ["setup"],
       use: {
         ...devices["Desktop Chrome"],
-        channel: "chrome",
+        channel: browserChannel,
         storageState: authState,
         viewport: { width: 390, height: 844 },
       },

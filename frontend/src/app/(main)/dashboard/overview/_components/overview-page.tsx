@@ -289,7 +289,8 @@ export default function DashboardOverviewPage() {
       frame = 0;
       const barTop = element.getBoundingClientRect().top;
       const containerTop = scroller ? scroller.getBoundingClientRect().top : 0;
-      setToolbarStuck(barTop <= containerTop + 1);
+      const scrollOffset = scroller?.scrollTop ?? window.scrollY;
+      setToolbarStuck(scrollOffset > 0 && barTop <= containerTop + 74);
     };
     const onScroll = () => {
       if (!frame) frame = requestAnimationFrame(measure);
@@ -305,7 +306,16 @@ export default function DashboardOverviewPage() {
     };
   }, []);
 
-  const header = <OverviewHeader t={t} />;
+  const largeDataNotice = largeDataLoading ? (
+    <Alert className="w-auto max-w-[min(42rem,60vw)] shrink-0 border-0 bg-muted/70 px-3 py-2 shadow-none">
+      <RefreshCw className="size-4 animate-spin" />
+      <AlertDescription className="whitespace-nowrap">
+        {t.largeDataLoading.replace("{count}", formatCount(total, locale))}
+      </AlertDescription>
+    </Alert>
+  ) : null;
+
+  const header = <OverviewHeader t={t} notice={largeDataNotice} />;
 
   const toolbar = (
     <OverviewToolbar
@@ -346,16 +356,18 @@ export default function DashboardOverviewPage() {
     return (
       <DisplayCurrencyProvider currency={currency}>
         <MarketColorProvider profile={marketProfile}>
-          <div className="mx-auto flex w-full max-w-screen-2xl flex-col gap-5">
+          <div className="overview-page-shell flex min-h-0 w-full flex-col">
             {header}
-            {toolbar}
-            <Card className="items-center gap-3 py-16 text-center">
-              <CardTitle className="text-base">{t.errorTitle}</CardTitle>
-              <p className="text-sm text-muted-foreground">{t.errorDescription}</p>
-              <Button variant="outline" size="sm" onClick={() => void reload()}>
-                {t.errorRetry}
-              </Button>
-            </Card>
+            <div className="overview-page-body flex flex-col gap-5 px-4 pb-5 pt-0 md:px-10">
+              {toolbar}
+              <Card className="items-center gap-3 py-16 text-center">
+                <CardTitle className="text-base">{t.errorTitle}</CardTitle>
+                <p className="text-sm text-muted-foreground">{t.errorDescription}</p>
+                <Button variant="outline" size="sm" onClick={() => void reload()}>
+                  {t.errorRetry}
+                </Button>
+              </Card>
+            </div>
           </div>
         </MarketColorProvider>
       </DisplayCurrencyProvider>
@@ -368,10 +380,12 @@ export default function DashboardOverviewPage() {
     return (
       <DisplayCurrencyProvider currency={currency}>
         <MarketColorProvider profile={marketProfile}>
-          <div className="mx-auto flex w-full max-w-screen-2xl flex-col gap-5">
+          <div className="overview-page-shell flex min-h-0 w-full flex-col">
             {header}
-            {toolbar}
-            <LoadingWave title={t.loadingTitle} description={t.loadingDescription} />
+            <div className="overview-page-body flex flex-col gap-5 px-4 pb-5 pt-0 md:px-10">
+              {toolbar}
+              <LoadingWave title={t.loadingTitle} description={t.loadingDescription} />
+            </div>
           </div>
         </MarketColorProvider>
       </DisplayCurrencyProvider>
@@ -383,154 +397,148 @@ export default function DashboardOverviewPage() {
   return (
     <DisplayCurrencyProvider currency={currency}>
       <MarketColorProvider profile={marketProfile}>
-        <div className="relative mx-auto flex w-full max-w-screen-2xl flex-col gap-5">
+        <div className="overview-page-shell relative flex min-h-0 w-full flex-col">
           {header}
-          {toolbar}
-          {largeDataLoading && (
-            <Alert className="pointer-events-none absolute top-3 left-1/2 z-40 w-auto max-w-[90%] -translate-x-1/2 shadow-md">
-              <RefreshCw className="size-4 animate-spin" />
-              <AlertDescription className="whitespace-nowrap">
-                {t.largeDataLoading.replace("{count}", formatCount(total, locale))}
-              </AlertDescription>
-            </Alert>
-          )}
-          {empty ? (
-            <SyncEmptyState
-              title={t.emptyTitle}
-              description={t.emptyDescription}
-              actionLabel={t.goToAccounts}
-              href="/dashboard/account-center"
-              actionIcon={<Plus className="size-4" />}
+          <div className="overview-page-body relative flex flex-col gap-5 px-4 pb-5 pt-0 md:px-10">
+            {toolbar}
+            {empty ? (
+              <SyncEmptyState
+                title={t.emptyTitle}
+                description={t.emptyDescription}
+                actionLabel={t.goToAccounts}
+                href="/dashboard/account-center"
+                actionIcon={<Plus className="size-4" />}
+              />
+            ) : (
+              <>
+                <OverviewMetrics t={t} locale={locale} stats={stats} />
+
+                <div className="grid gap-3 xl:grid-cols-3">
+                  <Panel
+                    t={t}
+                    titleKey="scoreTitle"
+                    tipKey="scoreTip"
+                    action={<PanelAction onClick={() => setScoreOpen(true)}>{t.scoreDetail}</PanelAction>}
+                  >
+                    <ScoreRadar t={t} locale={locale} score={score} radar={scoreRadar} />
+                  </Panel>
+                  <Panel
+                    t={t}
+                    titleKey="consistencyTitle"
+                    tipKey="consistencyTip"
+                    action={<PanelAction href="/dashboard/trade-center">{t.viewMore}</PanelAction>}
+                  >
+                    <ConsistencyHeatmap
+                      t={t}
+                      locale={locale}
+                      statuses={consistency}
+                      onOpenChecklist={() => toast(t.checklistUnavailable)}
+                    />
+                  </Panel>
+                  <Panel
+                    t={t}
+                    titleKey="cumulativeTitle"
+                    tipKey="cumulativeTip"
+                    action={
+                      <PanelIconAction label={t.expandCumulative} onClick={() => setCumulativeOpen(true)}>
+                        <Maximize2 className="size-4" />
+                      </PanelIconAction>
+                    }
+                  >
+                    <CumulativeChart points={cumulativeRecent} locale={locale} heightClassName="h-[310px] min-h-0" />
+                  </Panel>
+                </div>
+
+                <div className="grid gap-3 xl:grid-cols-3">
+                  <Panel
+                    t={t}
+                    titleKey="dailyTitle"
+                    tipKey="dailyTip"
+                    className="relative z-20 overflow-visible!"
+                    bodyClassName="relative z-20 justify-center overflow-visible"
+                  >
+                    <DailyChart days={[...stats.days].reverse()} locale={locale} />
+                  </Panel>
+                  <Panel t={t} titleKey="recentTitle" tipKey="recentTip" bodyClassName="min-h-0 overflow-hidden">
+                    <RecentTrades t={t} trades={recent} locale={locale} />
+                  </Panel>
+                  <Panel t={t} titleKey="drawdownTitle" tipKey="drawdownTip" bodyClassName="justify-center">
+                    <DrawdownChart points={drawdown.points} locale={locale} />
+                  </Panel>
+                </div>
+
+                <div className="grid gap-3 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] xl:grid-rows-[440px_440px]">
+                  <Panel
+                    t={t}
+                    titleKey="calendarTitle"
+                    tipKey="calendarTip"
+                    className="h-auto xl:row-span-2 xl:h-full"
+                    bodyClassName="min-h-0 overflow-hidden"
+                  >
+                    <MonthCalendar
+                      t={t}
+                      locale={locale}
+                      month={monthKey}
+                      calendar={calendar}
+                      onShiftMonth={(delta) => setCursor(shiftMonth(monthKey, delta))}
+                      onThisMonth={() => setCursor(latestDay.slice(0, 7))}
+                      onOpenDay={openCalendarDay}
+                    />
+                  </Panel>
+                  <Panel
+                    t={t}
+                    titleKey="timeOfDayTitle"
+                    tipKey={timeBasis === "entry" ? "timeOfDayTipEntry" : "timeOfDayTipExit"}
+                    bodyClassName="justify-center"
+                    action={
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <PanelMenuTrigger label={t.timeOfDaySettings}>
+                            <Settings className="size-4" />
+                          </PanelMenuTrigger>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-44 p-1.5">
+                          <DropdownMenuItem
+                            className={`cursor-pointer py-2 ${timeBasis === "entry" ? "font-semibold" : ""}`}
+                            onSelect={() => setTimeBasis("entry")}
+                          >
+                            {t.entryTime}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            className={`cursor-pointer py-2 ${timeBasis === "exit" ? "font-semibold" : ""}`}
+                            onSelect={() => setTimeBasis("exit")}
+                          >
+                            {t.exitTime}
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    }
+                  >
+                    <TimePerformanceChart
+                      points={(timeBasis === "entry" ? overview?.timeEntry : overview?.timeExit) ?? []}
+                      basis={timeBasis}
+                      locale={locale}
+                    />
+                  </Panel>
+                  <Panel t={t} titleKey="durationTitle" tipKey="durationTip" bodyClassName="justify-center">
+                    <DurationPerformanceChart points={overview?.duration ?? []} locale={locale} />
+                  </Panel>
+                </div>
+              </>
+            )}
+
+            <ScoreDialog t={t} open={scoreOpen} score={score} onClose={() => setScoreOpen(false)} />
+            <CumulativeHistoryDialog
+              open={cumulativeOpen}
+              onOpenChange={setCumulativeOpen}
+              points={cumulativeFull}
+              title={t.cumulativeTitle}
+              description={t.cumulativeHistoryDescription}
+              loadingText={t.cumulativeHistoryLoading}
+              locale={locale}
             />
-          ) : (
-            <>
-              <OverviewMetrics t={t} locale={locale} stats={stats} />
-
-              <div className="grid gap-3 xl:grid-cols-3">
-                <Panel
-                  t={t}
-                  titleKey="scoreTitle"
-                  tipKey="scoreTip"
-                  action={<PanelAction onClick={() => setScoreOpen(true)}>{t.scoreDetail}</PanelAction>}
-                >
-                  <ScoreRadar t={t} locale={locale} score={score} radar={scoreRadar} />
-                </Panel>
-                <Panel
-                  t={t}
-                  titleKey="consistencyTitle"
-                  tipKey="consistencyTip"
-                  action={<PanelAction href="/dashboard/trade-center">{t.viewMore}</PanelAction>}
-                >
-                  <ConsistencyHeatmap
-                    t={t}
-                    locale={locale}
-                    statuses={consistency}
-                    onOpenChecklist={() => toast(t.checklistUnavailable)}
-                  />
-                </Panel>
-                <Panel
-                  t={t}
-                  titleKey="cumulativeTitle"
-                  tipKey="cumulativeTip"
-                  action={
-                    <PanelIconAction label={t.expandCumulative} onClick={() => setCumulativeOpen(true)}>
-                      <Maximize2 className="size-4" />
-                    </PanelIconAction>
-                  }
-                >
-                  <CumulativeChart points={cumulativeRecent} locale={locale} heightClassName="h-[310px] min-h-0" />
-                </Panel>
-              </div>
-
-              <div className="grid gap-3 xl:grid-cols-3">
-                <Panel
-                  t={t}
-                  titleKey="dailyTitle"
-                  tipKey="dailyTip"
-                  className="relative z-20 overflow-visible!"
-                  bodyClassName="relative z-20 justify-center overflow-visible"
-                >
-                  <DailyChart days={[...stats.days].reverse()} locale={locale} />
-                </Panel>
-                <Panel t={t} titleKey="recentTitle" tipKey="recentTip" bodyClassName="min-h-0 overflow-hidden">
-                  <RecentTrades t={t} trades={recent} locale={locale} />
-                </Panel>
-                <Panel t={t} titleKey="drawdownTitle" tipKey="drawdownTip" bodyClassName="justify-center">
-                  <DrawdownChart points={drawdown.points} locale={locale} />
-                </Panel>
-              </div>
-
-              <div className="grid gap-3 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] xl:grid-rows-[440px_440px]">
-                <Panel
-                  t={t}
-                  titleKey="calendarTitle"
-                  tipKey="calendarTip"
-                  className="h-auto xl:row-span-2 xl:h-full"
-                  bodyClassName="min-h-0 overflow-hidden"
-                >
-                  <MonthCalendar
-                    t={t}
-                    locale={locale}
-                    month={monthKey}
-                    calendar={calendar}
-                    onShiftMonth={(delta) => setCursor(shiftMonth(monthKey, delta))}
-                    onThisMonth={() => setCursor(latestDay.slice(0, 7))}
-                    onOpenDay={openCalendarDay}
-                  />
-                </Panel>
-                <Panel
-                  t={t}
-                  titleKey="timeOfDayTitle"
-                  tipKey={timeBasis === "entry" ? "timeOfDayTipEntry" : "timeOfDayTipExit"}
-                  bodyClassName="justify-center"
-                  action={
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <PanelMenuTrigger label={t.timeOfDaySettings}>
-                          <Settings className="size-4" />
-                        </PanelMenuTrigger>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-44 p-1.5">
-                        <DropdownMenuItem
-                          className={`cursor-pointer py-2 ${timeBasis === "entry" ? "font-semibold" : ""}`}
-                          onSelect={() => setTimeBasis("entry")}
-                        >
-                          {t.entryTime}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          className={`cursor-pointer py-2 ${timeBasis === "exit" ? "font-semibold" : ""}`}
-                          onSelect={() => setTimeBasis("exit")}
-                        >
-                          {t.exitTime}
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  }
-                >
-                  <TimePerformanceChart
-                    points={(timeBasis === "entry" ? overview?.timeEntry : overview?.timeExit) ?? []}
-                    basis={timeBasis}
-                    locale={locale}
-                  />
-                </Panel>
-                <Panel t={t} titleKey="durationTitle" tipKey="durationTip" bodyClassName="justify-center">
-                  <DurationPerformanceChart points={overview?.duration ?? []} locale={locale} />
-                </Panel>
-              </div>
-            </>
-          )}
-
-          <ScoreDialog t={t} open={scoreOpen} score={score} onClose={() => setScoreOpen(false)} />
-          <CumulativeHistoryDialog
-            open={cumulativeOpen}
-            onOpenChange={setCumulativeOpen}
-            points={cumulativeFull}
-            title={t.cumulativeTitle}
-            description={t.cumulativeHistoryDescription}
-            loadingText={t.cumulativeHistoryLoading}
-            locale={locale}
-          />
-          <DayTradesDialog locale={locale} day={calendarDay ? dayGroup : null} onClose={closeCalendarDay} />
+            <DayTradesDialog locale={locale} day={calendarDay ? dayGroup : null} onClose={closeCalendarDay} />
+          </div>
         </div>
       </MarketColorProvider>
     </DisplayCurrencyProvider>

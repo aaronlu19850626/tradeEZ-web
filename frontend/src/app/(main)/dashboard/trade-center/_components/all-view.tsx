@@ -21,7 +21,13 @@ import { fill, type Locale } from "@/lib/i18n";
 import type { TradeCenterText } from "@/lib/tradesync/trade-center-i18n";
 import type { MockTrade, TradeStats } from "@/lib/tradesync/trades-mock";
 
-import { type ColumnKey, formatPercent, formatStatMoney, toneClass } from "../_lib/trade-center-model";
+import {
+  ALL_TRADES_PAGE_SIZE,
+  type ColumnKey,
+  formatPercent,
+  formatStatMoney,
+  toneClass,
+} from "../_lib/trade-center-model";
 import { AvgWinLossBar, DayTrendChart, DonutStat, MetricCard, WinRateStats } from "./trade-metric-cards";
 import { TradeTable } from "./trade-table";
 
@@ -53,7 +59,7 @@ export function AllView({
   loading?: boolean;
 }) {
   const currency = useDisplayCurrency();
-  const pageSize = 100;
+  const pageSize = ALL_TRADES_PAGE_SIZE;
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
   const [pageInput, setPageInput] = useState(String(page));
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
@@ -135,118 +141,129 @@ export function AllView({
       {/* Fills the remaining viewport height so only the table body scrolls. */}
       <Card
         aria-busy={loading}
-        className={`flex flex-1 flex-col gap-0 overflow-hidden pt-0 pb-0 ${
+        className={`flex flex-1 flex-col gap-0 overflow-visible pt-0 pb-10 ${
           loading ? "pointer-events-none opacity-60 transition-opacity" : "transition-opacity"
         }`}
       >
-        <CardHeader className="flex h-16 flex-row flex-wrap items-center justify-between gap-2 border-b px-4 py-0 pb-0!">
-          <div className="flex flex-wrap items-center gap-3">
-            <CardTitle className="text-base font-bold">
-              {fill(t.rowsRange, {
-                from: total === 0 ? "0" : String(start + 1),
-                to: String(Math.min(start + pageSize, total)),
-                total: String(total),
-              })}
-            </CardTitle>
-            <Badge variant="secondary" role="status" aria-live="polite" className="font-normal">
-              {fill(t.rowsSelected, { selected: selectedRows.length, total: rows.length })}
-            </Badge>
-          </div>
-          <div className="flex h-8 flex-wrap items-center justify-end gap-2">
-            <Pagination className="mx-0 h-8 w-auto items-center justify-end">
-              <PaginationContent className="h-8 items-center">
-                <PaginationItem>
+        <div data-testid="all-trades-sticky-stack" className="sticky top-[133px] z-30 flex min-h-0 flex-col bg-card">
+          <CardHeader
+            data-testid="all-trades-card-header"
+            className="flex h-16 flex-row flex-wrap items-center justify-between gap-2 border-b bg-card px-4 py-0 pb-0!"
+          >
+            <div className="flex flex-wrap items-center gap-3">
+              <CardTitle className="text-base font-bold">
+                {fill(t.rowsRange, {
+                  from: total === 0 ? "0" : String(start + 1),
+                  to: String(Math.min(start + pageSize, total)),
+                  total: String(total),
+                })}
+              </CardTitle>
+              <Badge variant="secondary" role="status" aria-live="polite" className="font-normal">
+                {fill(t.rowsSelected, { selected: selectedRows.length, total: rows.length })}
+              </Badge>
+            </div>
+            <div className="flex h-8 flex-wrap items-center justify-end gap-2">
+              <Pagination className="mx-0 h-8 w-auto items-center justify-end">
+                <PaginationContent className="h-8 items-center">
+                  <PaginationItem>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      aria-label={t.prevPage}
+                      disabled={current <= 1}
+                      onClick={() => onPage(current - 1)}
+                    >
+                      <ChevronLeft className="size-4" />
+                    </Button>
+                  </PaginationItem>
+                  <PaginationItem>
+                    <Badge
+                      aria-current="page"
+                      variant="outline"
+                      className="h-8 px-3 text-sm font-normal tabular-nums whitespace-nowrap"
+                    >
+                      {fill(t.pagination, { page: String(current), totalPages: String(totalPages) })}
+                    </Badge>
+                  </PaginationItem>
+                  <PaginationItem>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      aria-label={t.nextPage}
+                      disabled={current >= totalPages}
+                      onClick={() => onPage(current + 1)}
+                    >
+                      <ChevronRight className="size-4" />
+                    </Button>
+                  </PaginationItem>
+                  <PaginationItem>
+                    <Input
+                      type="number"
+                      min={1}
+                      max={totalPages}
+                      value={pageInput}
+                      aria-label={t.goToPage}
+                      className="w-14 px-1 py-0! text-center text-sm leading-none tabular-nums [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                      style={{ height: "32px", minHeight: "32px" }}
+                      onChange={(event) => setPageInput(event.target.value)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") jumpToPage();
+                      }}
+                      onBlur={jumpToPage}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
                   <Button
                     variant="outline"
-                    size="icon"
-                    aria-label={t.prevPage}
-                    disabled={current <= 1}
-                    onClick={() => onPage(current - 1)}
+                    className="gap-1.5 font-normal"
+                    disabled={selectedRows.length === 0}
+                    aria-label={`${t.bulkActions} (${selectedRows.length})`}
                   >
-                    <ChevronLeft className="size-4" />
+                    <MoreHorizontal className="size-4" />
+                    {t.bulkActions}
+                    {selectedRows.length > 0 && (
+                      <span className="rounded-full bg-muted px-1.5 py-0.5 text-xs tabular-nums">
+                        {selectedRows.length}
+                      </span>
+                    )}
                   </Button>
-                </PaginationItem>
-                <PaginationItem>
-                  <Badge
-                    aria-current="page"
-                    variant="outline"
-                    className="h-8 px-3 text-sm font-normal tabular-nums whitespace-nowrap"
-                  >
-                    {fill(t.pagination, { page: String(current), totalPages: String(totalPages) })}
-                  </Badge>
-                </PaginationItem>
-                <PaginationItem>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    aria-label={t.nextPage}
-                    disabled={current >= totalPages}
-                    onClick={() => onPage(current + 1)}
-                  >
-                    <ChevronRight className="size-4" />
-                  </Button>
-                </PaginationItem>
-                <PaginationItem>
-                  <Input
-                    type="number"
-                    min={1}
-                    max={totalPages}
-                    value={pageInput}
-                    aria-label={t.goToPage}
-                    className="w-14 px-1 py-0! text-center text-sm leading-none tabular-nums [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-                    style={{ height: "32px", minHeight: "32px" }}
-                    onChange={(event) => setPageInput(event.target.value)}
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter") jumpToPage();
-                    }}
-                    onBlur={jumpToPage}
-                  />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="outline"
-                  className="gap-1.5 font-normal"
-                  disabled={selectedRows.length === 0}
-                  aria-label={`${t.bulkActions} (${selectedRows.length})`}
-                >
-                  <MoreHorizontal className="size-4" />
-                  {t.bulkActions}
-                  {selectedRows.length > 0 && (
-                    <span className="rounded-full bg-muted px-1.5 py-0.5 text-xs tabular-nums">
-                      {selectedRows.length}
-                    </span>
-                  )}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-52">
-                <DropdownMenuItem className="cursor-pointer" disabled>
-                  <Check /> {t.bulkReview}
-                </DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer" disabled>
-                  <Download /> {t.bulkExport}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-52">
+                  <DropdownMenuItem className="cursor-pointer" disabled>
+                    <Check /> {t.bulkReview}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className="cursor-pointer" disabled>
+                    <Download /> {t.bulkExport}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </CardHeader>
+          <div
+            data-testid="all-trades-table-viewport"
+            className="min-h-0 bg-card"
+            style={{ height: "min(820px, calc(100vh - 261px))" }}
+          >
+            <TradeTable
+              trades={rows}
+              columns={columns}
+              t={t}
+              locale={locale}
+              selectable
+              dateInline
+              stickyHeader
+              sort={sort}
+              onSortChange={onSortChange}
+              selectionResetKey={`${current}:${rows.map((trade) => trade.id).join(",")}`}
+              onSelectionChange={setSelectedRows}
+            />
           </div>
-        </CardHeader>
-        <div className="min-h-0 flex-1">
-          <TradeTable
-            trades={rows}
-            columns={columns}
-            t={t}
-            locale={locale}
-            selectable
-            dateInline
-            stickyHeader
-            sort={sort}
-            onSortChange={onSortChange}
-            selectionResetKey={`${current}:${rows.map((trade) => trade.id).join(",")}`}
-            onSelectionChange={setSelectedRows}
-          />
         </div>
+        {/* Sticky positioning only has travel while real content remains below the stack. */}
+        <div aria-hidden="true" className="h-24 shrink-0" />
       </Card>
     </>
   );

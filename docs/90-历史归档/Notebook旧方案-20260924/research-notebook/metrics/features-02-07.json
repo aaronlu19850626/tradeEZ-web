@@ -1,0 +1,327 @@
+{
+  "f02": {
+    "items": [
+      {
+        "testid": "directory-list-select-item-40301814",
+        "text": "Wed, Sep 09, 202640 minutes ago",
+        "rect": [
+          324,
+          418,
+          232,
+          36
+        ],
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "color": "rgb(38, 50, 56)"
+      },
+      {
+        "testid": "directory-list-select-item-40130574",
+        "text": "Mon, Sep 21, 20262 hours ago",
+        "rect": [
+          324,
+          472,
+          232,
+          36
+        ],
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "color": "rgb(38, 50, 56)"
+      },
+      {
+        "testid": "directory-list-select-item-40121593",
+        "text": "Mon, Sep 14, 2026Sep 19, 2026",
+        "rect": [
+          324,
+          526,
+          232,
+          36
+        ],
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "color": "rgb(38, 50, 56)"
+      },
+      {
+        "testid": "directory-list-select-item-40093318",
+        "text": "Thu, Sep 17, 2026Sep 19, 2026",
+        "rect": [
+          324,
+          580,
+          232,
+          36
+        ],
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "color": "rgb(38, 50, 56)"
+      },
+      {
+        "testid": "directory-list-select-item-40092988",
+        "text": "Thu, Sep 10, 2026Sep 19, 2026",
+        "rect": [
+          324,
+          634,
+          232,
+          36
+        ],
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "color": "rgb(38, 50, 56)"
+      },
+      {
+        "testid": "directory-list-select-item-40092934",
+        "text": "Fri, Sep 18, 2026Sep 19, 2026",
+        "rect": [
+          324,
+          688,
+          232,
+          36
+        ],
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "color": "rgb(38, 50, 56)"
+      },
+      {
+        "testid": "directory-list-select-item-39900415",
+        "text": "Tue, Sep 15, 2026Sep 17, 2026",
+        "rect": [
+          324,
+          742,
+          232,
+          36
+        ],
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "color": "rgb(38, 50, 56)"
+      },
+      {
+        "testid": "directory-list-select-item-38023513",
+        "text": "Fri, Aug 14, 2026Aug 16, 2026",
+        "rect": [
+          324,
+          796,
+          232,
+          36
+        ],
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "normal",
+        "color": "rgb(38, 50, 56)"
+      }
+    ],
+    "pnl": []
+  },
+  "f0304": {
+    "star": null,
+    "share": null,
+    "toolbar": [
+      {
+        "label": "Contact us",
+        "rect": [
+          16,
+          968,
+          32,
+          32
+        ],
+        "fontSize": "18px",
+        "color": "rgb(163, 158, 172)",
+        "bg": "rgba(0, 0, 0, 0)",
+        "radius": "50%",
+        "padding": "0px"
+      },
+      {
+        "label": "Zella University",
+        "rect": [
+          16,
+          1012,
+          32,
+          32
+        ],
+        "fontSize": "18px",
+        "color": "rgb(163, 158, 172)",
+        "bg": "rgba(0, 0, 0, 0)",
+        "radius": "50%",
+        "padding": "0px"
+      },
+      {
+        "label": "Referral Program",
+        "rect": [
+          16,
+          1056,
+          32,
+          32
+        ],
+        "fontSize": "18px",
+        "color": "rgb(163, 158, 172)",
+        "bg": "rgba(0, 0, 0, 0)",
+        "radius": "50%",
+        "padding": "0px"
+      },
+      {
+        "label": "New note",
+        "rect": [
+          500,
+          333,
+          30,
+          30
+        ],
+        "fontSize": "18px",
+        "color": "rgb(84, 110, 122)",
+        "bg": "rgba(0, 0, 0, 0)",
+        "radius": "50%",
+        "padding": "5px"
+      },
+      {
+        "label": "More options",
+        "rect": [
+          530,
+          333,
+          30,
+          30
+        ],
+        "fontSize": "18px",
+        "color": "rgb(84, 110, 122)",
+        "bg": "rgba(0, 0, 0, 0)",
+        "radius": "50%",
+        "padding": "5px"
+      },
+      {
+        "label": "Log day",
+        "rect": [
+          500,
+          375,
+          30,
+          30
+        ],
+        "fontSize": "18px",
+        "color": "rgb(84, 110, 122)",
+        "bg": "rgba(0, 0, 0, 0)",
+        "radius": "50%",
+        "padding": "5px"
+      },
+      {
+        "label": "More options",
+        "rect": [
+          530,
+          375,
+          30,
+          30
+        ],
+        "fontSize": "18px",
+        "color": "rgb(84, 110, 122)",
+        "bg": "rgba(0, 0, 0, 0)",
+        "radius": "50%",
+        "padding": "5px"
+      },
+      {
+        "label": "Log session",
+        "rect": [
+          500,
+          889,
+          30,
+          30
+        ],
+        "fontSize": "18px",
+        "color": "rgb(84, 110, 122)",
+        "bg": "rgba(0, 0, 0, 0)",
+        "radius": "50%",
+        "padding": "5px"
+      },
+      {
+        "label": "More options",
+        "rect": [
+          530,
+          889,
+          30,
+          30
+        ],
+        "fontSize": "18px",
+        "color": "rgb(84, 110, 122)",
+        "bg": "rgba(0, 0, 0, 0)",
+        "radius": "50%",
+        "padding": "5px"
+      },
+      {
+        "label": "New note",
+        "rect": [
+          500,
+          944,
+          30,
+          30
+        ],
+        "fontSize": "18px",
+        "color": "rgb(84, 110, 122)",
+        "bg": "rgba(0, 0, 0, 0)",
+        "radius": "50%",
+        "padding": "5px"
+      },
+      {
+        "label": "More options",
+        "rect": [
+          530,
+          944,
+          30,
+          30
+        ],
+        "fontSize": "18px",
+        "color": "rgb(84, 110, 122)",
+        "bg": "rgba(0, 0, 0, 0)",
+        "radius": "50%",
+        "padding": "5px"
+      },
+      {
+        "label": "New note",
+        "rect": [
+          500,
+          986,
+          30,
+          30
+        ],
+        "fontSize": "18px",
+        "color": "rgb(84, 110, 122)",
+        "bg": "rgba(0, 0, 0, 0)",
+        "radius": "50%",
+        "padding": "5px"
+      },
+      {
+        "label": "More options",
+        "rect": [
+          530,
+          986,
+          30,
+          30
+        ],
+        "fontSize": "18px",
+        "color": "rgb(84, 110, 122)",
+        "bg": "rgba(0, 0, 0, 0)",
+        "radius": "50%",
+        "padding": "5px"
+      },
+      {
+        "label": "More options",
+        "rect": [
+          538,
+          1087,
+          30,
+          30
+        ],
+        "fontSize": "18px",
+        "color": "rgb(84, 110, 122)",
+        "bg": "rgba(0, 0, 0, 0)",
+        "radius": "50%",
+        "padding": "5px"
+      }
+    ]
+  },
+  "f05": [],
+  "f06": [],
+  "f07": {
+    "dialogBtns": [],
+    "versionItems": []
+  }
+}

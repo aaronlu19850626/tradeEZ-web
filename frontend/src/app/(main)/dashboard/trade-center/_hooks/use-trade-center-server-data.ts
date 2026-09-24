@@ -12,7 +12,7 @@ import {
 } from "@/lib/tradesync/trade-center";
 import type { DayGroup, MockTrade, TradeStats, WeekDayCell, WeekGroup } from "@/lib/tradesync/trades-mock";
 
-import type { ViewMode } from "../_lib/trade-center-model";
+import { ALL_TRADES_PAGE_SIZE, type ViewMode } from "../_lib/trade-center-model";
 
 function toDayGroup(group: TradeGroupRecord): DayGroup {
   const trades = group.trades.map(toTrade);
@@ -221,7 +221,7 @@ export function useTradeCenterServerData({
           setWeekHasMore(groups.length > weekVisible);
         } else {
           const [pageData, summaryData] = await Promise.all([
-            tradeCenterApi.list({ ...params, page, pageSize: 100, sort, order }),
+            tradeCenterApi.list({ ...params, page, pageSize: ALL_TRADES_PAGE_SIZE, sort, order }),
             tradeCenterApi.summary(params),
           ]);
           setPageTrades(pageData.items.map(toTrade));

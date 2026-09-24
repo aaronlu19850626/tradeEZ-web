@@ -69,11 +69,16 @@ import {
 } from "@/lib/format-numbers";
 import { useLocale } from "@/lib/i18n";
 
+import { LexicalEditorDemo } from "./lexical-editor-demo";
+import { TradeZellaIconGallery } from "./tradezella-icon-gallery";
+
 const sections = [
   ["actions", "按钮与徽标"],
   ["forms", "表单"],
   ["filters", "全局筛选器"],
   ["navigation", "导航与切换"],
+  ["editor", "Lexical 编辑器"],
+  ["icons", "TradeZella 图标"],
   ["data", "数据展示"],
   ["feedback", "反馈与状态"],
   ["overlays", "弹窗与提示"],
@@ -481,6 +486,24 @@ export default function DesignSystemPage() {
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
+          </Section>
+
+          <Section
+            id="editor"
+            title="Lexical 编辑器"
+            description="可复用 Lexical 富文本编辑器，与业务模块解耦；工具栏、标签、模板、划词菜单和图片/表格编辑均为标准能力。"
+            wide
+          >
+            <LexicalEditorDemo />
+          </Section>
+
+          <Section
+            id="icons"
+            title="TradeZella 图标"
+            description="从 TradeZella Notebook 真实 DOM 提取并去重的统一图标注册表。"
+            wide
+          >
+            <TradeZellaIconGallery />
           </Section>
 
           <Section id="data" title="数据展示" description="标准数据表、头像、进度、骨架和状态元素。" wide>

@@ -1,0 +1,55 @@
+name: Module development
+description: Register a module or feature through the standard lifecycle
+title: "[module] "
+labels: [module]
+body:
+  - type: input
+    id: module
+    attributes:
+      label: Module
+      description: Module name, route, branch and worktree.
+    validations:
+      required: true
+  - type: textarea
+    id: ownership
+    attributes:
+      label: Ownership and isolation
+      description: List owner, reviewer, branch, worktree, allowed directories, ports and dev/test/e2e database names.
+    validations:
+      required: true
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal and scope
+      description: Include included and explicitly excluded capabilities.
+    validations:
+      required: true
+  - type: textarea
+    id: matrix
+    attributes:
+      label: Feature matrix
+      description: Link docs/20-产品与需求/功能点覆盖矩阵模板.md or a completed matrix.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Research and confirmation evidence
+      description: Link TradeZella evidence, requirement decision, Mock confirmation and API contract when each becomes available.
+    validations:
+      required: true
+  - type: textarea
+    id: serial_resources
+    attributes:
+      label: Shared and serial resources
+      description: List navigation, tokens, lock files, migrations or shared contracts that require coordination.
+  - type: textarea
+    id: blockers
+    attributes:
+      label: Dependencies and blockers

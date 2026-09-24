@@ -468,6 +468,11 @@ html {
   max-width: none;
 }
 
+.tradeez-shell
+  [data-slot="dashboard-workspace"]:has(.account-page-shell, .overview-page-shell, .trade-center-page-shell) {
+  padding: 0 !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .tradeez-shell [data-slot="sidebar-gap"],
   .tradeez-shell [data-slot="sidebar-container"],
