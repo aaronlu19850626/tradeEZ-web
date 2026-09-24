@@ -2,7 +2,7 @@
 
 ## Project overview
 
-Studio Admin is a responsive admin dashboard built with Next.js 16, React 19, TypeScript, Tailwind CSS v4, and shadcn/ui.
+TradeEZ is a responsive trading journal and execution-management application built with Next.js 16, React 19, TypeScript, Tailwind CSS v4, and shadcn/ui. Read the repository-root `AGENTS.md` and current handoff snapshot before this frontend-specific file.
 
 Before any frontend implementation, read, in this order:
 
@@ -32,13 +32,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 Use the shadcn skill for all work involving shadcn/ui components, styling, composition, registries, presets, or `components.json`.
 
-If the skill is not available, install it with:
-
-```bash
-npx skills add shadcn/ui
-```
-
-The skill contains the component, styling, composition, accessibility, and CLI rules. Do not duplicate those rules here. Always inspect the local component source before using it.
+If the skill is unavailable, follow the checked-in UI rules and inspect the local component source. Do not install tools or dependencies unless the current task explicitly authorizes that change.
 
 Do not modify files inside `src/components/ui/` or `src/components/calendar/`. Keep these components intact and apply styling or customization where they are used.
 
@@ -83,7 +77,7 @@ Keep a component inside its route until it is reused by another feature. Do not 
 
 ## Creating or extending a screen
 
-1. Inspect the closest current screen before writing code. Finance, Infrastructure, CRM, and Analytics are useful references. Do not use routes under `(legacy)` as references for new screens unless maintaining a legacy route.
+1. Inspect the closest TradeEZ screen before writing code. Trading Overview, Trading Accounts, Trade Center, and the design-system route are the current local references. Do not use archived Notebook materials or unrelated template routes as new product requirements.
 2. When reproducing a UI from a screenshot or image, follow its visual direction closely, including layout, hierarchy, spacing, component structure, and important details. Implement it with the project's existing components and semantic theme tokens rather than copying raw color values. If the design needs a color that is not available through the existing theme tokens, or the user explicitly requests a non-theme color, use a named color from Tailwind's default palette. Do not use arbitrary hex, RGB, HSL, or OKLCH values.
 3. Reuse the existing dashboard shell, local components, layout controls, and theme tokens.
 4. Break each new page into focused components inside the route's `_components/` directory. Keep `page.tsx` small and focused on composing those pieces.

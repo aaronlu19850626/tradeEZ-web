@@ -1,6 +1,6 @@
 # TradeSync-Web / TradeEZ-web
 
-新电脑 / Codex 接手请先阅读 [文档入口](docs/README.md)、[迁移与接手指南](docs/00-项目总览/迁移与接手指南.md)、[新工作启动操作手册](docs/00-项目总览/新工作启动操作手册.md) 和 [项目文档索引](docs/00-项目总览/项目文档索引.md)。当前先建立可运行主干，再全面盘点 TradeZella 核心模块；一期方向和模块优先级尚未确认。
+新电脑、Codex 或其他模型接手时，先阅读 [当前接手快照](docs/00-项目总览/当前接手快照.md)、[贡献指南](CONTRIBUTING.md)、[文档入口](docs/README.md)、[迁移与接手指南](docs/00-项目总览/迁移与接手指南.md)、[新工作启动操作手册](docs/00-项目总览/新工作启动操作手册.md) 和 [项目文档索引](docs/00-项目总览/项目文档索引.md)。可运行主干已经建立；当前下一步是全面盘点 TradeZella 核心模块，一期方向和模块优先级尚未确认。
 
 TradeSync-Web 是 TradeEZ 的 MT5 交易数据同步 Web 服务。当前以 [SOP v1.03 新接口说明](<docs/50-连接器与EA/TradeEZ-SOP数据同步接口说明.md>) 为准：UTC 平仓成交时间游标、原始 body HMAC、先保存再提交游标。实现与验收边界见 [对齐记录](docs/50-连接器与EA/SOP契约验收.md)。
 
