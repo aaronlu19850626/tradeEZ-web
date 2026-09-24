@@ -1,16 +1,13 @@
-# 负责人路由。GitHub 按“最后一个匹配的规则优先”生效。
-# 当前项目负责人负责治理、迁移链、共享入口和未分配模块；模块负责人可在模块启动 Issue 中补充。
-
-# 数据库迁移链是强串行文件，必须由负责人把关
+# 最后一条匹配规则优先。占位负责人必须在模块 Issue 中替换为实际账号。
+/.github/ @aaronlu19850626
+/docs/10-开发与协作/ @aaronlu19850626
+/docs/20-产品与研究/ @aaronlu19850626
+/docs/30-模块规格/ @aaronlu19850626
+/docs/40-架构与数据/ @aaronlu19850626
+/docs/50-前端与设计系统/ @aaronlu19850626
+/docs/60-运行与部署/ @aaronlu19850626
 /backend/app/migrations.py @aaronlu19850626
 /backend/migrations/ @aaronlu19850626
-
-# 共享导航与全局注册
 /frontend/src/navigation/ @aaronlu19850626
-
-# 项目进度与协作文档
-/docs/00-项目总览/ @aaronlu19850626
-
-/frontend/src/app/(main)/dashboard/playbooks/ @aaronlu19850626
 /frontend/src/components/ @aaronlu19850626
-/docs/ @aaronlu19850626
+/scripts/ @aaronlu19850626

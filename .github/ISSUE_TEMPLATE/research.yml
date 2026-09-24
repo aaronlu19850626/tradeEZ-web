@@ -1,0 +1,47 @@
+name: Research and discovery
+description: Record TradeZella research or a core module inventory
+title: "[research] "
+labels: [research]
+body:
+  - type: input
+    id: subject
+    attributes:
+      label: Subject
+      description: Product area, module or feature point.
+    validations:
+      required: true
+  - type: textarea
+    id: goal
+    attributes:
+      label: Research goal
+      description: What decision will this research enable?
+    validations:
+      required: true
+  - type: textarea
+    id: paths
+    attributes:
+      label: Users and paths
+      description: Roles, entry points, URLs and complete operation paths.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: DOM/CSS values, states, screenshots, traces, data objects and cross-module relationships.
+    validations:
+      required: true
+  - type: textarea
+    id: classification
+    attributes:
+      label: Classification and gap
+      description: Separate reference facts, user requirements, TradeEZ decisions and current implementation gaps.
+    validations:
+      required: true
+  - type: textarea
+    id: decision
+    attributes:
+      label: Decision required
+      description: P0/P1/P2 recommendation, explicit exclusions and questions for product review.
+    validations:
+      required: true

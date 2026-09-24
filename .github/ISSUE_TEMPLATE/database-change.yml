@@ -1,0 +1,47 @@
+name: Database change
+description: Register a schema, data migration or production test environment change
+title: "[db] "
+labels: [database]
+body:
+  - type: textarea
+    id: change
+    attributes:
+      label: Change
+      description: Tables, columns, indexes, constraints, backfill and affected modules.
+    validations:
+      required: true
+  - type: input
+    id: revision
+    attributes:
+      label: Migration revision
+      description: Revision assigned from the latest main migration chain.
+    validations:
+      required: true
+  - type: textarea
+    id: compatibility
+    attributes:
+      label: Compatibility and rollout
+      description: Expand/contract steps, old/new code compatibility and locking risk.
+    validations:
+      required: true
+  - type: textarea
+    id: validation
+    attributes:
+      label: Validation
+      description: Empty database, old version upgrade, data checks, tests and E2E database.
+    validations:
+      required: true
+  - type: textarea
+    id: recovery
+    attributes:
+      label: Backup and recovery
+      description: Backup point, rollback or compensating migration and owner.
+    validations:
+      required: true
+  - type: checkboxes
+    id: approval
+    attributes:
+      label: Environment approval
+      options:
+        - label: Production test environment change requires manual approval
+          required: false

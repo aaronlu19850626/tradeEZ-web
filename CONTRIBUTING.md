@@ -1,23 +1,46 @@
-# TradeEZ 贡献指南
+# TradeEZ 贡献入口
 
-版本：1.0；状态：已生效；用途：为开发者和 AI 提供仓库级贡献入口；维护人：集成负责人；依赖：`AGENTS.md`、新工作启动操作手册、Git 分支与 PR 规范；验收入口：通过质量门禁并合并的 PR。
+本文件只提供仓库级入口。完整规则见 [GitHub 协作与交付流程](docs/10-开发与协作/GitHub协作与交付流程.md)。
 
-开始工作前依次阅读：
+## 开始任务
 
-1. [`AGENTS.md`](AGENTS.md)
-2. [当前接手快照](docs/00-项目总览/当前接手快照.md)
-3. [新工作启动操作手册](docs/00-项目总览/新工作启动操作手册.md)
-4. [Git 分支与 PR 规范](docs/10-规则与规范/Git分支与PR规范.md)
-5. [多人协作开发规范](docs/00-项目总览/多人协作开发规范.md)
+1. 阅读 `AGENTS.md`、当前状态和当前 GitHub Issue。
+2. 从最新 `origin/main` 创建独立分支和 worktree。
+3. 在 Issue 登记负责人、审查人、目录、端口、数据库和共享资源。
+4. 只在 Issue 已授权的阶段和范围内工作。
 
-所有新工作从 GitHub Issue 和模块卡片开始。一个交付单元使用一个分支、一个 worktree、一个任务和一个 PR；业务开发不得直接修改 `main`。前端统一使用 npm。测试必须使用独立的 `tradeez_test_*` 和 `tradeez_e2e_*` 数据库。
+分支命名：
 
-合并前按改动范围运行：
+```text
+feat/<module>-<issue>
+fix/<module>-<issue>
+docs/<topic>-<issue>
+chore/<topic>-<issue>
+```
+
+一个可验收任务对应一个 Issue、一个分支、一个 worktree 和一个 PR。不得直接向 `main` 提交或推送业务修改。
+
+## 提交前
+
+根据改动范围运行：
 
 ```bash
 ./scripts/quality/static.sh
 ./scripts/quality/e2e.sh
+python3 scripts/docs/check_docs.py
 git diff --check
 ```
 
-需求范围与前端 Mock 由产品负责人确认；实现、测试和合并门禁由技术负责人核对。PR 必须关联 Issue，并提供确认记录、测试结果、风险和回滚点。完整操作和 AI 沟通模板以《新工作启动操作手册》为准。
+页面、交互、导航、认证或数据流变化必须运行 E2E。测试必须使用独立数据库和端口。
+
+提交信息使用 Conventional Commits，例如：
+
+```text
+feat(notebook): add note list mock
+fix(accounts): reject duplicate submission
+docs: consolidate collaboration workflow
+```
+
+## Pull Request
+
+PR 必须关联 Issue，并说明范围、确认记录、测试证据、数据库影响、风险、回滚和未决项。默认通过 squash merge 合并；合并前同步最新 `origin/main`，所有必需检查和审查必须通过。
