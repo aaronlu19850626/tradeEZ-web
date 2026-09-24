@@ -1,118 +1,36 @@
-# AGENTS.md
+# TradeEZ 前端代理规则
 
-## Project overview
+先遵守仓库根目录 `AGENTS.md`，再读取：
 
-Studio Admin is a responsive admin dashboard built with Next.js 16, React 19, TypeScript, Tailwind CSS v4, and shadcn/ui.
+1. `../docs/50-前端与设计系统/前端实现规则.md`
+2. `../docs/50-前端与设计系统/视觉与交互规范.md`
+3. 当前模块在 `../docs/20-产品与研究/模块目录.md` 指定的规格
 
-Before any frontend implementation, read, in this order:
+## Next.js 规则
 
-1. `../docs/10-规则与规范/前端开发强制规则.md`
-2. `../docs/10-规则与规范/UI规范.md`
-3. The relevant module design document under `../docs/30-模块设计/`
+- 当前项目使用 Next.js 16；编码前读取 `node_modules/next/dist/docs/` 中与任务有关的当前版本说明。
+- `page.tsx` 默认保持 Server Component；交互和浏览器能力放入专用 Client Component。
+- 页面专用代码放在路由 `_components/`，跨两个模块复用后才提升为共享业务组件。
+- 不修改 `src/components/ui/` 和 `src/components/calendar/` 来满足单个页面需求。
+- 使用现有 `@/` 别名、严格 TypeScript、Biome 双引号和两空格格式。
 
-This reading and the resulting control-compliance check are mandatory gates. Do not start implementation until every page element has a standard semantic component mapping.
+## 目录边界
 
-All design elements must use standardized semantic controls first. Any non-standard semantic control must be submitted to the user with its rationale, states, accessibility, responsive behavior, Light/Dark behavior, and test plan, and may only be implemented after explicit approval.
+```text
+src/app/(main)/dashboard/<screen>/          页面和模块专用代码
+src/app/(main)/dashboard/_components/       Dashboard 共享业务组件
+src/components/                             应用级共享组件
+src/components/ui/                          shadcn/Radix 基础组件
+src/hooks/、src/lib/                         共享逻辑
+src/styles/presets/                         主题预设
+```
 
-New frontend work must also match the established design language and interaction patterns of the existing three modules: Trading Overview, Trading Accounts, and Trade Center. Reuse existing shared components before creating module-specific implementations.
-
-This repository uses the shadcn `radix-nova` style. The shadcn CLI reports `base: "radix"`, which refers to Radix UI. Always inspect the local components in `src/components/ui/` because individual wrappers may use different primitives.
+新页面必须覆盖加载、空、错误、禁用、成功、溢出、键盘、Light/Dark、中文/英文和 390/768/1024/1440px。页面、交互、数据流或导航变更必须运行受管 Playwright 门禁。
 
 <!-- BEGIN:nextjs-agent-rules -->
 
 # This is NOT the Next.js you know
 
-This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
-
-This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+This version has breaking changes. Read the relevant guide in `node_modules/next/dist/docs/` before writing code and follow current deprecation notices.
 
 <!-- END:nextjs-agent-rules -->
-
-## shadcn skill
-
-Use the shadcn skill for all work involving shadcn/ui components, styling, composition, registries, presets, or `components.json`.
-
-If the skill is not available, install it with:
-
-```bash
-npx skills add shadcn/ui
-```
-
-The skill contains the component, styling, composition, accessibility, and CLI rules. Do not duplicate those rules here. Always inspect the local component source before using it.
-
-Do not modify files inside `src/components/ui/` or `src/components/calendar/`. Keep these components intact and apply styling or customization where they are used.
-
-## Setup
-
-This project uses npm.
-
-```bash
-npm install
-npm run dev
-```
-
-Available commands:
-
-```bash
-npm run build
-npm run lint
-npm run format
-npm run check
-npm run check:fix
-npm run generate:presets
-```
-
-Every change must pass the repository quality gates before it is submitted. From the repository root, run
-`./scripts/quality/static.sh` with an explicit isolated `TRADESYNC_TEST_DATABASE_URL`. Run
-`./scripts/quality/e2e.sh` for page, interaction, data-flow, navigation, authentication, or responsive changes.
-Never point either command at a shared development or production database.
-
-## Co-location-based structure
-
-Keep feature code close to the route that owns it.
-
-- Dashboard routes: `src/app/(main)/dashboard/<screen>/page.tsx`
-- Screen-specific components, data, and schemas: `src/app/(main)/dashboard/<screen>/_components/`
-- Shared dashboard components: `src/app/(main)/dashboard/_components/`
-- Shared application components: `src/components/`
-- Local shadcn components: `src/components/ui/`
-- Shared hooks and utilities: `src/hooks/` and `src/lib/`
-- Theme presets: `src/styles/presets/`
-
-Keep a component inside its route until it is reused by another feature. Do not move screen-specific code into a shared directory preemptively.
-
-## Creating or extending a screen
-
-1. Inspect the closest current screen before writing code. Finance, Infrastructure, CRM, and Analytics are useful references. Do not use routes under `(legacy)` as references for new screens unless maintaining a legacy route.
-2. When reproducing a UI from a screenshot or image, follow its visual direction closely, including layout, hierarchy, spacing, component structure, and important details. Implement it with the project's existing components and semantic theme tokens rather than copying raw color values. If the design needs a color that is not available through the existing theme tokens, or the user explicitly requests a non-theme color, use a named color from Tailwind's default palette. Do not use arbitrary hex, RGB, HSL, or OKLCH values.
-3. Reuse the existing dashboard shell, local components, layout controls, and theme tokens.
-4. Break each new page into focused components inside the route's `_components/` directory. Keep `page.tsx` small and focused on composing those pieces.
-5. Keep `page.tsx` as a Server Component by default. Move interactive or browser-dependent code into a dedicated Client Component.
-6. Add the screen to `src/navigation/sidebar/sidebar-items.ts` when it should appear in the dashboard navigation.
-7. Decide the information hierarchy before choosing widgets. Let the content determine the page structure.
-8. Keep the established visual rhythm where it fits: compact spacing, clear typography hierarchy, responsive action rows, and grids that collapse cleanly on smaller screens.
-9. Widget selection is not a fixed formula. Try different arrangements of cards, resource rows, meters, charts, tabs, empty states, and actions, then keep the version that communicates the content clearly and feels consistent with the project.
-10. Match nearby screens in card density, borders, radius, spacing, content width, and responsive behavior.
-11. Use semantic theme tokens so new screens work with light mode, dark mode, and the existing theme presets.
-12. Handle relevant loading, empty, error, disabled, and overflow states.
-13. Keep screens accessible with semantic HTML, keyboard support, visible focus states, labels, and appropriate ARIA attributes.
-
-## Code conventions
-
-- Use only `src/components/ui` for base controls. Do not recreate Button, Badge, Input, Select, Dialog, Tooltip, or Table in business code.
-- Use the global Button and Badge variants. Do not add custom hover or color styles when an existing variant covers the state.
-- Native `<button>` is allowed only for framework triggers or specialized calendar/table cells and must preserve the global visual language.
-- Apply the responsive rules in `../docs/10-规则与规范/UI规范.md`; all new screens must be checked at 390px, 768px, 1024px, and 1440px.
-
-- TypeScript strict mode is enabled. Use precise types and avoid `any`.
-- Use the existing `@/` import aliases.
-- Follow the Biome configuration: double quotes, semicolons, two-space indentation, sorted imports, and a 120-character line width.
-- Avoid unnecessary dependencies.
-- Keep changes focused and do not refactor unrelated files.
-
-## Contributions
-
-- Use conventional commit prefixes such as `feat:`, `fix:`, `refactor:`, `docs:`, and `chore:`.
-- Include screenshots for new screens and material visual changes. Include mobile and dark-theme states when relevant.
-- Explain new reusable patterns or dependencies in the pull request.
-- Follow `CONTRIBUTING.md` for the contribution workflow.

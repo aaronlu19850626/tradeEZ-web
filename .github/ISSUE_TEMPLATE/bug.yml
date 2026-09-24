@@ -7,17 +7,22 @@ body:
     id: reproduce
     attributes:
       label: Reproduction
-      description: Give exact steps, environment, expected and actual behavior.
+      description: Exact steps, environment, expected and actual behavior.
     validations:
       required: true
-  - type: textarea
-    id: evidence
-    attributes:
-      label: Evidence
-      description: Add logs, screenshots, traces or failing test names. Remove secrets and personal data.
   - type: textarea
     id: impact
     attributes:
       label: Impact and regression scope
     validations:
       required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: Logs, screenshots, traces or failing tests. Remove secrets and personal data.
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Fix acceptance
+      description: Regression test, affected modules and release requirement.
