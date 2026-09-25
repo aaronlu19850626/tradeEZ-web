@@ -66,3 +66,6 @@ skills-lock.json
 
 # Task-owned service logs and local environment configuration
 .quality/
+
+# Local module research/process assets (images, recordings, DOM snapshots)
+docs/*/assets/
