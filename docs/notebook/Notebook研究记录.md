@@ -1,3 +1,11 @@
+---
+doc_id: NOTEBOOK-RESEARCH
+status: active
+owner: product-owner
+last_verified: 2026-09-25
+github_issue: aaronlu19850626/tradeEZ-web#9
+---
+
 # Notebook 模块研究记录
 
 > 关联 Issue：`aaronlu19850626/tradeEZ-web#9`
@@ -174,65 +182,65 @@ Notebook 是记录不同维度笔记的模块。维度笔记包括：
 
 完整需求截图：
 
-![飞书完整文档](assets/feishu/fullpage.png)
+<img src="assets/feishu/fullpage.png" alt="飞书完整文档">
 
 分屏截图（按飞书文档出现顺序）：
 
-![截图 01](assets/feishu/feishu-img-01.png)
-![截图 02](assets/feishu/feishu-img-02.png)
-![截图 03](assets/feishu/feishu-img-03.png)
-![截图 04](assets/feishu/feishu-img-04.png)
-![截图 05](assets/feishu/feishu-img-05.png)
-![截图 06](assets/feishu/feishu-img-06.png)
-![截图 07](assets/feishu/feishu-img-07.png)
-![截图 08](assets/feishu/feishu-img-08.png)
-![截图 09](assets/feishu/feishu-img-09.png)
-![截图 10](assets/feishu/feishu-img-10.png)
-![截图 11](assets/feishu/feishu-img-11.png)
-![截图 12](assets/feishu/feishu-img-12.png)
-![截图 13](assets/feishu/feishu-img-13.png)
-![截图 14](assets/feishu/feishu-img-14.png)
-![截图 15](assets/feishu/feishu-img-15.png)
-![截图 16](assets/feishu/feishu-img-16.png)
-![截图 17](assets/feishu/feishu-img-17.png)
-![截图 18](assets/feishu/feishu-img-18.png)
-![截图 19](assets/feishu/feishu-img-19.png)
-![截图 20](assets/feishu/feishu-img-20.png)
-![截图 21](assets/feishu/feishu-img-21.png)
-![截图 22](assets/feishu/feishu-img-22.png)
-![截图 23](assets/feishu/feishu-img-23.png)
-![截图 24](assets/feishu/feishu-img-24.png)
-![截图 25](assets/feishu/feishu-img-25.png)
-![截图 26](assets/feishu/feishu-img-26.png)
-![截图 27](assets/feishu/feishu-img-27.png)
-![截图 28](assets/feishu/feishu-img-28.png)
-![截图 29](assets/feishu/feishu-img-29.png)
-![截图 30](assets/feishu/feishu-img-30.png)
-![截图 31](assets/feishu/feishu-img-31.png)
-![截图 32](assets/feishu/feishu-img-32.png)
-![截图 33](assets/feishu/feishu-img-33.png)
-![截图 34](assets/feishu/feishu-img-34.png)
-![截图 35](assets/feishu/feishu-img-35.png)
-![截图 36](assets/feishu/feishu-img-36.png)
-![截图 37](assets/feishu/feishu-img-37.png)
-![截图 38](assets/feishu/feishu-img-38.png)
-![截图 39](assets/feishu/feishu-img-39.png)
-![截图 40](assets/feishu/feishu-img-40.png)
-![截图 41](assets/feishu/feishu-img-41.png)
-![截图 42](assets/feishu/feishu-img-42.png)
-![截图 43](assets/feishu/feishu-img-43.png)
-![截图 44](assets/feishu/feishu-img-44.png)
-![截图 45](assets/feishu/feishu-img-45.png)
-![截图 46](assets/feishu/feishu-img-46.png)
-![截图 47](assets/feishu/feishu-img-47.png)
-![截图 48](assets/feishu/feishu-img-48.png)
-![截图 49](assets/feishu/feishu-img-49.png)
-![截图 50](assets/feishu/feishu-img-50.png)
-![截图 51](assets/feishu/feishu-img-51.png)
-![截图 52](assets/feishu/feishu-img-52.png)
-![截图 53](assets/feishu/feishu-img-53.png)
-![截图 54](assets/feishu/feishu-img-54.png)
-![截图 55](assets/feishu/feishu-img-55.png)
-![截图 56](assets/feishu/feishu-img-56.png)
+<img src="assets/feishu/feishu-img-01.png" alt="截图 01">
+<img src="assets/feishu/feishu-img-02.png" alt="截图 02">
+<img src="assets/feishu/feishu-img-03.png" alt="截图 03">
+<img src="assets/feishu/feishu-img-04.png" alt="截图 04">
+<img src="assets/feishu/feishu-img-05.png" alt="截图 05">
+<img src="assets/feishu/feishu-img-06.png" alt="截图 06">
+<img src="assets/feishu/feishu-img-07.png" alt="截图 07">
+<img src="assets/feishu/feishu-img-08.png" alt="截图 08">
+<img src="assets/feishu/feishu-img-09.png" alt="截图 09">
+<img src="assets/feishu/feishu-img-10.png" alt="截图 10">
+<img src="assets/feishu/feishu-img-11.png" alt="截图 11">
+<img src="assets/feishu/feishu-img-12.png" alt="截图 12">
+<img src="assets/feishu/feishu-img-13.png" alt="截图 13">
+<img src="assets/feishu/feishu-img-14.png" alt="截图 14">
+<img src="assets/feishu/feishu-img-15.png" alt="截图 15">
+<img src="assets/feishu/feishu-img-16.png" alt="截图 16">
+<img src="assets/feishu/feishu-img-17.png" alt="截图 17">
+<img src="assets/feishu/feishu-img-18.png" alt="截图 18">
+<img src="assets/feishu/feishu-img-19.png" alt="截图 19">
+<img src="assets/feishu/feishu-img-20.png" alt="截图 20">
+<img src="assets/feishu/feishu-img-21.png" alt="截图 21">
+<img src="assets/feishu/feishu-img-22.png" alt="截图 22">
+<img src="assets/feishu/feishu-img-23.png" alt="截图 23">
+<img src="assets/feishu/feishu-img-24.png" alt="截图 24">
+<img src="assets/feishu/feishu-img-25.png" alt="截图 25">
+<img src="assets/feishu/feishu-img-26.png" alt="截图 26">
+<img src="assets/feishu/feishu-img-27.png" alt="截图 27">
+<img src="assets/feishu/feishu-img-28.png" alt="截图 28">
+<img src="assets/feishu/feishu-img-29.png" alt="截图 29">
+<img src="assets/feishu/feishu-img-30.png" alt="截图 30">
+<img src="assets/feishu/feishu-img-31.png" alt="截图 31">
+<img src="assets/feishu/feishu-img-32.png" alt="截图 32">
+<img src="assets/feishu/feishu-img-33.png" alt="截图 33">
+<img src="assets/feishu/feishu-img-34.png" alt="截图 34">
+<img src="assets/feishu/feishu-img-35.png" alt="截图 35">
+<img src="assets/feishu/feishu-img-36.png" alt="截图 36">
+<img src="assets/feishu/feishu-img-37.png" alt="截图 37">
+<img src="assets/feishu/feishu-img-38.png" alt="截图 38">
+<img src="assets/feishu/feishu-img-39.png" alt="截图 39">
+<img src="assets/feishu/feishu-img-40.png" alt="截图 40">
+<img src="assets/feishu/feishu-img-41.png" alt="截图 41">
+<img src="assets/feishu/feishu-img-42.png" alt="截图 42">
+<img src="assets/feishu/feishu-img-43.png" alt="截图 43">
+<img src="assets/feishu/feishu-img-44.png" alt="截图 44">
+<img src="assets/feishu/feishu-img-45.png" alt="截图 45">
+<img src="assets/feishu/feishu-img-46.png" alt="截图 46">
+<img src="assets/feishu/feishu-img-47.png" alt="截图 47">
+<img src="assets/feishu/feishu-img-48.png" alt="截图 48">
+<img src="assets/feishu/feishu-img-49.png" alt="截图 49">
+<img src="assets/feishu/feishu-img-50.png" alt="截图 50">
+<img src="assets/feishu/feishu-img-51.png" alt="截图 51">
+<img src="assets/feishu/feishu-img-52.png" alt="截图 52">
+<img src="assets/feishu/feishu-img-53.png" alt="截图 53">
+<img src="assets/feishu/feishu-img-54.png" alt="截图 54">
+<img src="assets/feishu/feishu-img-55.png" alt="截图 55">
+<img src="assets/feishu/feishu-img-56.png" alt="截图 56">
 
 > 旧 TradeZella 研究截图已归档到 `docs/notebook/assets/tradezella/`，不再作为当前需求依据。
